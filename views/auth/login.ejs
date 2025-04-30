@@ -1,0 +1,42 @@
+<form action="/login" method="POST" class="auth-form">
+    <div class="form-group">
+        <label for="username">Username</label>
+        <div class="input-icon">
+            <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'username') ? 'is-invalid' : '' %>"
+                    placeholder="Enter your username"
+                    value="<%= typeof username !== 'undefined' ? username : '' %>"
+                    required
+            >
+            <i class="fas fa-user"></i>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-icon">
+            <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'password') ? 'is-invalid' : '' %>"
+                    placeholder="Enter your password"
+                    required
+            >
+            <i class="fas fa-lock"></i>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </button>
+    </div>
+</form>
+
+<div class="auth-links">
+    <p>Don't have an account? Contact your administrator.</p>
+</div>

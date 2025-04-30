@@ -1,0 +1,96 @@
+<!-- Error Page -->
+<div class="error-container">
+    <div class="error-code"><%= typeof statusCode !== 'undefined' ? statusCode : 500 %></div>
+    <div class="error-title"><%= typeof title !== 'undefined' ? title : 'Error' %></div>
+    <div class="error-message"><%= typeof message !== 'undefined' ? message : 'Something went wrong' %></div>
+
+    <% if (process.env.NODE_ENV === 'development' && typeof error !== 'undefined') { %>
+        <div class="error-details">
+            <h3>Error Details:</h3>
+            <pre><%= error.stack %></pre>
+        </div>
+    <% } %>
+
+    <div class="error-actions">
+        <a href="/" class="btn btn-primary">
+            <i class="fas fa-home"></i> Back to Home
+        </a>
+        <a href="javascript:history.back()" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Go Back
+        </a>
+    </div>
+</div>
+
+<%- contentFor('styles') %>
+<style>
+    .error-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 30px;
+        text-align: center;
+    }
+
+    .error-code {
+        font-size: 6rem;
+        font-weight: 700;
+        color: var(--primary-blue);
+        line-height: 1;
+        margin-bottom: 20px;
+    }
+
+    .error-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: var(--dark-gray);
+    }
+
+    .error-message {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        margin-bottom: 30px;
+    }
+
+    .error-details {
+        text-align: left;
+        background: var(--light-gray);
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-bottom: 30px;
+        overflow-x: auto;
+    }
+
+    .error-details h3 {
+        font-size: 1.2rem;
+        color: var(--dark-gray);
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .error-details pre {
+        margin: 0;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+        color: var(--text-muted);
+    }
+
+    .error-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .error-code {
+            font-size: 4rem;
+        }
+
+        .error-title {
+            font-size: 1.5rem;
+        }
+
+        .error-actions {
+            flex-direction: column;
+        }
+    }
+</style>

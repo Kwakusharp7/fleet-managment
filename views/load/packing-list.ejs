@@ -1,0 +1,755 @@
+<!-- Packing List Page -->
+<div class="data-container packing-list-container">
+    <div class="data-header">
+        <h3>Packing List - Truck <%= load.truckId %></h3>
+
+        <div class="load-actions">
+            <button type="button" id="savePackingList" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Progress
+            </button>
+            <button type="button" id="printPackingList" class="btn btn-secondary">
+                <i class="fas fa-print"></i> Print
+            </button>
+
+            <% if (load.status !== 'Delivered') { %>
+                <button type="button" id="completePackingList" class="btn btn-success">
+                    <i class="fas fa-check-circle"></i> Mark Complete &amp; Save
+                </button>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="document-container">
+        <!-- Packing List Header -->
+        <div class="packing-header">
+            <div class="logo-container">
+                <img src="/img/img.webp" alt="Company Logo">
+            </div>
+            <div class="packing-title-area">
+                <div class="packing-title">TRUCK LOAD <%= load.truckId %></div>
+                <div class="subtitle">DESA PANELS - PACKING LIST</div>
+            </div>
+        </div>
+
+        <form id="packing-list-form">
+            <!-- Section 1: General Info -->
+            <div class="form-section">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="date">DELIVERY DATE:</label>
+                        <input type="date" id="date" name="date" class="form-control"
+                               value="<%= load.packingList && load.packingList.date ? new Date(load.packingList.date).toISOString().split('T')[0] : '' %>"
+                                <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                    </div>
+                    <div class="form-field">
+                        <label for="workOrder">WORK ORDER NO.:</label>
+                        <input type="text" id="workOrder" name="workOrder" class="form-control"
+                               placeholder="Enter Work Order Number"
+                               value="<%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : '' %>"
+                                <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="projectName">PROJECT NAME:</label>
+                    <input type="text" id="projectName" name="projectName" class="form-control"
+                           value="<%= load.packingList && load.packingList.projectName ? load.packingList.projectName : load.projectName %>"
+                            <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                </div>
+                <div class="form-field">
+                    <label for="projectAddress">PROJECT ADDRESS:</label>
+                    <input type="text" id="projectAddress" name="projectAddress" class="form-control"
+                           placeholder="Enter Project Site Address"
+                           value="<%= load.packingList && load.packingList.projectAddress ? load.packingList.projectAddress : '' %>"
+                            <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Section 2: Shipper/Contact -->
+            <div class="form-section">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="fixed-info">
+                            <p><strong>SHIPPER / FROM:</strong><br>DESA Glass<br>285079 Bluegrass Drive<br>Rocky View, AB T1X 0P5 Canada</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fixed-info">
+                            <p><strong>CONTACT:</strong><br>Phone: 403.230.5011<br>Toll Free: 1.877.508.3965</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Delivery Info -->
+            <div class="form-section">
+                <div class="section-title">DELIVERY INFORMATION</div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="requestedBy">REQUESTED BY:</label>
+                        <input type="text" id="requestedBy" name="requestedBy" class="form-control"
+                               placeholder="Name of person requesting"
+                               value="<%= load.packingList && load.packingList.requestedBy ? load.packingList.requestedBy : '' %>"
+                                <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                    </div>
+                    <div class="form-field">
+                        <label for="carrier">CARRIER:</label>
+                        <input type="text" id="carrier" name="carrier" class="form-control"
+                               placeholder="Shipping Company Name"
+                               value="<%= load.packingList && load.packingList.carrier ? load.packingList.carrier : '' %>"
+                                <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Consignee -->
+            <div class="form-section">
+                <div class="section-title">CONSIGNEE DETAILS</div>
+                <div class="form-field">
+                    <label for="consignee">CONSIGNEE / TO:</label>
+                    <input type="text" id="consignee" name="consignee" class="form-control"
+                           placeholder="Receiving Company or Person"
+                           value="<%= load.packingList && load.packingList.consignee ? load.packingList.consignee : '' %>"
+                            <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                </div>
+                <div class="form-field">
+                    <label for="consigneeAddress">DELIVERY ADDRESS:</label>
+                    <input type="text" id="consigneeAddress" name="consigneeAddress" class="form-control"
+                           placeholder="Full Delivery Address"
+                           value="<%= load.packingList && load.packingList.consigneeAddress ? load.packingList.consigneeAddress : '' %>"
+                            <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="siteContact">SITE CONTACT:</label>
+                        <input type="text" id="siteContact" name="siteContact" class="form-control"
+                               placeholder="Name of person on site"
+                               value="<%= load.packingList && load.packingList.siteContact ? load.packingList.siteContact : '' %>"
+                                <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                    </div>
+                    <div class="form-field">
+                        <label for="sitePhone">SITE PHONE:</label>
+                        <input type="tel" id="sitePhone" name="sitePhone" class="form-control"
+                               placeholder="e.g., 555-123-4567"
+                               value="<%= load.packingList && load.packingList.sitePhone ? load.packingList.sitePhone : '' %>"
+                                <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Confirmation -->
+            <div class="form-section">
+                <div class="section-title">SHIPMENT CONFIRMATION</div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="deliveryDate">ACTUAL DELIVERY DATE:</label>
+                        <input type="date" id="deliveryDate" name="deliveryDate" class="form-control"
+                               value="<%= load.packingList && load.packingList.deliveryDate ? new Date(load.packingList.deliveryDate).toISOString().split('T')[0] : '' %>"
+                                <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                    </div>
+                    <div class="form-field">
+                        <label for="packagedBy">PACKAGED BY:</label>
+                        <input type="text" id="packagedBy" name="packagedBy" class="form-control"
+                               placeholder="Initials or Name"
+                               value="<%= load.packingList && load.packingList.packagedBy ? load.packingList.packagedBy : '' %>"
+                                <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="checkedBy">LOADED BY (LOADER):</label>
+                    <input type="text" id="checkedBy" name="checkedBy" class="form-control"
+                           placeholder="Initials or Name"
+                           value="<%= load.packingList && load.packingList.checkedBy ? load.packingList.checkedBy : '' %>"
+                            <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                </div>
+            </div>
+
+            <!-- Section 6: Signature -->
+            <div class="signature-area">
+                <div class="form-field">
+                    <label for="receivedBy">DRIVER BY (PRINT NAME):</label>
+                    <input type="text" id="receivedBy" name="receivedBy" class="form-control"
+                           placeholder="Print Name of Receiver"
+                           value="<%= load.packingList && load.packingList.receivedBy ? load.packingList.receivedBy : '' %>"
+                            <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <label>DRIVER SIGNATURE:</label>
+                    <% if (load.status === 'Delivered' && load.packingList && load.packingList.signature) { %>
+                        <div class="signature-image">
+                            <img src="<%= load.packingList.signature %>" alt="Driver Signature">
+                        </div>
+                    <% } else { %>
+                        <div class="signature-container">
+                            <canvas id="signature-pad"></canvas>
+                        </div>
+                        <button type="button" class="signature-clear no-print">
+                            <i class="fas fa-eraser"></i> Clear Signature
+                        </button>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Hidden Print Section -->
+            <div id="printTruckInfo" style="display: none;">
+                <h3 class="print-section-title">Load Details</h3>
+                <h4 class="print-section-subtitle">Truck Information</h4>
+                <p><strong>Truck ID:</strong> <%= load.truckId %></p>
+                <p class="project-info"><strong>Project:</strong> <%= load.projectFullName %></p>
+                <p><strong>Dimensions:</strong> <%= load.truckInfo.length %>ft L × <%= load.truckInfo.width %>ft W</p>
+                <p><strong>Weight Capacity:</strong> <%= load.truckInfo.weight.toLocaleString() %> lbs</p>
+
+                <h4 class="print-section-subtitle">Skid Details (<%= load.skidCount || 0 %> Total)</h4>
+                <table class="print-skids-table">
+                    <thead>
+                    <tr>
+                        <th>Skid ID</th>
+                        <th>Width (ft)</th>
+                        <th>Length (ft)</th>
+                        <th>Weight (lbs)</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <% if (load.skids && load.skids.length > 0) { %>
+                        <% load.skids.forEach(skid => { %>
+                            <tr>
+                                <td><%= skid.id %></td>
+                                <td><%= skid.width.toFixed(2) %></td>
+                                <td><%= skid.length.toFixed(2) %></td>
+                                <td><%= skid.weight.toFixed(2) %></td>
+                                <td><%= skid.description || '-' %></td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" style="text-align:center;">No skids added to this load.</td>
+                        </tr>
+                    <% } %>
+                    </tbody>
+                    <% if (load.skids && load.skids.length > 0) { %>
+                        <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align: right;"><strong>Total Weight:</strong></td>
+                            <td><strong><%= (load.totalWeight || 0).toFixed(2) %></strong></td>
+                            <td></td>
+                        </tr>
+                        </tfoot>
+                    <% } %>
+                </table>
+            </div>
+        </form>
+    </div>
+
+    <!-- Save Status Message -->
+    <div class="save-status" id="save-status"></div>
+
+    <!-- Navigation Buttons -->
+    <div class="button-group">
+        <a href="/loads/<%= load._id %>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Load Details
+        </a>
+    </div>
+</div>
+
+<%- contentFor('styles') %>
+<style>
+    .packing-list-container {
+        padding-bottom: 30px;
+    }
+
+    .document-container {
+        background-color: var(--white);
+        padding: 40px;
+        box-shadow: none;
+        border: 1px solid var(--medium-gray);
+        border-radius: var(--border-radius);
+        position: relative;
+        margin-bottom: 30px;
+    }
+
+    .packing-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid var(--primary-blue);
+    }
+
+    .logo-container {
+        width: 150px;
+        height: 75px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .logo-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .packing-title-area {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0 20px;
+    }
+
+    .packing-title {
+        font-size: 1.8rem;
+        margin-bottom: 5px;
+        color: var(--dark-gray);
+        font-weight: 700;
+    }
+
+    .subtitle {
+        font-weight: bold;
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 1rem;
+        line-height: 1.4;
+    }
+
+    .divider {
+        border: 0;
+        height: 1px;
+        background: var(--medium-gray);
+        margin: 30px 0;
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+    }
+
+    .form-section .section-title {
+        font-weight: 600;
+        color: var(--primary-blue);
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        border-bottom: 1px solid var(--medium-gray);
+        padding-bottom: 8px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 25px;
+        margin-bottom: 20px;
+    }
+
+    .form-row .form-field {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .form-field {
+        margin-bottom: 20px;
+    }
+
+    .form-field label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--dark-gray);
+    }
+
+    .form-field label.required::after {
+        content: " *";
+        color: var(--danger-red);
+        font-weight: normal;
+    }
+
+    .form-field input[type="text"],
+    .form-field input[type="date"],
+    .form-field input[type="tel"] {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ced4da;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+    }
+
+    .form-field input:focus,
+    .form-field input[type="tel"]:focus {
+        border-color: var(--secondary-blue);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    }
+
+    .fixed-info {
+        margin-bottom: 20px;
+        padding: 15px 20px;
+        background-color: var(--light-gray);
+        border-radius: var(--border-radius);
+        border-left: 4px solid var(--secondary-blue);
+    }
+
+    .fixed-info p {
+        margin: 8px 0;
+        line-height: 1.5;
+    }
+
+    .fixed-info strong {
+        color: var(--primary-blue);
+    }
+
+    .signature-area {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px dashed var(--medium-gray);
+    }
+
+    .signature-container {
+        border: 2px dashed var(--medium-gray);
+        border-radius: var(--border-radius);
+        margin-top: 10px;
+        position: relative;
+        height: 200px;
+        background-color: #fdfdfd;
+        cursor: crosshair;
+    }
+
+    #signature-pad {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+    }
+
+    .signature-clear {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        background: var(--danger-red);
+        color: var(--white);
+        border: none;
+        padding: 6px 12px;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: background-color 0.3s;
+    }
+
+    .signature-clear:hover {
+        background-color: #c82333;
+    }
+
+    .signature-image {
+        border: 1px solid var(--medium-gray);
+        background-color: #fff;
+        padding: 10px;
+        border-radius: var(--border-radius);
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    .signature-image img {
+        max-width: 300px;
+        max-height: 150px;
+    }
+
+    .save-status {
+        font-size: 0.85rem;
+        text-align: right;
+        margin-top: 15px;
+        height: 1em;
+        opacity: 0;
+        transition: opacity 0.5s;
+        color: var(--success-green);
+    }
+
+    .save-status.visible {
+        opacity: 1;
+    }
+
+    .save-status.error {
+        color: var(--danger-red);
+    }
+
+    @media (max-width: 768px) {
+        .document-container {
+            padding: 20px;
+        }
+
+        .packing-header {
+            flex-direction: column;
+        }
+
+        .logo-container {
+            margin-bottom: 15px;
+        }
+
+        .packing-title {
+            font-size: 1.5rem;
+        }
+
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .signature-container {
+            height: 150px;
+        }
+
+        .signature-image img {
+            max-width: 100%;
+        }
+
+        .load-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .load-actions button {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+    }
+
+    @media print {
+        .load-actions, .button-group, .save-status, .signature-clear {
+            display: none !important;
+        }
+
+        .document-container {
+            border: none;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        .packing-header {
+            border-bottom: 2px solid #000;
+        }
+    }
+</style>
+
+<%- contentFor('scripts') %>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script>
+    // Global variables
+    let signaturePad;
+    let saveTimeout;
+
+    // Initialize on document ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize signature pad if available
+        const canvas = document.getElementById('signature-pad');
+        if (canvas) {
+            initializeSignaturePad(canvas);
+        }
+
+        // Set up event listeners
+        const saveBtn = document.getElementById('savePackingList');
+        const completeBtn = document.getElementById('completePackingList');
+        const printBtn = document.getElementById('printPackingList');
+        const clearBtn = document.querySelector('.signature-clear');
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', handleSavePackingList);
+        }
+
+        if (completeBtn) {
+            completeBtn.addEventListener('click', handleCompletePackingList);
+        }
+
+        if (printBtn) {
+            printBtn.addEventListener('click', handlePrintPackingList);
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', handleClearSignature);
+        }
+
+        // Enable auto-save on input changes
+        document.getElementById('packing-list-form').addEventListener('input', debounce(handleFormChanged, 1000));
+    });
+
+    // Initialize signature pad
+    function initializeSignaturePad(canvas) {
+        // Resize canvas
+        resizeCanvas(canvas);
+
+        // Create signature pad
+        signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(255, 255, 255)',
+            penColor: 'rgb(0, 0, 0)'
+        });
+
+        // Load existing signature if any
+        <% if (load.packingList && load.packingList.signature) { %>
+        signaturePad.fromDataURL("<%= load.packingList.signature %>");
+        <% } %>
+
+        // Setup resize handling
+        window.addEventListener('resize', debounce(() => resizeCanvas(canvas), 200));
+
+        // Handle end stroke to auto-save
+        signaturePad.addEventListener("endStroke", () => {
+            if (!signaturePad.isEmpty()) {
+                handleFormChanged();
+            }
+        });
+    }
+
+    // Resize canvas for signature pad
+    function resizeCanvas(canvas) {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const data = signaturePad ? signaturePad.toDataURL() : null;
+
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+
+        const ctx = canvas.getContext("2d");
+        ctx.scale(ratio, ratio);
+
+        if (signaturePad) {
+            signaturePad.clear();
+            if (data) {
+                signaturePad.fromDataURL(data);
+            }
+        }
+    }
+
+    // Handle saving packing list
+    function handleSavePackingList() {
+        savePackingList(false);
+    }
+
+    // Handle completing packing list
+    function handleCompletePackingList() {
+        // Validate required fields
+        const receivedBy = document.getElementById('receivedBy').value.trim();
+        const hasSignature = signaturePad && !signaturePad.isEmpty();
+
+        if (!receivedBy) {
+            alert('Please enter the driver name.');
+            document.getElementById('receivedBy').focus();
+            return;
+        }
+
+        if (!hasSignature) {
+            alert('Driver signature is required.');
+            return;
+        }
+
+        if (confirm('Are you sure you want to mark this packing list as complete? This will set the load status to "Delivered" and lock the packing list for editing.')) {
+            savePackingList(true);
+        }
+    }
+
+    // Handle printing packing list
+    function handlePrintPackingList() {
+        window.print();
+    }
+
+    // Handle clearing signature
+    function handleClearSignature() {
+        if (signaturePad) {
+            signaturePad.clear();
+            handleFormChanged();
+        }
+    }
+
+    // Handle form input changes (for auto-save)
+    function handleFormChanged() {
+        savePackingList(false, true);
+    }
+
+    // Save packing list data
+    function savePackingList(markComplete = false, autoSave = false) {
+        // Collect form data
+        const form = document.getElementById('packing-list-form');
+        const formData = new FormData(form);
+        const packingListData = {};
+
+        // Convert form data to object
+        for (const [key, value] of formData.entries()) {
+            packingListData[key] = value;
+        }
+
+        // Add signature if available
+        if (signaturePad && !signaturePad.isEmpty()) {
+            packingListData.signature = signaturePad.toDataURL();
+        } else {
+            packingListData.signature = null;
+        }
+
+        // Create payload
+        const payload = {
+            packingList: packingListData
+        };
+
+        // Optional: Set delivered status
+        if (markComplete) {
+            payload.markAsDelivered = true;
+        }
+
+        // Send data to server
+        fetch('/loads/<%= load._id %>/packing-list?_method=PUT', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                showSaveStatus(markComplete ? 'Packing list completed and saved!' : 'Packing list saved!');
+
+                if (markComplete) {
+                    // Redirect to load details page after completion
+                    setTimeout(() => {
+                        window.location.href = '/loads/<%= load._id %>';
+                    }, 1500);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving packing list:', error);
+                showSaveStatus('Error saving packing list. Please try again.', true);
+            });
+    }
+
+    // Show save status message
+    function showSaveStatus(message, isError = false) {
+        const statusElement = document.getElementById('save-status');
+        if (!statusElement) return;
+
+        statusElement.textContent = message;
+        statusElement.classList.add('visible');
+
+        if (isError) {
+            statusElement.classList.add('error');
+        } else {
+            statusElement.classList.remove('error');
+        }
+
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            statusElement.classList.remove('visible');
+        }, 3000);
+    }
+
+    // Debounce function to limit frequency of function calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+</script>

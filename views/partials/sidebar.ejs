@@ -1,0 +1,38 @@
+<nav class="sidebar-nav">
+    <ul>
+        <li>
+            <a href="/dashboard" class="<%= path === '/dashboard' ? 'active' : '' %>">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+        </li>
+        <li>
+            <a href="/loads" class="<%= path.startsWith('/loads') ? 'active' : '' %>">
+                <i class="fas fa-truck-loading"></i> Load Management
+            </a>
+        </li>
+        <li>
+            <a href="/projects" class="<%= path.startsWith('/projects') ? 'active' : '' %>">
+                <i class="fas fa-briefcase"></i> Project Management
+            </a>
+        </li>
+        <% if (user && user.role === 'Admin') { %>
+            <li>
+                <a href="/users" class="<%= path.startsWith('/users') ? 'active' : '' %>">
+                    <i class="fas fa-users"></i> User Management
+                </a>
+            </li>
+        <% } %>
+        <li>
+            <a href="/reports" class="<%= path.startsWith('/reports') ? 'active' : '' %>">
+                <i class="fas fa-chart-line"></i> Reports
+            </a>
+        </li>
+        <% if (user && user.role === 'Admin') { %>
+            <li>
+                <a href="/settings" class="<%= path.startsWith('/settings') ? 'active' : '' %>">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </li>
+        <% } %>
+    </ul>
+</nav>

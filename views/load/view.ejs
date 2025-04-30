@@ -1,0 +1,427 @@
+<!-- Load Details View -->
+<div class="data-container">
+    <div class="data-header">
+        <h3>Load Details: <%= load.truckId %></h3>
+
+        <div class="load-actions">
+            <% if (load.canEdit) { %>
+                <a href="/loads/<%= load._id %>/edit" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Load
+                </a>
+                <a href="/loads/<%= load._id %>/packing-list" class="btn btn-success">
+                    <i class="fas fa-clipboard-list"></i> Packing List
+                </a>
+            <% } else { %>
+                <span class="status-badge status-delivered">Delivered</span>
+                <a href="/loads/<%= load._id %>/packing-list" class="btn btn-success">
+                    <i class="fas fa-clipboard-check"></i> View Packing List
+                </a>
+            <% } %>
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+    </div>
+
+    <!-- Truck and Project Information -->
+    <div class="load-section">
+        <h4><i class="fas fa-truck"></i> Truck Information</h4>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Truck ID</div>
+                <div class="info-value"><%= load.truckId %></div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Project</div>
+                <div class="info-value"><%= load.projectFullName %></div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Date Entered</div>
+                <div class="info-value"><%= load.formattedDate %></div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Status</div>
+                <div class="info-value">
+                    <% if (load.status === 'Planned') { %>
+                        <span class="status-badge status-planned">Planned</span>
+                    <% } else if (load.status === 'Loaded') { %>
+                        <span class="status-badge status-loaded">Loaded</span>
+                    <% } else if (load.status === 'Delivered') { %>
+                        <span class="status-badge status-delivered">Delivered</span>
+                    <% } %>
+                </div>
+            </div>
+
+            <% if (load.canEdit) { %>
+                <div class="info-item info-actions">
+                    <form action="/loads/<%= load._id %>/status?_method=PUT" method="POST" class="status-update-form">
+                        <div class="form-group">
+                            <label for="status">Update Status</label>
+                            <div class="input-group">
+                                <select name="status" id="status" class="form-control form-control-sm">
+                                    <option value="Planned" <%= load.status === 'Planned' ? 'selected' : '' %>>Planned</option>
+                                    <option value="Loaded" <%= load.status === 'Loaded' ? 'selected' : '' %>>Loaded</option>
+                                    <option value="Delivered" <%= load.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-save"></i> Update
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="sub-section">
+            <h5>Truck Dimensions</h5>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Length</div>
+                    <div class="info-value"><%= load.truckInfo.length %> ft</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Width</div>
+                    <div class="info-value"><%= load.truckInfo.width %> ft</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Weight Capacity</div>
+                    <div class="info-value"><%= load.truckInfo.weight.toLocaleString() %> lbs</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skids Information -->
+    <div class="load-section">
+        <h4><i class="fas fa-pallet"></i> Skid Information</h4>
+
+        <div class="total-summary">
+            <div class="summary-item">
+                <div class="summary-label">Total Skids</div>
+                <div class="summary-value"><%= load.skidCount || 0 %></div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-label">Total Weight</div>
+                <div class="summary-value"><%= (load.totalWeight || 0).toFixed(2) %> lbs</div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-label">% of Capacity</div>
+                <div class="summary-value <%= (load.totalWeight && load.truckInfo.weight && load.totalWeight > load.truckInfo.weight) ? 'text-danger' : '' %>">
+                    <%= (load.totalWeight && load.truckInfo.weight) ? ((load.totalWeight / load.truckInfo.weight) * 100).toFixed(1) : 0 %>%
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Skid ID</th>
+                    <th>Width (ft)</th>
+                    <th>Length (ft)</th>
+                    <th>Weight (lbs)</th>
+                    <th>Description</th>
+                </tr>
+                </thead>
+                <tbody>
+                <% if (load.skids && load.skids.length > 0) { %>
+                    <% load.skids.forEach(skid => { %>
+                        <tr>
+                            <td><%= skid.id %></td>
+                            <td><%= skid.width.toFixed(2) %></td>
+                            <td><%= skid.length.toFixed(2) %></td>
+                            <td><%= skid.weight.toFixed(2) %></td>
+                            <td><%= skid.description || '-' %></td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="5" style="text-align:center;">No skids added to this load.</td>
+                    </tr>
+                <% } %>
+                </tbody>
+                <% if (load.skids && load.skids.length > 0) { %>
+                    <tfoot>
+                    <tr>
+                        <th colspan="3">Total</th>
+                        <th><%= (load.totalWeight || 0).toFixed(2) %></th>
+                        <th></th>
+                    </tr>
+                    </tfoot>
+                <% } %>
+            </table>
+        </div>
+    </div>
+
+    <!-- Packing List Information (if available) -->
+    <% if (load.packingList && Object.keys(load.packingList).length > 0) { %>
+        <div class="load-section">
+            <h4><i class="fas fa-clipboard-list"></i> Packing List Information</h4>
+
+            <div class="info-grid">
+                <% if (load.packingList.date) { %>
+                    <div class="info-item">
+                        <div class="info-label">Delivery Date</div>
+                        <div class="info-value"><%= new Date(load.packingList.date).toLocaleDateString() %></div>
+                    </div>
+                <% } %>
+
+                <% if (load.packingList.workOrder) { %>
+                    <div class="info-item">
+                        <div class="info-label">Work Order</div>
+                        <div class="info-value"><%= load.packingList.workOrder %></div>
+                    </div>
+                <% } %>
+
+                <% if (load.packingList.requestedBy) { %>
+                    <div class="info-item">
+                        <div class="info-label">Requested By</div>
+                        <div class="info-value"><%= load.packingList.requestedBy %></div>
+                    </div>
+                <% } %>
+
+                <% if (load.packingList.carrier) { %>
+                    <div class="info-item">
+                        <div class="info-label">Carrier</div>
+                        <div class="info-value"><%= load.packingList.carrier %></div>
+                    </div>
+                <% } %>
+
+                <% if (load.packingList.consignee) { %>
+                    <div class="info-item">
+                        <div class="info-label">Consignee</div>
+                        <div class="info-value"><%= load.packingList.consignee %></div>
+                    </div>
+                <% } %>
+
+                <% if (load.packingList.siteContact) { %>
+                    <div class="info-item">
+                        <div class="info-label">Site Contact</div>
+                        <div class="info-value"><%= load.packingList.siteContact %></div>
+                    </div>
+                <% } %>
+
+                <% if (load.packingList.packagedBy) { %>
+                    <div class="info-item">
+                        <div class="info-label">Packaged By</div>
+                        <div class="info-value"><%= load.packingList.packagedBy %></div>
+                    </div>
+                <% } %>
+
+                <% if (load.packingList.checkedBy) { %>
+                    <div class="info-item">
+                        <div class="info-label">Loaded By</div>
+                        <div class="info-value"><%= load.packingList.checkedBy %></div>
+                    </div>
+                <% } %>
+
+                <% if (load.packingList.receivedBy) { %>
+                    <div class="info-item">
+                        <div class="info-label">Driver</div>
+                        <div class="info-value"><%= load.packingList.receivedBy %></div>
+                    </div>
+                <% } %>
+            </div>
+
+            <% if (load.packingList.signature) { %>
+                <div class="signature-display">
+                    <label>Driver Signature</label>
+                    <div class="signature-image">
+                        <img src="<%= load.packingList.signature %>" alt="Driver Signature">
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    <% } %>
+
+    <div class="button-group">
+        <a href="/loads" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Loads
+        </a>
+    </div>
+</div>
+
+<%- contentFor('styles') %>
+<style>
+    .load-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .load-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: var(--border-radius);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .load-section h4 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: var(--primary-blue);
+        font-size: 1.2rem;
+        font-weight: 600;
+        border-bottom: 1px solid var(--medium-gray);
+        padding-bottom: 10px;
+    }
+
+    .load-section h5 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        color: var(--dark-gray);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+    }
+
+    .info-actions {
+        grid-column: 1 / -1;
+        margin-top: 10px;
+    }
+
+    .status-update-form {
+        max-width: 300px;
+    }
+
+    .status-update-form .input-group {
+        display: flex;
+    }
+
+    .sub-section {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px dashed var(--medium-gray);
+    }
+
+    .total-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        background-color: var(--white);
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-bottom: 15px;
+    }
+
+    .summary-item {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+    }
+
+    .summary-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 5px;
+    }
+
+    .summary-value {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .text-danger {
+        color: var(--danger-red);
+    }
+
+    .signature-display {
+        margin-top: 20px;
+    }
+
+    .signature-display label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .signature-image {
+        border: 1px solid var(--medium-gray);
+        background-color: var(--white);
+        padding: 10px;
+        border-radius: var(--border-radius);
+        display: inline-block;
+    }
+
+    .signature-image img {
+        max-width: 300px;
+        max-height: 150px;
+    }
+
+    @media (max-width: 768px) {
+        .load-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .load-actions .btn {
+            width: 100%;
+        }
+
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .signature-image img {
+            max-width: 100%;
+        }
+    }
+
+    @media print {
+        .load-actions, .button-group, .info-actions {
+            display: none !important;
+        }
+
+        .data-container {
+            box-shadow: none;
+            border: none;
+        }
+
+        .load-section {
+            box-shadow: none;
+            background-color: #fff !important;
+            padding: 10px 0;
+            break-inside: avoid;
+        }
+
+        .info-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .total-summary {
+            background-color: #fff !important;
+            border: 1px solid #ddd;
+        }
+    }
+</style>

@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desa - Loading & Inventory System</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/img/favicon.png">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+
+    <!-- External JS (Signature Pad) -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+    <!-- Include the CSS directly from your existing stylesheet -->
+    <style>
+        /* --- CSS styles --- */
+        :root {
+            --primary-blue: #0056b3;
+            --secondary-blue: #007bff;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef;
+            --dark-gray: #343a40;
+            --text-muted: #6c757d;
+            --danger-red: #dc3545;
+            --success-green: #28a745;
+            --white: #ffffff;
+            --border-radius: 6px;
+            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background-color: var(--light-gray); margin: 0; padding: 20px; color: var(--dark-gray); line-height: 1.6; }
+        .container { background-color: var(--white); border-radius: 10px; box-shadow: var(--box-shadow); width: 100%; max-width: 1100px; margin: 20px auto; overflow: hidden; }
+        .header { background-color: var(--primary-blue); color: var(--white); padding: 25px 30px; text-align: center; border-bottom: 5px solid var(--secondary-blue); }
+        .header-logo { display: block; height: 50px; width: auto; margin: 0 auto 15px auto; }
+        .header h1 { margin: 0; font-size: 2rem; font-weight: 600; }
+        .header p { margin: 5px 0 0; font-size: 1rem; opacity: 0.9; }
+        .content { padding: 30px; }
+        .section-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 15px; color: var(--primary-blue); padding-bottom: 10px; border-bottom: 2px solid var(--medium-gray); display: flex; align-items: center; gap: 10px; }
+        .project-selection-area { padding: 20px; margin-bottom: 15px; }
+        .project-selection-area label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--dark-gray); }
+        .project-selection-area select { width: 100%; padding: 12px 15px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 1rem; transition: border-color 0.3s, box-shadow 0.3s; line-height: 1.5; background-color: var(--white); appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 16px 12px; padding-right: 2.5rem; }
+        .project-selection-area select.select2-hidden-accessible { background-image: none; padding-right: 15px; }
+        .project-selection-area select:focus { border-color: var(--secondary-blue); outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); }
+        form { background-color: var(--white); padding: 25px; border-radius: var(--border-radius); border: 1px solid var(--medium-gray); margin-bottom: 25px; margin-top: 0; }
+        .intro-paragraph { padding: 0 25px; margin-bottom: 15px; color: var(--text-muted); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--dark-gray); }
+        .form-group input[type="text"], .form-group input[type="number"], .form-group input[type="date"], .form-group input[type="tel"], .form-group textarea, .form-group select, .form-control { width: 100%; padding: 12px 15px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 1rem; transition: border-color 0.3s, box-shadow 0.3s; line-height: 1.5; }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-group input:focus, .form-group input[type="tel"]:focus, .form-group textarea:focus, .form-group select:focus, .form-control:focus { border-color: var(--secondary-blue); outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); }
+        .unit-label { color: var(--text-muted); font-size: 0.85rem; margin-left: 5px; font-weight: normal; }
+        .button-group { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; flex-wrap: wrap; }
+        .btn { padding: 10px 25px; border: none; border-radius: var(--border-radius); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; line-height: 1.5; }
+        .btn:hover { transform: translateY(-2px); filter: brightness(110%); }
+        .btn-next { background-color: var(--success-green); color: var(--white); } .btn-next:hover { background-color: #218838; }
+        .btn-cancel, .btn-secondary { background-color: var(--medium-gray); color: var(--dark-gray); } .btn-cancel:hover, .btn-secondary:hover { background-color: #d6d8db; }
+        .btn-print, .btn-primary { background-color: var(--primary-blue); color: var(--white); } .btn-print:hover, .btn-primary:hover { background-color: #004494; }
+        .btn-edit { background-color: var(--secondary-blue); color: var(--white); } .btn-edit:hover { background-color: #0056b3; }
+        .btn-delete { background-color: var(--danger-red); color: var(--white); } .btn-delete:hover { background-color: #c82333; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; gap: 5px; }
+        .input-icon { position: relative; } .input-icon i { position: absolute; right: 15px; top: calc(50% + 5px); transform: translateY(-50%); color: var(--text-muted); pointer-events: none; } .input-icon input { padding-right: 40px; }
+        .skid-details { margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: var(--white); border-radius: var(--border-radius); overflow: hidden; box-shadow: var(--box-shadow); border: 1px solid var(--medium-gray); }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--medium-gray); vertical-align: middle; }
+        th { background-color: var(--primary-blue); color: var(--white); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        tr:last-child td { border-bottom: none; } tr:hover { background-color: #f1f8ff; } td.action-buttons { display: flex; gap: 8px; white-space: nowrap; }
+        .form-container { background-color: var(--light-gray); padding: 20px; border-radius: var(--border-radius); margin-top: 20px; margin-bottom: 20px; border: 1px solid var(--medium-gray); }
+        .form-container h4 { margin-top: 0; margin-bottom: 20px; color: var(--primary-blue); display: flex; align-items: center; gap: 8px; }
+        .row { display: flex; flex-wrap: wrap; margin: 0 -10px; }
+        .col-md-3, .col-md-4, .col-md-6, .col-md-12 { padding: 0 10px; margin-bottom: 15px; }
+        .col-md-3 { flex: 0 0 25%; max-width: 25%; } .col-md-4 { flex: 0 0 33.333%; max-width: 33.333%; } .col-md-6 { flex: 0 0 50%; max-width: 50%; } .col-md-12 { flex: 0 0 100%; max-width: 100%; }
+        .input-group { display: flex; } .input-group input { border-top-right-radius: 0; border-bottom-right-radius: 0; } .input-group-text { padding: 12px 15px; background-color: var(--medium-gray); border: 1px solid #ced4da; border-left: none; border-radius: 0 var(--border-radius) var(--border-radius) 0; font-size: 1rem; color: var(--text-muted); }
+        .mt-3 { margin-top: 1rem; } .d-flex { display: flex; } .justify-content-between { justify-content: space-between; } .align-items-center { align-items: center; }
+        .loading-instructions { background-color: #eef7ff; padding: 20px; border-radius: var(--border-radius); margin-top: 20px; border: 1px solid #bde0ff; }
+        .loading-instructions h5 { margin-top: 0; margin-bottom: 15px; color: var(--primary-blue); display: flex; align-items: center; gap: 8px; } .loading-instructions ul { padding-left: 20px; margin-bottom: 0; } .loading-instructions li { margin-bottom: 5px; }
+        .warning { color: var(--danger-red); font-weight: 600; background-color: #ffebee; padding: 10px; border-radius: var(--border-radius); margin-top: 10px; border: 1px solid var(--danger-red); } .warning i { margin-right: 5px; }
+        .page { display: none; } .page.active { display: block; animation: fadeIn 0.5s ease-in-out; } @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .document-container { background-color: var(--white); padding: 40px; box-shadow: none; border: 1px solid var(--medium-gray); border-radius: var(--border-radius); position: relative; margin-bottom: 30px; }
+        .packing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid var(--primary-blue); }
+        .logo-container { width: 150px; height: 75px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; } .logo-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .packing-title-area { flex-grow: 1; text-align: center; margin: 0 20px; } .packing-title { font-size: 1.8rem; margin-bottom: 5px; color: var(--dark-gray); font-weight: 700; } .subtitle { font-weight: bold; margin-bottom: 0; color: var(--text-muted); font-size: 1rem; line-height: 1.4; }
+        .divider { border: 0; height: 1px; background: var(--medium-gray); margin: 30px 0; }
+        .form-section { margin-bottom: 30px; } .form-section .section-title { font-weight: 600; color: var(--primary-blue); margin-bottom: 15px; font-size: 1.1rem; border-bottom: 1px solid var(--medium-gray); padding-bottom: 8px; }
+        .form-row { display: flex; gap: 25px; margin-bottom: 20px; } .form-row .form-field { flex: 1; min-width: 0; } .form-field { margin-bottom: 20px; } .form-field label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--dark-gray); } .form-field label.required::after { content: " *"; color: var(--danger-red); font-weight: normal; }
+        .form-field input[type="text"], .form-field input[type="date"], .form-field input[type="tel"] { width: 100%; padding: 12px 15px; border: 1px solid #ced4da; border-radius: var(--border-radius); font-size: 1rem; } .form-field input:focus, .form-field input[type="tel"]:focus { border-color: var(--secondary-blue); outline: none; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); }
+        .fixed-info { margin-bottom: 20px; padding: 15px 20px; background-color: var(--light-gray); border-radius: var(--border-radius); border-left: 4px solid var(--secondary-blue); } .fixed-info p { margin: 8px 0; line-height: 1.5; } .fixed-info strong { color: var(--primary-blue); }
+        .signature-area { margin-top: 40px; padding-top: 30px; border-top: 1px dashed var(--medium-gray); }
+        .signature-container { border: 2px dashed var(--medium-gray); border-radius: var(--border-radius); margin-top: 10px; position: relative; height: 200px; background-color: #fdfdfd; cursor: crosshair; } #signature-pad { display: block; width: 100%; height: 100%; touch-action: none; }
+        .signature-clear { position: absolute; right: 10px; bottom: 10px; background: var(--danger-red); color: var(--white); border: none; padding: 6px 12px; border-radius: var(--border-radius); cursor: pointer; font-size: 0.8rem; transition: background-color 0.3s; } .signature-clear:hover { background-color: #c82333; }
+        .packing-action-buttons { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--medium-gray); }
+        .signature-required-error { color: var(--danger-red); font-size: 0.85rem; margin-top: 5px; display: none; }
+        .save-status { font-size: 0.85rem; text-align: right; margin-top: 15px; height: 1em; opacity: 0; transition: opacity 0.5s; } .save-status.visible { opacity: 1; }
+        @media print { body { padding: 0; background: var(--white) !important; font-size: 10pt; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .container { box-shadow: none; border-radius: 0; max-width: 100%; margin: 0; border: none; } .header, .intro-paragraph, #jobSelectionPage, #projectSelectionPage { display: none !important; } .content { padding: 10px; } .no-print, .button-group, .packing-action-buttons, .save-status, .signature-clear, .action-buttons td .btn-edit, .action-buttons td .btn-delete, .section-title.no-print, .select2-container, .project-selection-area, #inventorySkidSelectionContainer, #inventoryPage .button-group { display: none !important; } form { border: none; padding: 0; margin: 0; box-shadow: none; } .form-field label.required::after { content: "" !important; } .form-field label .print-remove-required { display: none !important; } .form-group select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: none !important; border: none; padding: 0; } table { page-break-inside: auto; box-shadow: none; border: 1px solid #ccc; border-radius: 0; margin-top: 10px; } tr { page-break-inside: avoid; page-break-after: auto } th { background-color: #eee !important; color: #000 !important; font-size: 9pt; border: 1px solid #ccc; } td { border: 1px solid #ccc; padding: 8px; } .fixed-info { page-break-inside: avoid; background-color: #f0f0f0 !important; border: 1px solid #ccc; padding: 10px 15px; } .document-container { box-shadow: none; padding: 10px; border: none; } .packing-header { border-bottom: 2px solid #666; padding-bottom: 15px; margin-bottom: 15px; } .packing-header .logo-container img { max-height: 60px; } .packing-title { font-size: 1.6rem; } .signature-container { border: 1px solid #999; height: 150px; background-color: #fff !important; } #signature-pad { border: none; } #printTruckInfo { display: block !important; margin-top: 20px; padding: 15px 0; border: none; border-top: 1px solid #ccc; background-color: transparent !important; page-break-before: always !important; } #printLoadingSummary { margin-top: 15px; padding: 15px; background-color: #f5f5f5 !important; border: 1px solid #ddd; font-size: 9pt; } #printLoadingSummary h5 { margin-top: 0; margin-bottom: 10px; font-size: 11pt; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; } #printLoadingSummary ul { padding-left: 20px; margin-bottom: 5px; list-style: disc; } #printLoadingSummary li { margin-bottom: 4px; } #printLoadingSummary p.warning { color: #a94442 !important; background-color: #f2dede !important; border: 1px solid #ebccd1 !important; padding: 8px; margin-top: 8px; font-weight: bold; } .print-section-title { font-size: 14pt; color: #000; margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-weight: bold; } .print-section-subtitle { font-size: 11pt; color: #333; margin-top: 15px; margin-bottom: 5px; font-weight: bold; } #printTruckInfo p { margin: 4px 0; } .print-skids-table { margin-top: 10px; width: 100%; border-collapse: collapse; } .print-skids-table th, .print-skids-table td { border: 1px solid #ccc; padding: 6px; font-size: 9pt; } .print-skids-table th { background-color: #eee !important; text-align: left; } .print-skids-table tfoot td { background-color: #f5f5f5 !important; } #printTruckInfo p.project-info { } #inventoryPage { display: none !important; } }
+        @media (max-width: 992px) { .col-md-3, .col-md-4 { flex: 0 0 50%; max-width: 50%; } .project-selection-area, .intro-paragraph, form { padding-left: 15px; padding-right: 15px; } }
+        @media (max-width: 768px) { body { padding: 10px; } .container { margin: 10px auto; } .content { padding: 15px; } .header { padding: 20px 15px; } .header-logo { height: 40px; margin-bottom: 10px;} .header h1 { font-size: 1.8rem; } .col-md-3, .col-md-4, .col-md-6 { flex: 0 0 100%; max-width: 100%; } .button-group, .packing-action-buttons { flex-direction: column; gap: 10px; } .button-group .btn, .packing-action-buttons .btn { width: 100%; justify-content: center; } .form-row { flex-direction: column; gap: 0; } .form-row .form-field { margin-bottom: 20px; } .packing-header { flex-direction: column; text-align: center; } .logo-container { margin-bottom: 15px; width: 120px; height: 60px; } .packing-title-area { margin: 0; } .packing-title { font-size: 1.5rem; } .signature-container { height: 150px; } td.action-buttons { flex-direction: row; flex-wrap: wrap; gap: 5px; } .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; } .project-selection-area, .intro-paragraph, form { padding-left: 10px; padding-right: 10px; } }
+        .is-invalid { border-color: var(--danger-red) !important; box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important; }
+        .select2-container--bootstrap-5 .select2-selection.is-invalid { border-color: var(--danger-red) !important; box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important; }
+        .select2-container--bootstrap-5 .select2-selection--single { height: calc(1.5em + 0.75rem + 8px)!important; padding: 12px 15px!important; border: 1px solid #ced4da!important; border-radius: var(--border-radius)!important; }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered { line-height: 1.5!important; padding-left: 0!important; }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow { height: calc(1.5em + 0.75rem + 6px)!important; }
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection, .select2-container--bootstrap-5.select2-container--open .select2-selection { border-color: var(--secondary-blue) !important; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25) !important; }
+        .select2-search__field { border: 1px solid #ced4da!important; border-radius: var(--border-radius)!important; padding: 8px 10px!important; }
+        #inventorySkidSelectionContainer { margin-top: 30px; padding: 20px; background-color: #eef7ff; border: 1px solid #bde0ff; border-radius: var(--border-radius); }
+        #inventorySkidSelectionContainer h4 { margin-top: 0; margin-bottom: 15px; color: var(--primary-blue); border-bottom: 1px solid var(--medium-gray); padding-bottom: 10px; }
+        #inventorySkidSelectionContainer table { margin-bottom: 15px; background-color: var(--white); }
+        #inventorySkidSelectionContainer table th, #inventorySkidSelectionContainer table td { font-size: 0.9rem; padding: 8px 12px; }
+        #inventorySkidSelectionContainer table th:first-child, #inventorySkidSelectionContainer table td:first-child { width: 50px; text-align: center; }
+        /* Ensure invalid feedback displays */
+        .invalid-feedback { display: none; width: 100%; margin-top: 0.25rem; font-size: .875em; color: var(--danger-red); }
+        .is-invalid ~ .invalid-feedback { display: block; }
+        /* Style for disabled inventory selection checkbox */
+        .inventory-skid-select:disabled { cursor: not-allowed; }
+        .inventory-skid-select:disabled + label { color: var(--text-muted); }
+        /* User menu in top-right */
+        .user-menu { position: absolute; top: 10px; right: 10px; display: flex; align-items: center; gap: 10px; color: white; }
+        .user-menu .user-info { text-align: right; }
+        .user-menu .username { font-weight: bold; }
+        .user-menu .role { font-size: 0.8rem; opacity: 0.8; }
+        .user-menu .logout-btn { color: white; text-decoration: none; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 4px; font-size: 0.9rem; }
+        .user-menu .logout-btn:hover { background: rgba(0,0,0,0.3); }
+        /* Flash messages */
+        .flash-messages { padding: 0 20px; }
+        .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: var(--border-radius); }
+        .alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+        .alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+        .alert-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="user-menu">
+            <div class="user-info">
+                <div class="username"><%= user ? user.username : 'Guest' %></div>
+                <div class="role"><%= user ? user.role : '' %></div>
+            </div>
+            <a href="/logout" class="logout-btn" title="Logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+        <img src="/img/img.webp" alt="Desa Company Logo" class="header-logo">
+        <h1>Desa</h1>
+        <p>Loading & Inventory System</p>
+    </div>
+
+    <div class="content">
+        <!-- Flash Messages -->
+        <div class="flash-messages">
+            <% if(success_msg !== ''){ %>
+                <div class="alert alert-success">
+                    <%= success_msg %>
+                </div>
+            <% } %>
+            <% if(error_msg !== ''){ %>
+                <div class="alert alert-danger">
+                    <%= error_msg %>
+                </div>
+            <% } %>
+            <% if(error !== ''){ %>
+                <div class="alert alert-danger">
+                    <%= error %>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Job Selection Page -->
+        <div id="jobSelectionPage" class="page active">
+            <h2 class="section-title"><i class="fas fa-tasks"></i> Select Task</h2>
+            <div class="form-group" style="padding: 20px;">
+                <label for="jobTypeSelect">Choose the task you want to perform:</label>
+                <select id="jobTypeSelect" class="form-control">
+                    <option value="" disabled selected>-- Select Task Type --</option>
+                    <option value="inventory">Inventory Skid Entry</option>
+                    <option value="truckEntry">Truck Load Entry & Packing</option>
+                </select>
+            </div>
+            <div class="button-group" style="padding: 0 20px 20px;">
+                <button type="button" class="btn btn-danger" onclick="resetEntireProcess()" title="Clear all saved data and start over">
+                    <i class="fas fa-power-off"></i> Reset All Data
+                </button>
+                <button type="button" class="btn btn-primary" id="proceedJobSelectionBtn">
+                    <i class="fas fa-arrow-right"></i> Next: Select Project
+                </button>
+            </div>
+        </div>
+        <!-- Project Selection Page -->
+        <div id="projectSelectionPage" class="page">
+            <h2 class="section-title"><i class="fas fa-clipboard-list"></i> Select Project for <span id="projectSelectionTaskName">Task</span></h2>
+            <div class="project-selection-area">
+
+                <label for="mainProjectSelect">Project <span class="unit-label">(Required)</span></label>
+                <select id="mainProjectSelect" name="mainProject" class="form-control project-selector" style="width: 100%;">
+                    <option value="" disabled selected>Select a Project...</option>
+                    <% if (projects && projects.length > 0) { %>
+                        <% projects.forEach(project => { %>
+                            <option value="<%= project.code %>"><%= project.code %> – <%= project.name %></option>
+                        <% }); %>
+                    <% } %>
+                </select>
+                <div id="mainProjectSelect-error" class="invalid-feedback" style="display: none;">Project selection is required.</div>
+            </div>
+            <div class="button-group" style="padding: 0 20px 20px;">
+                <button type="button" class="btn btn-secondary" onclick="goBackToJobSelection()">
+                    <i class="fas fa-arrow-left"></i> Back to Task Selection
+                </button>
+                <button type="button" class="btn btn-primary" id="proceedProjectSelectionBtn">
+                    <i class="fas fa-arrow-right"></i> Proceed to <span id="projectSelectionProceedButtonText">Next Step</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Inventory Management Page -->
+        <div id="inventoryPage" class="page">
+            <h2 class="section-title"><i class="fas fa-boxes"></i> Inventory Skid Management for: <span id="inventoryPageProjectName">N/A</span></h2>
+
+            <!-- Project display instead of selection -->
+            <div class="fixed-info" style="margin: 0 25px 15px;">
+                <p><strong>Current Project:</strong> <span id="inventoryProjectDisplay">N/A</span></p>
+            </div>
+
+            <!-- Inventory Skid Table -->
+            <h3 class="section-title" style="font-size: 1.2rem; margin-top: 30px; border-bottom: none;">
+                <i class="fas fa-list-ul"></i> Skids in Inventory
+            </h3>
+            <div class="table-responsive">
+                <table id="inventorySkidTable">
+                    <thead>
+                    <tr>
+                        <th>Inv. ID</th><th>Width (ft)</th><th>Length (ft)</th><th>Weight (lbs)</th><th>Description</th><th class="no-print" style="width: 150px;">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="inventorySkidTableBody">
+                    <tr><td colspan="6" style="text-align: center;">Loading inventory skids...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Action Buttons for Inventory -->
+            <div class="d-flex justify-content-between align-items-center mb-3 mt-3 no-print">
+                <button class="btn btn-success" id="showAddInventorySkidBtn">
+                    <i class="fas fa-plus"></i> Add Skid to Inventory
+                </button>
+                <button id="resetInventorySkidsBtn" type="button" class="btn btn-danger" style="margin-left: 10px;" title="Delete all skids listed for the selected project's inventory">
+                    <i class="fas fa-trash-alt"></i> Clear All Skids for this Project
+                </button>
+            </div>
+
+            <!-- Add/Edit Skid Form Container -->
+            <div class="form-container no-print" id="addInventorySkidFormContainer" style="display: none;">
+                <!-- Content Populated by JS using template -->
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="button-group no-print" style="margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="goBackToJobSelection()">
+                    <i class="fas fa-arrow-left"></i> Back to Task Selection
+                </button>
+                <button class="btn btn-primary" onclick="saveInventoryAndReturnToTaskSelection()" title="Save inventory changes and return to Task Selection">
+                    <i class="fas fa-save"></i> Save Inventory & Return
+                </button>
+            </div>
+        </div>
+
+        <!-- Truck Information Page -->
+        <div id="truckInfoPage" class="page">
+            <h2 class="section-title"><i class="fas fa-truck"></i> Truck Information Entry for: <span id="truckInfoPageProjectName">N/A</span></h2>
+
+            <!-- Project display instead of selection -->
+            <div class="fixed-info" style="margin: 0 25px 15px;">
+                <p><strong>Current Project:</strong> <span id="truckProjectDisplay">N/A</span></p>
+            </div>
+
+            <!-- Intro Paragraph -->
+            <p class="intro-paragraph">Enter the truck details below to begin loading planning.</p>
+
+            <!-- Truck Details Form -->
+            <form id="truckInfoForm" novalidate>
+                <div class="form-group input-icon">
+                    <label for="truckId">Truck Identification <span class="unit-label">(Required)</span></label>
+                    <input type="text" id="truckId" name="truckId" class="form-control" placeholder="Enter truck ID or license plate" required>
+                    <i class="fas fa-tag"></i>
+                    <div class="invalid-feedback">Please enter the Truck Identification.</div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group input-icon">
+                            <label for="length">Length <span class="unit-label">(Feet, Required)</span></label>
+                            <input type="number" id="length" name="length" class="form-control" placeholder="e.g., 53" step="0.01" min="1" required>
+                            <i class="fas fa-ruler-horizontal"></i>
+                            <div class="invalid-feedback">Please enter a valid length (min 1).</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group input-icon">
+                            <label for="width">Width <span class="unit-label">(Feet, Required)</span></label>
+                            <input type="number" id="width" name="width" class="form-control" placeholder="e.g., 8.5" step="0.01" min="1" required>
+                            <i class="fas fa-ruler-combined"></i>
+                            <div class="invalid-feedback">Please enter a valid width (min 1).</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group input-icon">
+                            <label for="weight">Weight Capacity <span class="unit-label">(Pounds, Required)</span></label>
+                            <input type="number" id="weight" name="weight" class="form-control" placeholder="e.g., 45000" step="1" min="1000" required>
+                            <i class="fas fa-weight-hanging"></i>
+                            <div class="invalid-feedback">Please enter a valid weight capacity (min 1000).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary" onclick="goBackToJobSelection()"><i class="fas fa-arrow-left"></i> Back to Task Selection</button>
+                    <button type="button" class="btn btn-cancel" id="resetTruckInfoBtn"><i class="fas fa-undo"></i> Reset Truck Info Fields</button>
+                    <button type="submit" class="btn btn-next" id="nextBtn"><i class="fas fa-arrow-right"></i> Next: Add Skids</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Skid Details Page -->
+        <div id="skidDetailsPage" class="page">
+            <h2 class="section-title"><i class="fas fa-pallet"></i> Skids for Truck: <span id="truckIdentifier"></span> (<span id="skidDetailsProjectName">N/A</span>)</h2>
+            <p>Add skids directly, select from inventory for this project, or edit/remove skids for this load. <span id="truckSizeDisplay"></span></p>
+
+            <!-- Inventory Skid Selection -->
+            <div id="inventorySkidSelectionContainer" class="no-print" style="display: none;">
+                <h4><i class="fas fa-clipboard-check"></i> Select Inventory Skids to Add to Truck</h4>
+                <div class="table-responsive">
+                    <table id="inventorySkidSelectionTable">
+                        <thead>
+                        <tr>
+                            <th>Add</th><th>Inv. ID</th><th>W (ft)</th><th>L (ft)</th><th>Wt (lbs)</th><th>Description</th>
+                        </tr>
+                        </thead>
+                        <tbody id="inventorySkidSelectionBody">
+                        <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <button id="addSelectedInventorySkidsBtn" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus-circle"></i> Add Selected Inventory Skids to Truck Load
+                </button>
+            </div>
+
+            <!-- Add/Edit Skid Form Container -->
+            <div class="form-container no-print" id="addTruckSkidFormContainer" style="display: none;">
+                <!-- Content Populated by JS using template -->
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between align-items-center mb-3 mt-3 no-print">
+                <div>
+                    <button class="btn btn-success" id="addTruckSkidBtn">
+                        <i class="fas fa-plus"></i> Add Skid Directly to Truck
+                    </button>
+                    <button id="resetSkidsBtn" type="button" class="btn btn-secondary" style="margin-left: 10px;" title="Remove all skids currently listed for this truck load">
+                        <i class="fas fa-undo"></i> Reset Truck Skids List
+                    </button>
+                </div>
+                <button class="btn btn-print" onclick="printSkidPage()">
+                    <i class="fas fa-print"></i> Print Loading Plan
+                </button>
+            </div>
+
+            <!-- Truck Skid Table -->
+            <h3 class="section-title" style="font-size: 1.2rem; margin-top: 30px; border-bottom: none;">
+                <i class="fas fa-truck-loading"></i> Skids Assigned to this Truck Load
+            </h3>
+            <div class="table-responsive">
+                <table id="truckSkidTable">
+                    <thead>
+                    <tr>
+                        <th>Truck Skid #</th>
+                        <th>Width (ft)</th><th>Length (ft)</th><th>Weight (lbs)</th><th>Description</th><th class="no-print" style="width: 150px;">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="truckSkidTableBody">
+                    <tr><td colspan="6" style="text-align: center;">No skids added to this truck yet.</td></tr>
+                    </tbody>
+                    <tfoot>
+                    <tr style="font-weight: bold; background-color: var(--light-gray);">
+                        <td colspan="3">Truck Totals: <span id="totalTruckSkidCount">0</span> Skids</td>
+                        <td id="totalTruckSkidWeight">0.00 lbs</td><td colspan="2"></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Loading Instructions -->
+            <div class="loading-instructions no-print">
+                <div id="loadingInstructions">Enter truck info and add skids to see summary.</div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="button-group no-print" style="margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="goBackToJobSelection()">
+                    <i class="fas fa-arrow-left"></i> Back to Task Selection
+                </button>
+                <button class="btn btn-secondary" onclick="navigateTo('truckInfoPage')">
+                    <i class="fas fa-arrow-left"></i> Back to Truck Info
+                </button>
+                <button class="btn btn-next" onclick="proceedToPackingList()">
+                    <i class="fas fa-clipboard-list"></i> Next: Packing List
+                </button>
+            </div>
+        </div>
+
+        <!-- Packing List Page -->
+        <div id="packingListPage" class="page">
+            <h2 class="section-title no-print"><i class="fas fa-file-invoice"></i> Packing List & Delivery Confirmation</h2>
+            <div class="document-container">
+                <!-- Packing Header -->
+                <div class="packing-header">
+                    <div class="logo-container">
+                        <img src="/img/img.webp" alt="Desa Packing List Logo">
+                    </div>
+                    <div class="packing-title-area">
+                        <div class="packing-title">TRUCK LOAD <span id="packingListTruckId"></span></div>
+                        <div class="subtitle">DESA PANELS - PACKING LIST</div>
+                    </div>
+                </div>
+
+                <!-- Packing List Form -->
+                <form id="packing-list-form" novalidate action="/loader/save-packing-list" method="POST">
+                    <input type="hidden" id="load_id" name="load_id" value="">
+                    <!-- Section 1: General Info -->
+                    <div class="form-section">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="date">DELIVERY DATE: </label>
+                                <input type="date" id="date" name="date" class="form-control">
+                            </div>
+                            <div class="form-field">
+                                <label for="work-order">WORK ORDER NO.:</label>
+                                <input type="text" id="work-order" name="workOrder" class="form-control" placeholder="Enter Work Order Number">
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label for="project-name">PROJECT NAME:</label>
+                            <input type="text" id="project-name" name="projectName" class="form-control" placeholder="Project Name (Auto-filled)" readonly>
+                        </div>
+                        <div class="form-field">
+                            <label for="project-address">PROJECT ADDRESS:</label>
+                            <input type="text" id="project-address" name="projectAddress" class="form-control" placeholder="Enter Project Site Address">
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <!-- Section 2: Shipper/Contact -->
+                    <div class="form-section">
+                        <div class="row">
+                            <div class="col-md-6"><div class="fixed-info"><p><strong>SHIPPER / FROM:</strong><br>DESA Glass<br>285079 Bluegrass Drive<br>Rocky View, AB T1X 0P5 Canada</p></div></div>
+                            <div class="col-md-6"><div class="fixed-info"><p><strong>CONTACT:</strong><br>Phone: 403.230.5011<br>Toll Free: 1.877.508.3965</p></div></div>
+                        </div>
+                    </div>
+                    <!-- Section 3: Delivery Info -->
+                    <div class="form-section">
+                        <div class="section-title">DELIVERY INFORMATION</div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="requested-by">REQUESTED BY:</label>
+                                <input type="text" id="requested-by" name="requestedBy" class="form-control" placeholder="Name of person requesting">
+                            </div>
+                            <div class="form-field">
+                                <label for="carrier">CARRIER:</label>
+                                <input type="text" id="carrier" name="carrier" class="form-control" placeholder="Shipping Company Name">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Section 4: Consignee -->
+                    <div class="form-section">
+                        <div class="section-title">CONSIGNEE DETAILS</div>
+                        <div class="form-field">
+                            <label for="consignee">CONSIGNEE / TO:</label>
+                            <input type="text" id="consignee" name="consignee" class="form-control" placeholder="Receiving Company or Person">
+                        </div>
+                        <div class="form-field">
+                            <label for="consignee-address">DELIVERY ADDRESS:</label>
+                            <input type="text" id="consignee-address" name="consigneeAddress" class="form-control" placeholder="Full Delivery Address">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="site-contact">SITE CONTACT:</label>
+                                <input type="text" id="site-contact" name="siteContact" class="form-control" placeholder="Name of person on site">
+                            </div>
+                            <div class="form-field">
+                                <label for="site-phone">SITE PHONE:</label>
+                                <input type="tel" id="site-phone" name="sitePhone" class="form-control" pattern="[0-9]{3}-?[0-9]{3}-?[0-9]{4}" placeholder="e.g., 555-123-4567">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Section 5: Confirmation -->
+                    <div class="form-section">
+                        <div class="section-title">SHIPMENT CONFIRMATION</div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="delivery-date">ACTUAL DELIVERY DATE:</label>
+                                <input type="date" id="delivery-date" name="deliveryDate" class="form-control">
+                            </div>
+                            <div class="form-field">
+                                <label for="packaged-by">PACKAGED BY:</label>
+                                <input type="text" id="packaged-by" name="packagedBy" class="form-control" placeholder="Initials or Name">
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label for="checked-by">LOADED BY (LOADER):</label>
+                            <input type="text" id="checked-by" name="checkedBy" class="form-control" placeholder="Initials or Name" value="<%= user ? user.username : '' %>">
+                        </div>
+                    </div>
+                    <!-- Section 6: Signature -->
+                    <div class="signature-area">
+                        <div class="form-field">
+                            <label for="received-by" class="required">DRIVER BY (PRINT NAME):</label>
+                            <input type="text" id="received-by" name="receivedBy" class="form-control" placeholder="Print Name of Receiver" required>
+                            <div class="invalid-feedback">Driver's printed name is required.</div>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <label class="required">DRIVER SIGNATURE:</label>
+                            <div class="signature-container">
+                                <canvas id="signature-pad"></canvas>
+                            </div>
+                            <button type="button" class="signature-clear no-print"><i class="fas fa-eraser"></i> Clear Signature</button>
+                            <div class="signature-required-error" id="signature-error">Signature is required for completion.</div>
+                        </div>
+                    </div>
+
+                    <!-- Save Status -->
+                    <div class="save-status no-print" id="save-status"></div>
+
+                    <!-- Hidden Print Section -->
+                    <div id="printTruckInfo" style="display: none;">
+                        <h3 class="print-section-title">Load Details</h3>
+                        <h4 class="print-section-subtitle">Truck Information</h4>
+                        <p><strong>Truck ID:</strong> <span id="printTruckId"></span></p>
+                        <p class="project-info"><strong>Project:</strong> <span id="printProject">N/A</span></p>
+                        <p><strong>Dimensions:</strong> <span id="printTruckDimensions"></span></p>
+                        <p><strong>Weight Capacity:</strong> <span id="printTruckWeight"></span> lbs</p>
+                        <h4 class="print-section-subtitle">Skid Details (<span id="printTotalSkids"></span> Total)</h4>
+                        <table class="print-skids-table">
+                            <thead><tr><th>Skid #</th><th>Width (ft)</th><th>Length (ft)</th><th>Weight (lbs)</th><th>Description</th></tr></thead>
+                            <tbody id="printSkidsBody"></tbody>
+                            <tfoot><tr style="font-weight: bold;"><td colspan="3" style="text-align: right;">Total Weight:</td><td id="printTotalWeight"></td><td></td></tr></tfoot>
+                        </table>
+                        <div id="printLoadingSummary"></div>
+                    </div>
+                </form> <!-- End Packing List Form -->
+            </div> <!-- End document-container -->
+
+            <!-- Packing List Action Buttons -->
+            <div class="packing-action-buttons no-print">
+                <button type="button" class="btn btn-secondary" onclick="goBackToSkidDetails()"><i class="fas fa-arrow-left"></i> Back to Skid Details</button>
+                <button id="resetPackingListBtn" type="button" class="btn btn-cancel">
+                    <i class="fas fa-undo"></i> Reset Form
+                </button>
+                <button type="button" class="btn btn-print" id="printPackingListBtn"><i class="fas fa-print"></i> Print Packing List</button>
+                <button type="button" class="btn btn-primary" id="saveProgressBtn"><i class="fas fa-save"></i> Save Progress</button>
+                <button type="button" class="btn btn-success" onclick="completePackingList()"><i class="fas fa-check-circle"></i> Mark as Complete & Save</button>
+            </div>
+        </div> <!-- End packingListPage -->
+
+    </div> <!-- End content -->
+</div> <!-- End container -->
+
+<!-- === Reusable Skid Form HTML Template === -->
+<template id="skidFormTemplate">
+    <!-- Title will be added dynamically by JS -->
+    <form class="add-skid-form" novalidate> <!-- Use class for easier selection -->
+        <input type="hidden" class="edit-skid-index">
+        <input type="hidden" class="skid-context"> <!-- 'inventory' or 'truck' -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="skidWidth" class="form-label required">Width <span class="unit-label">(ft)</span></label>
+                    <div class="input-group">
+                        <input type="number" class="form-control skid-width" min="0.1" max="40" step="0.01" required placeholder="e.g., 4">
+                        <span class="input-group-text">ft</span>
+                    </div>
+                    <div class="invalid-feedback">Please enter a valid width (0.1-40).</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="skidLength" class="form-label required">Length <span class="unit-label">(ft)</span></label>
+                    <div class="input-group">
+                        <input type="number" class="form-control skid-length" min="0.1" max="40" step="0.01" required placeholder="e.g., 4">
+                        <span class="input-group-text">ft</span>
+                    </div>
+                    <div class="invalid-feedback">Please enter a valid length (0.1-40).</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="skidWeight" class="form-label required">Weight <span class="unit-label">(lbs)</span></label>
+                    <div class="input-group">
+                        <input type="number" class="form-control skid-weight" min="1" required placeholder="e.g., 500">
+                        <span class="input-group-text">lbs</span>
+                    </div>
+                    <div class="invalid-feedback">Please enter a valid weight (min 1).</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="skidDescription" class="form-label">Description</label>
+                    <textarea class="form-control skid-description" placeholder="Type description here..." rows="3"></textarea>
+                    <!-- No validation needed -->
+                </div>
+            </div>
+        </div>
+        <div class="button-group">
+            <button type="button" class="btn btn-secondary cancel-skid-btn" onclick="hideAddEditSkidForm()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-primary save-skid-btn">
+                <!-- Text set by JS -->
+            </button>
+        </div>
+    </form>
+</template>
+<!-- === END Template === -->
+
+<!-- Load JS Libraries (jQuery must come before Select2) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Main Application Script -->
+<script>
+    // --- State Variables ---
+    let appState = {
+        currentPage: 'jobSelectionPage',
+        inventory: { selectedProject: null, skids: {}, nextSkidId: {} },
+        truckLoad: { truckInfo: { id: '', project: null, length: null, width: null, weight: null }, skids: [], nextSkidId: 1, packingList: {}, signatureData: null },
+        _selectedJobType: null
+    };
+    let signaturePad;
+    let saveTimeout;
+    const APP_STATE_KEY = 'desaWorkflowData_v4'; // Incremented version for state structure changes
+
+    // --- State Variables ---
+
+
+    // --- DOM Elements ---
+    const jobSelectionPage = document.getElementById('jobSelectionPage');
+    const projectSelectionPage = document.getElementById('projectSelectionPage');
+    const inventoryPage = document.getElementById('inventoryPage');
+    const truckInfoPage = document.getElementById('truckInfoPage');
+    const skidDetailsPage = document.getElementById('skidDetailsPage');
+    const packingListPage = document.getElementById('packingListPage');
+    const jobTypeSelect = document.getElementById('jobTypeSelect');
+    const proceedJobSelectionBtn = document.getElementById('proceedJobSelectionBtn');
+    const projectSelectionTaskNameSpan = document.getElementById('projectSelectionTaskName');
+    const mainProjectSelect = document.getElementById('mainProjectSelect');
+    const mainProjectSelectErrorDiv = document.getElementById('mainProjectSelect-error');
+    const proceedProjectSelectionBtn = document.getElementById('proceedProjectSelectionBtn');
+    const projectSelectionProceedButtonTextSpan = document.getElementById('projectSelectionProceedButtonText');
+    const inventoryPageProjectNameSpan = document.getElementById('inventoryPageProjectName');
+    const inventoryProjectDisplaySpan = document.getElementById('inventoryProjectDisplay');
+    const inventorySkidTableBody = document.getElementById('inventorySkidTableBody');
+    const showAddInventorySkidBtn = document.getElementById('showAddInventorySkidBtn');
+    const resetInventorySkidsBtn = document.getElementById('resetInventorySkidsBtn');
+    const addInventorySkidFormContainer = document.getElementById('addInventorySkidFormContainer');
+    const truckInfoPageProjectNameSpan = document.getElementById('truckInfoPageProjectName');
+    const truckProjectDisplaySpan = document.getElementById('truckProjectDisplay');
+    const truckInfoForm = document.getElementById('truckInfoForm');
+    const truckIdentifierSpan = document.getElementById('truckIdentifier');
+    const skidDetailsProjectNameSpan = document.getElementById('skidDetailsProjectName');
+    const truckSizeDisplaySpan = document.getElementById('truckSizeDisplay');
+    const truckSkidTableBody = document.getElementById('truckSkidTableBody');
+    const totalTruckSkidCountSpan = document.getElementById('totalTruckSkidCount');
+    const totalTruckSkidWeightSpan = document.getElementById('totalTruckSkidWeight');
+    const loadingInstructionsDiv = document.getElementById('loadingInstructions');
+    const addTruckSkidFormContainer = document.getElementById('addTruckSkidFormContainer');
+    const inventorySkidSelectionContainer = document.getElementById('inventorySkidSelectionContainer');
+    const inventorySkidSelectionBody = document.getElementById('inventorySkidSelectionBody');
+    const addSelectedInventorySkidsBtn = document.getElementById('addSelectedInventorySkidsBtn');
+    const packingListForm = document.getElementById('packing-list-form');
+    const packingListTruckIdSpan = document.getElementById('packingListTruckId');
+    const signatureCanvas = document.getElementById('signature-pad');
+    const signatureErrorDiv = document.getElementById('signature-error');
+    const saveStatusDiv = document.getElementById('save-status');
+    const projectNameInput = document.getElementById('project-name');
+    const printTruckId = document.getElementById('printTruckId');
+    const printProject = document.getElementById('printProject');
+    const printTruckDimensions = document.getElementById('printTruckDimensions');
+    const printTruckWeight = document.getElementById('printTruckWeight');
+    const printTotalSkids = document.getElementById('printTotalSkids');
+    const printSkidsBody = document.getElementById('printSkidsBody');
+    const printTotalWeight = document.getElementById('printTotalWeight');
+    const printLoadingSummaryDiv = document.getElementById('printLoadingSummary');
+    const skidFormTemplate = document.getElementById('skidFormTemplate');
+
+    // --- Initialize ---
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM Loaded. Initializing application...");
+        loadState();
+        initializeSignaturePad();
+        setupEventListeners(); // Setup listeners AFTER elements are defined
+        initializeSelect2();
+        renderCurrentPage();
+        if (appState.inventory.selectedProject || appState.truckLoad.truckInfo.project) {
+            updateDynamicContentForState();
+        }
+        console.log("Application Initialized. Current State:", JSON.parse(JSON.stringify(appState)));
+    });
+
+    function populateProjectSelectors() {
+        mainProjectSelect.innerHTML = '<option value="" disabled selected>Select a Project...</option>';
+        PROJECT_OPTIONS.forEach(proj => {
+            const option = document.createElement('option');
+            option.value = proj.value;
+            option.textContent = proj.text;
+            mainProjectSelect.appendChild(option);
+        });
+        console.log("Main project selector populated.");
+    }
+
+    function initializeSelect2() {
+        try {
+            if (typeof $ !== 'undefined' && typeof $.fn.select2 === 'function') {
+                $(mainProjectSelect).select2({
+                    placeholder: "Select a Project...",
+                    allowClear: false, width: '100%', theme: "bootstrap-5",
+                    dropdownParent: $('#projectSelectionPage') // Ensure it's attached correctly
+                }).on('select2:open', () => {
+                    setTimeout(() => { document.querySelector('.select2-search__field')?.focus(); }, 10);
+                }).on('change', () => {
+                    clearProjectValidationError(mainProjectSelect, mainProjectSelectErrorDiv);
+                });
+                console.log(`Select2 initialized for #mainProjectSelect`);
+            } else {
+                console.warn("jQuery or Select2 library not loaded.");
+                if(mainProjectSelect) { mainProjectSelect.addEventListener('change', () => clearProjectValidationError(mainProjectSelect, mainProjectSelectErrorDiv)); }
+            }
+        } catch (error) {
+            console.error("Error initializing Select2:", error);
+            if(mainProjectSelect) { mainProjectSelect.addEventListener('change', () => clearProjectValidationError(mainProjectSelect, mainProjectSelectErrorDiv)); }
+        }
+    }
+
+    // --- Signature Pad ---
+    function initializeSignaturePad(){
+        if (!signatureCanvas) { console.error("Signature canvas element not found!"); return; }
+        try {
+            resizeCanvas();
+            signaturePad = new SignaturePad(signatureCanvas, { backgroundColor: 'rgb(255, 255, 255)', penColor: 'rgb(0, 0, 0)' });
+            if (appState.truckLoad.signatureData) {
+                // Delay loading slightly to ensure canvas is fully ready
+                setTimeout(() => { try { signaturePad.fromDataURL(appState.truckLoad.signatureData); } catch (loadError) { console.error("Error loading signature data:", loadError); appState.truckLoad.signatureData = null; } }, 100);
+            }
+            window.addEventListener('resize', debounce(resizeCanvas, 250));
+            // Prevent scrolling on touch devices when drawing
+            ['touchstart', 'touchmove', 'touchend'].forEach(event => { signatureCanvas.addEventListener(event, (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false }); });
+            signaturePad.addEventListener("endStroke", debounce(() => {
+                if (!signaturePad.isEmpty()) {
+                    signatureErrorDiv.style.display = 'none';
+                    signatureCanvas.parentElement.style.border = '2px dashed var(--medium-gray)';
+                    appState.truckLoad.signatureData = signaturePad.toDataURL();
+                    saveState(); // Auto-save on signature change
+                } else {
+                    appState.truckLoad.signatureData = null;
+                    saveState(); // Auto-save if cleared
+                }
+            }, 250));
+            console.log('Signature pad initialized.');
+        } catch(error) { console.error("Error initializing SignaturePad:", error); }
+    }
+    function resizeCanvas(){
+        if (!signatureCanvas) return;
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        let data;
+        if (signaturePad && !signaturePad.isEmpty()) { data = signaturePad.toDataURL(); } // Save current signature
+        signatureCanvas.style.width = '100%'; signatureCanvas.style.height = '200px';
+        signatureCanvas.width = signatureCanvas.offsetWidth * ratio; signatureCanvas.height = signatureCanvas.offsetHeight * ratio;
+        const ctx = signatureCanvas.getContext('2d'); ctx.scale(ratio, ratio);
+        // Restore signature if it existed
+        if (signaturePad) { signaturePad.clear(); if (data && data !== 'data:,') { signaturePad.fromDataURL(data); } }
+    }
+    function debounce(func, wait){ let timeout; return function executedFunction(...args) { const later = () => { clearTimeout(timeout); func(...args); }; clearTimeout(timeout); timeout = setTimeout(later, wait); }; }
+
+    // --- Event Listeners ---
+    function setupEventListeners() {
+        // Job Selection Page
+        proceedJobSelectionBtn.addEventListener('click', handleJobSelectionProceed);
+
+        // Project Selection Page
+        proceedProjectSelectionBtn.addEventListener('click', handleProjectSelectionProceed);
+
+        // Inventory Page Buttons
+        showAddInventorySkidBtn.addEventListener('click', () => showAddSkidForm('inventory'));
+        resetInventorySkidsBtn.addEventListener('click', handleResetInventoryProjectSkids);
+        // The "Save Inventory & Return" button's onclick is now directly in the HTML
+
+        // Truck Skid Page Button
+        const addTruckSkidButton = document.getElementById('addTruckSkidBtn');
+        if (addTruckSkidButton) {
+            addTruckSkidButton.addEventListener('click', () => showAddSkidForm('truck'));
+        } else {
+            console.warn("Button #addTruckSkidBtn not found during initial setup.");
+        }
+
+        // Truck Info Form Submission & Reset
+        truckInfoForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let isFormValid = validateTruckInfoForm();
+            if (isFormValid) {
+                proceedToSkidDetails();
+            } else {
+                console.log(`Truck Info Validation failed.`);
+                const firstInvalid = truckInfoForm.querySelector('.is-invalid, :invalid'); // Broader selector
+                if(firstInvalid) firstInvalid.focus();
+            }
+        });
+        document.getElementById('resetTruckInfoBtn').addEventListener('click', handleResetTruckInfoClick);
+        // Clear truck form errors on input
+        truckInfoForm.querySelectorAll('input.form-control').forEach(input => {
+            input.addEventListener('input', handleFormInputChange.bind(null, input));
+        });
+
+        // Add Selected Inventory Skids Button
+        addSelectedInventorySkidsBtn.addEventListener('click', addSelectedInventorySkidsToTruck);
+
+        // Packing List
+        packingListForm.addEventListener('input', debounce(handlePackingListInputChange, 500));
+        document.querySelector('.signature-clear').addEventListener('click', clearSignature);
+        document.getElementById('saveProgressBtn').addEventListener('click', handleManualSave);
+        document.getElementById('printPackingListBtn').addEventListener('click', handlePrintPackingList);
+
+        // Reset buttons listeners (ensure they are available)
+        const resetSkidsBtn = document.getElementById('resetSkidsBtn');
+        if(resetSkidsBtn) resetSkidsBtn.addEventListener('click', handleResetTruckSkids);
+        const resetPackingListBtn = document.getElementById('resetPackingListBtn');
+        if(resetPackingListBtn) resetPackingListBtn.addEventListener('click', handleResetPackingList);
+    }
+
+    // --- Event Handlers ---
+    function handleJobSelectionProceed() {
+        const selectedJob = jobTypeSelect.value;
+        if (!selectedJob) { alert("Please select a task type."); return; }
+        appState._selectedJobType = selectedJob;
+        console.log("Task selected:", selectedJob);
+        const taskName = selectedJob === 'inventory' ? 'Inventory Entry' : 'Truck Loading';
+        projectSelectionTaskNameSpan.textContent = taskName;
+        projectSelectionProceedButtonTextSpan.textContent = selectedJob === 'inventory' ? 'Inventory Skids' : 'Truck Details';
+        // Reset project selection when going to this page
+        $(mainProjectSelect).val('').trigger('change.select2');
+        clearProjectValidationError(mainProjectSelect, mainProjectSelectErrorDiv);
+        navigateTo('projectSelectionPage');
+    }
+    function handleProjectSelectionProceed() {
+        const selectedProjectId = mainProjectSelect.value;
+        const selectedJobType = appState._selectedJobType;
+        if (!validateProjectSelection(mainProjectSelect, mainProjectSelectErrorDiv)) { return; }
+        if (!selectedJobType) { console.error("Error: Job type (_selectedJobType) is missing."); alert("An error occurred. Please go back and select the task type again."); goBackToJobSelection(); return; }
+        console.log(`Project ${selectedProjectId} selected for task ${selectedJobType}`);
+        let nextPageId = '';
+        if (selectedJobType === 'inventory') {
+            appState.inventory.selectedProject = selectedProjectId;
+            if (!appState.inventory.skids[selectedProjectId]) { appState.inventory.skids[selectedProjectId] = []; }
+            if (!appState.inventory.nextSkidId[selectedProjectId]) { appState.inventory.nextSkidId[selectedProjectId] = 1; }
+            nextPageId = 'inventoryPage';
+        } else if (selectedJobType === 'truckEntry') {
+            // Only set truck project if it's different or wasn't set
+            if (appState.truckLoad.truckInfo.project !== selectedProjectId) {
+                // If changing project for an existing truck load, warn or clear skids?
+                if (appState.truckLoad.skids.length > 0 && !confirm(`You have changed the project for this truck load. Do you want to keep the ${appState.truckLoad.skids.length} skids currently assigned, or clear them? \n\nOK = Keep Skids, Cancel = Clear Skids`)) {
+                    console.log("User opted to clear truck skids due to project change.");
+                    appState.truckLoad.skids = [];
+                    // Reset inventory selection availability if we were on that page
+                    if(appState.currentPage === 'skidDetailsPage') {
+                        displayInventorySkidsForSelection(selectedProjectId); // Display for the *new* project
+                    }
+                } else {
+                    console.log("User opted to keep existing truck skids despite project change.");
+                    // Skids from the OLD project remain, inventory selection will show NEW project items
+                }
+                appState.truckLoad.truckInfo.project = selectedProjectId; // Update project in state
+            }
+            nextPageId = 'truckInfoPage';
+        }
+        appState._selectedJobType = null; // Clear the temporary selection
+        if (nextPageId) { navigateTo(nextPageId); } else { console.error("Could not determine next page ID."); }
+    }
+    function handleResetTruckInfoClick() {
+        if (confirm('Reset truck identification, length, width, and weight fields? This will not change the selected project.')) {
+            document.getElementById('truckId').value = ''; document.getElementById('length').value = ''; document.getElementById('width').value = ''; document.getElementById('weight').value = '';
+            clearTruckInfoFormErrors();
+            appState.truckLoad.truckInfo.id = ''; appState.truckLoad.truckInfo.length = null; appState.truckLoad.truckInfo.width = null; appState.truckLoad.truckInfo.weight = null;
+            saveState();
+            console.log("Truck info form fields reset (Project unchanged).");
+        }
+    }
+    function handlePackingListInputChange(event) {
+        // Avoid auto-saving for the read-only project name
+        if (event.target.id !== 'project-name') { collectPackingListData(); saveState(); }
+    }
+    function handleManualSave() { collectPackingListData(); updatePackingListProjectName(); saveState(true); }
+    function handlePrintPackingList() { collectPackingListData(); updatePackingListProjectName(); updatePrintSection(); window.print(); }
+    function handleFormInputChange(inputElement) {
+        // Also validate on input for truck form
+        if (inputElement.form === truckInfoForm && !inputElement.checkValidity()) {
+            inputElement.classList.add('is-invalid');
+            const feedback = inputElement.closest('.form-group,.col-md-4,.col-md-6')?.querySelector('.invalid-feedback');
+            if (feedback) feedback.style.display = 'block';
+        } else if (inputElement.checkValidity()) {
+            inputElement.classList.remove('is-invalid');
+            const feedback = inputElement.closest('.form-group,.col-md-4,.col-md-6,.form-field')?.querySelector('.invalid-feedback');
+            if (feedback) feedback.style.display = 'none';
+        }
+    }
+
+
+    // --- Validation Helpers ---
+    function validateProjectSelection(selectElement, errorDiv) { const value = (typeof $ !== 'undefined' && $.fn.select2 && $(selectElement).hasClass('select2-hidden-accessible')) ? $(selectElement).val() : selectElement.value; if (!value) { showProjectValidationError(selectElement, errorDiv); if (typeof $ !== 'undefined' && $.fn.select2 && $(selectElement).hasClass('select2-hidden-accessible')) { $(selectElement).select2('open'); } else { selectElement.focus(); } return false; } clearProjectValidationError(selectElement, errorDiv); return true; }
+    function showProjectValidationError(selectElement, errorDiv) { if (typeof $ !== 'undefined' && $.fn.select2 && $(selectElement).hasClass('select2-hidden-accessible')) { $(selectElement).next('.select2-container').find('.select2-selection').addClass('is-invalid'); } else { selectElement.classList.add('is-invalid'); } if (errorDiv) errorDiv.style.display = 'block'; }
+    function clearProjectValidationError(selectElement, errorDiv) { if (typeof $ !== 'undefined' && $.fn.select2 && $(selectElement).hasClass('select2-hidden-accessible')) { $(selectElement).next('.select2-container').find('.select2-selection').removeClass('is-invalid'); } else { selectElement.classList.remove('is-invalid'); } if (errorDiv) errorDiv.style.display = 'none'; }
+    function validateTruckInfoForm() { clearTruckInfoFormErrors(); const isValid = truckInfoForm.checkValidity(); if (!isValid) { let firstInvalidElement = null; Array.from(truckInfoForm.elements).forEach(el => { if (el.willValidate && !el.checkValidity()) { el.classList.add('is-invalid'); const feedback = el.closest('.form-group,.col-md-4,.col-md-6')?.querySelector('.invalid-feedback'); if (feedback) feedback.style.display = 'block'; if (!firstInvalidElement) firstInvalidElement = el; } }); /* Focus handled in submit listener */ } return isValid; }
+    function clearTruckInfoFormErrors() { Array.from(truckInfoForm.elements).forEach(el => { el.classList.remove('is-invalid'); const feedback = el.closest('.form-group,.col-md-4,.col-md-6')?.querySelector('.invalid-feedback'); if (feedback) feedback.style.display = 'none'; }); }
+    function validatePackingListForm() { let isValid = true; let firstInvalidField = null; packingListForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid')); packingListForm.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none'); // Hide text feedback
+        signatureErrorDiv.style.display = 'none'; if(signatureCanvas) signatureCanvas.parentElement.style.border = '2px dashed var(--medium-gray)';
+        const receivedByInput = document.getElementById('received-by');
+        if (!receivedByInput.checkValidity()) {
+            isValid = false; receivedByInput.classList.add('is-invalid');
+            const feedback = receivedByInput.closest('.form-field')?.querySelector('.invalid-feedback');
+            if (feedback) feedback.style.display = 'block';
+            if (!firstInvalidField) firstInvalidField = receivedByInput;
+        }
+        if (!signaturePad || signaturePad.isEmpty()) {
+            isValid = false; signatureErrorDiv.style.display = 'block'; if(signatureCanvas) signatureCanvas.parentElement.style.border = '2px dashed var(--danger-red)';
+            if (!firstInvalidField) firstInvalidField = signatureCanvas.parentElement;
+        }
+        if (!isValid) {
+            alert('Please fill in all required fields (marked with *). Driver Name and Signature are mandatory.');
+            if (firstInvalidField) { setTimeout(() => { if (firstInvalidField.focus) firstInvalidField.focus(); firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); }
+        } return isValid;
+    }
+    function validateSkidForm(formElement) {
+        formElement.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        formElement.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+        const isValid = formElement.checkValidity();
+        if (!isValid) {
+            let firstInvalidElement = null;
+            Array.from(formElement.elements).forEach(el => {
+                if (el.willValidate && !el.checkValidity()) {
+                    el.classList.add('is-invalid');
+                    const feedback = el.closest('.form-group')?.querySelector('.invalid-feedback');
+                    if (feedback) feedback.style.display = 'block';
+                    if (!firstInvalidElement) firstInvalidElement = el;
+                }
+            });
+            if(firstInvalidElement) firstInvalidElement.focus();
+        }
+        return isValid;
+    }
+
+
+    // --- State Management ---
+    function saveState(showStatus = false) {
+        if (signaturePad && !signaturePad.isEmpty()) { appState.truckLoad.signatureData = signaturePad.toDataURL(); } else { appState.truckLoad.signatureData = null; }
+        updatePackingListProjectName(); // Ensure project name is sync'd before save
+        try {
+            localStorage.setItem(APP_STATE_KEY, JSON.stringify(appState));
+            if (showStatus) showSaveStatus("Progress saved successfully!");
+        } catch (e) {
+            console.error("Error saving state:", e); showSaveStatus("Error saving progress.", true);
+            if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') { alert('Error: Could not save data. Browser local storage might be full.'); }
+        }
+    }
+    function loadState() {
+        const savedState = localStorage.getItem(APP_STATE_KEY);
+        if (savedState) {
+            try {
+                const loadedData = JSON.parse(savedState);
+                // Reset state partially before loading to avoid merging issues with complex objects
+                appState = {
+                    currentPage: loadedData.currentPage || 'jobSelectionPage',
+                    _selectedJobType: null, // Always reset this transient state
+                    inventory: { selectedProject: null, skids: {}, nextSkidId: {}, ...(loadedData.inventory || {}) },
+                    truckLoad: { truckInfo: { id: '', project: null, length: null, width: null, weight: null }, skids: [], nextSkidId: 1, packingList: {}, signatureData: null, ...(loadedData.truckLoad || {}) }
+                };
+                // Ensure nested objects exist
+                appState.inventory.skids = appState.inventory.skids || {};
+                appState.inventory.nextSkidId = appState.inventory.nextSkidId || {};
+                appState.truckLoad.truckInfo = appState.truckLoad.truckInfo || { id: '', project: null, length: null, width: null, weight: null };
+                appState.truckLoad.skids = appState.truckLoad.skids || [];
+                appState.truckLoad.packingList = appState.truckLoad.packingList || {};
+                // Ensure nextSkidId is at least 1 and >= current skid count + 1 for truck
+                if (!appState.truckLoad.nextSkidId || appState.truckLoad.nextSkidId <= appState.truckLoad.skids.length) {
+                    appState.truckLoad.nextSkidId = appState.truckLoad.skids.length + 1;
+                }
+                // Ensure inventory nextSkidId is consistent per project
+                for (const projId in appState.inventory.skids) {
+                    const count = appState.inventory.skids[projId].length;
+                    if (!appState.inventory.nextSkidId[projId] || appState.inventory.nextSkidId[projId] <= count) {
+                        appState.inventory.nextSkidId[projId] = count + 1;
+                    }
+                }
+
+                console.log("State loaded successfully.");
+            } catch (e) {
+                console.error("Error parsing saved state:", e);
+                localStorage.removeItem(APP_STATE_KEY); // Remove corrupted state
+                // Reset to default state
+                appState = { currentPage: 'jobSelectionPage', _selectedJobType: null, inventory: { selectedProject: null, skids: {}, nextSkidId: {} }, truckLoad: { truckInfo: { id: '', project: null, length: null, width: null, weight: null }, skids: [], nextSkidId: 1, packingList: {}, signatureData: null } };
+                alert("Could not load previous session data due to an error. Starting fresh.");
+            }
+        } else {
+            console.log("No saved state found. Starting fresh.");
+            // Ensure default structure is set even if no state is loaded
+            appState = { currentPage: 'jobSelectionPage', _selectedJobType: null, inventory: { selectedProject: null, skids: {}, nextSkidId: {} }, truckLoad: { truckInfo: { id: '', project: null, length: null, width: null, weight: null }, skids: [], nextSkidId: 1, packingList: {}, signatureData: null } };
+        }
+        // Populate initial form fields from loaded state
+        document.getElementById('truckId').value = appState.truckLoad.truckInfo.id || '';
+        document.getElementById('length').value = appState.truckLoad.truckInfo.length || '';
+        document.getElementById('width').value = appState.truckLoad.truckInfo.width || '';
+        document.getElementById('weight').value = appState.truckLoad.truckInfo.weight || '';
+        // Don't automatically populate project select, let navigation handle it
+    }
+    function showSaveStatus(message, isError = false){ if (!saveStatusDiv) return; saveStatusDiv.textContent = message; saveStatusDiv.style.color = isError ? 'var(--danger-red)' : 'var(--success-green)'; saveStatusDiv.classList.add('visible'); clearTimeout(saveTimeout); saveTimeout = setTimeout(() => { saveStatusDiv.classList.remove('visible'); saveStatusDiv.textContent = ''; }, 3000); }
+
+    // --- Navigation & Page Updates ---
+    function renderCurrentPage() {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        const currentPageElement = document.getElementById(appState.currentPage);
+        if (currentPageElement) {
+            currentPageElement.classList.add('active');
+            hideAddEditSkidForm(); // Hide forms when switching pages
+            updateDynamicContentForState(); // Update content based on the new page
+        } else {
+            console.warn(`Page element ID "${appState.currentPage}" not found. Defaulting to jobSelectionPage.`);
+            jobSelectionPage.classList.add('active');
+            appState.currentPage = 'jobSelectionPage';
+            updateDynamicContentForState();
+        }
+    }
+    function updateDynamicContentForState() {
+        const currentPage = appState.currentPage;
+        const inventoryProject = PROJECT_OPTIONS.find(p => p.value === appState.inventory.selectedProject);
+        const truckProject = PROJECT_OPTIONS.find(p => p.value === appState.truckLoad.truckInfo.project);
+
+        // Update common elements or specific page elements
+        if (currentPage === 'inventoryPage') {
+            inventoryPageProjectNameSpan.textContent = inventoryProject ? inventoryProject.text : 'N/A';
+            inventoryProjectDisplaySpan.textContent = inventoryProject ? inventoryProject.text : 'N/A';
+            renderInventorySkidsTable(appState.inventory.selectedProject);
+            showAddInventorySkidBtn.disabled = !appState.inventory.selectedProject;
+            resetInventorySkidsBtn.disabled = !appState.inventory.selectedProject || (appState.inventory.skids[appState.inventory.selectedProject]?.length || 0) === 0; // Disable if no skids
+        } else if (currentPage === 'truckInfoPage') {
+            truckInfoPageProjectNameSpan.textContent = truckProject ? truckProject.text : 'N/A';
+            truckProjectDisplaySpan.textContent = truckProject ? truckProject.text : 'N/A';
+            // Ensure truck form reflects current state (in case of back navigation)
+            document.getElementById('truckId').value = appState.truckLoad.truckInfo.id || '';
+            document.getElementById('length').value = appState.truckLoad.truckInfo.length || '';
+            document.getElementById('width').value = appState.truckLoad.truckInfo.width || '';
+            document.getElementById('weight').value = appState.truckLoad.truckInfo.weight || '';
+        } else if (currentPage === 'skidDetailsPage') {
+            updateSkidPageHeader();
+            displayInventorySkidsForSelection(appState.truckLoad.truckInfo.project);
+            updateTruckSkidTable();
+            updateLoadingInstructions();
+            // Ensure the add truck skid button exists and listener is attached (if navigated here directly)
+            const addTruckSkidButton = document.getElementById('addTruckSkidBtn');
+            if (addTruckSkidButton && !addTruckSkidButton.onclick) { // Basic check if listener might be missing
+                addTruckSkidButton.addEventListener('click', () => showAddSkidForm('truck'));
+            }
+            // Disable reset button if no skids
+            const resetSkidsBtn = document.getElementById('resetSkidsBtn');
+            if(resetSkidsBtn) resetSkidsBtn.disabled = (appState.truckLoad.skids?.length || 0) === 0;
+
+        } else if (currentPage === 'packingListPage') {
+            populatePackingListForm(); // Populates from appState.truckLoad.packingList
+            updatePackingListPageHeader();
+            updatePrintSection(); // Prepare print data
+            resizeCanvas(); // Ensure signature pad is sized correctly
+            // Re-load signature if needed (might be redundant if loadState worked, but safe)
+            if (signaturePad && appState.truckLoad.signatureData) {
+                try { signaturePad.fromDataURL(appState.truckLoad.signatureData); } catch(e) {console.error("Error reloading signature on page render",e)}
+            } else if (signaturePad) {
+                signaturePad.clear();
+            }
+            // Disable reset if form likely empty
+            const resetPackingListBtn = document.getElementById('resetPackingListBtn');
+            if(resetPackingListBtn) resetPackingListBtn.disabled = Object.keys(appState.truckLoad.packingList || {}).length === 0 && (!signaturePad || signaturePad.isEmpty());
+        } else if (currentPage === 'projectSelectionPage') {
+            // Pre-select project based on the flow (task) that led here
+            const currentProject = appState._selectedJobType === 'inventory' ? appState.inventory.selectedProject : appState.truckLoad.truckInfo.project;
+            $(mainProjectSelect).val(currentProject || '').trigger('change.select2');
+        }
+        // Ensure Select2 dropdown is correctly associated if page renders directly
+        if (currentPage === 'projectSelectionPage' && typeof $ !== 'undefined' && $.fn.select2) {
+            // Re-initialize or update options if needed, ensure parent is correct
+            $(mainProjectSelect).select2({
+                placeholder: "Select a Project...",
+                allowClear: false, width: '100%', theme: "bootstrap-5",
+                dropdownParent: $('#projectSelectionPage') // Explicitly set parent on re-render
+            });
+        }
+    }
+    function navigateTo(pageId) { hideAddEditSkidForm(); appState.currentPage = pageId; renderCurrentPage(); saveState(); window.scrollTo(0, 0); console.log("Navigated to:", pageId); }
+    function goBackToJobSelection() {
+        appState.inventory.selectedProject = null; // Clear selected inventory project
+        // Keep truck project if returning from inventory, maybe they want to load it next?
+        // appState.truckLoad.truckInfo.project = null;
+        appState._selectedJobType = null;
+        navigateTo('jobSelectionPage');
+    }
+    // *** NEW FUNCTION ***
+    function saveInventoryAndReturnToTaskSelection() {
+        console.log("Saving inventory changes and returning to task selection...");
+        saveState(false); // Save the state without showing the default status message
+        goBackToJobSelection(); // Navigate back to the task selection page
+        // Optional: Briefly show a status message if desired, but navigation might be too fast
+        // showSaveStatus("Inventory saved. Returning to task selection...");
+        // setTimeout(goBackToJobSelection, 500); // Delay navigation slightly if showing status
+    }
+    function proceedToSkidDetails() { appState.truckLoad.truckInfo = { ...appState.truckLoad.truckInfo, id: document.getElementById('truckId').value.trim(), length: parseFloat(document.getElementById('length').value) || null, width: parseFloat(document.getElementById('width').value) || null, weight: parseFloat(document.getElementById('weight').value) || null }; navigateTo('skidDetailsPage'); }
+    function goBackToSkidDetails() { collectPackingListData(); saveState(); navigateTo('skidDetailsPage'); }
+    function proceedToPackingList() { collectPackingListData(); navigateTo('packingListPage'); } // Data collected before nav
+    function completePackingList() { collectPackingListData(); updatePackingListProjectName(); if (!validatePackingListForm()) return; saveState(true); alert(`Packing list for Truck ${appState.truckLoad.truckInfo.id} completed and saved.`); /* Optionally navigate away or reset */ }
+
+    // --- UI Update Helpers ---
+    function updateSkidPageHeader() { truckIdentifierSpan.textContent = appState.truckLoad.truckInfo.id || 'N/A'; const project = PROJECT_OPTIONS.find(p => p.value === appState.truckLoad.truckInfo.project); skidDetailsProjectNameSpan.textContent = project ? project.text : (appState.truckLoad.truckInfo.project || 'N/A'); truckSizeDisplaySpan.textContent = `(${appState.truckLoad.truckInfo.length || '?'}ft L × ${appState.truckLoad.truckInfo.width || '?'}ft W, ${appState.truckLoad.truckInfo.weight || '?'}lbs Cap.)`; }
+    function updatePackingListPageHeader() { packingListTruckIdSpan.textContent = appState.truckLoad.truckInfo.id || 'N/A'; }
+    function updatePackingListProjectName() { if (!projectNameInput) return; const selectedProjectValue = appState.truckLoad.truckInfo.project; let projectText = ''; if (selectedProjectValue) { const selectedOption = PROJECT_OPTIONS.find(p => p.value === selectedProjectValue); projectText = selectedOption ? selectedOption.text : selectedProjectValue; } projectNameInput.value = projectText; if (!appState.truckLoad.packingList) appState.truckLoad.packingList = {}; appState.truckLoad.packingList.projectName = projectText; /* Store the text version */ }
+
+    // --- Skid Management (Inventory) ---
+    function renderInventorySkidsTable(projectId) {
+        inventorySkidTableBody.innerHTML = '';
+        if (!projectId) { inventorySkidTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Select a project first.</td></tr>'; return; }
+        const skids = appState.inventory.skids[projectId] || [];
+        if (skids.length === 0) { const projectText = PROJECT_OPTIONS.find(p => p.value === projectId)?.text || projectId; inventorySkidTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">No inventory skids found for project ${projectText}.</td></tr>`; return; }
+        skids.forEach((skid, index) => {
+            const row = inventorySkidTableBody.insertRow();
+            const displayId = skid.invId || `Error-No-ID-${index}`;
+            const descriptionText = skid.description ? skid.description.replace(/\n/g, '<br>') : '-';
+            row.innerHTML = `
+                    <td>${displayId}</td>
+                    <td>${skid.width?.toFixed(2) || '?'}</td>
+                    <td>${skid.length?.toFixed(2) || '?'}</td>
+                    <td>${skid.weight?.toFixed(2) || '?'}</td>
+                    <td>${descriptionText}</td>
+                    <td class="action-buttons no-print">
+                        <button class="btn btn-edit btn-sm" onclick="showEditSkidForm(${index}, 'inventory')" title="Edit Inventory Skid ${displayId}"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-delete btn-sm" onclick="deleteInventorySkid(${index})" title="Delete Inventory Skid ${displayId}"><i class="fas fa-trash"></i> Delete</button>
+                    </td>`;
+        });
+        // Update reset button state
+        const resetBtn = document.getElementById('resetInventorySkidsBtn');
+        if(resetBtn) resetBtn.disabled = skids.length === 0;
+    }
+    function deleteInventorySkid(index) {
+        const projectId = appState.inventory.selectedProject;
+        if (!projectId || !appState.inventory.skids[projectId] || !appState.inventory.skids[projectId][index]) { console.error("Could not delete inventory skid: Invalid project or index."); return; }
+        const skidToDelete = appState.inventory.skids[projectId][index];
+        const displayId = skidToDelete.invId || `INV-${projectId}-temp-${index + 1}`;
+        const projectText = PROJECT_OPTIONS.find(p => p.value === projectId)?.text || projectId;
+        if (confirm(`Are you sure you want to permanently delete Inventory Skid ${displayId} for project ${projectText}? This cannot be undone.`)) {
+            // Store the ID before deleting
+            const deletedInvId = skidToDelete.invId;
+
+            appState.inventory.skids[projectId].splice(index, 1);
+            console.log(`Deleted inventory skid ${displayId} at index ${index} for project ${projectId}`);
+
+            // Renumber Inventory IDs for this project
+            const remainingSkids = appState.inventory.skids[projectId];
+            for (let i = 0; i < remainingSkids.length; i++) { // Renumber ALL remaining skids based on new index
+                const newIdNumber = i + 1;
+                const newInvId = `INV-${projectId}-${newIdNumber}`;
+                if (remainingSkids[i].invId !== newInvId) {
+                    console.log(`Renumbering inventory skid ${remainingSkids[i].invId} to ${newInvId}`);
+                    remainingSkids[i].invId = newInvId;
+                }
+            }
+            // Update the next ID counter
+            appState.inventory.nextSkidId[projectId] = remainingSkids.length + 1;
+
+            renderInventorySkidsTable(projectId); // Re-render the inventory table
+
+            // Check if this deleted inventory skid was on the CURRENT truck load and remove it
+            const truckSkidIndex = appState.truckLoad.skids.findIndex(ts => ts.originalInvId === deletedInvId);
+            if (truckSkidIndex > -1) {
+                console.warn(`Inventory skid ${deletedInvId} was also on the current truck load. Removing it from the truck.`);
+                appState.truckLoad.skids.splice(truckSkidIndex, 1);
+                // If on skid details page, update truck table immediately
+                if (appState.currentPage === 'skidDetailsPage') {
+                    updateTruckSkidTable();
+                    updateLoadingInstructions();
+                    // Also re-render the selection list as the item is now gone entirely
+                    displayInventorySkidsForSelection(appState.truckLoad.truckInfo.project);
+                }
+            }
+
+            saveState();
+        }
+    }
+    function handleResetInventoryProjectSkids() {
+        const projectId = appState.inventory.selectedProject;
+        if (!projectId) { alert("Please select a project first."); return; }
+        const skids = appState.inventory.skids[projectId] || [];
+        const projectText = PROJECT_OPTIONS.find(p => p.value === projectId)?.text || projectId;
+        if (skids.length === 0) { alert(`Inventory for project ${projectText} is already empty.`); return; }
+        if (confirm(`ARE YOU SURE you want to REMOVE ALL ${skids.length} inventory skids listed for project ${projectText}? This will reset the ID counter and cannot be undone.`)) {
+            console.log(`Resetting inventory skids for project ${projectId}...`);
+
+            // Find which of these skids are on the current truck load
+            const invIdsToClear = skids.map(s => s.invId).filter(id => !!id); // Get valid IDs before clearing
+
+            // Clear inventory
+            appState.inventory.skids[projectId] = [];
+            appState.inventory.nextSkidId[projectId] = 1;
+            renderInventorySkidsTable(projectId); // Updates table and reset button state
+
+            // Remove corresponding skids from the current truck load if any
+            const initialTruckSkidCount = appState.truckLoad.skids.length;
+            appState.truckLoad.skids = appState.truckLoad.skids.filter(ts => !invIdsToClear.includes(ts.originalInvId));
+            const removedFromTruckCount = initialTruckSkidCount - appState.truckLoad.skids.length;
+
+            if (removedFromTruckCount > 0) {
+                console.warn(`Removed ${removedFromTruckCount} skids from the current truck load as their inventory source was cleared.`);
+            }
+
+            // If on skid details page, update truck table and selection list
+            if (appState.currentPage === 'skidDetailsPage') {
+                updateTruckSkidTable();
+                updateLoadingInstructions();
+                displayInventorySkidsForSelection(appState.truckLoad.truckInfo.project); // Re-render selection (will be empty for this project)
+            }
+
+            saveState();
+            alert(`Inventory skid list for project ${projectText} has been reset.`);
+        }
+    }
+
+    // --- Skid Management (Truck Load & Shared Form Logic) ---
+    function showAddSkidForm(context = 'truck') {
+        console.log(`Attempting to show skid form. Context: ${context}.`);
+        const formContainerId = (context === 'inventory') ? 'addInventorySkidFormContainer' : 'addTruckSkidFormContainer';
+        const formContainer = document.getElementById(formContainerId);
+        console.log(`Target container ID: ${formContainerId}`);
+        if (!formContainer) { console.error(`Target form container #${formContainerId} NOT FOUND!`); alert(`Error: Could not find the form area for ${context}.`); return; }
+        if (!skidFormTemplate) { console.error("Skid form template #skidFormTemplate not found!"); alert("Error: Cannot display skid form because the template is missing."); return; }
+        console.log("Container and template found. Injecting form...");
+        formContainer.innerHTML = ''; // Clear previous form
+        const templateContent = skidFormTemplate.content.cloneNode(true);
+        formContainer.appendChild(templateContent);
+
+        // Get elements from the newly added template content
+        const form = formContainer.querySelector('.add-skid-form'); // Use class selector
+        const saveBtn = formContainer.querySelector('.save-skid-btn');
+        const indexInput = formContainer.querySelector('.edit-skid-index');
+        const contextInput = formContainer.querySelector('.skid-context');
+
+        if (!form || !saveBtn || !indexInput || !contextInput) { console.error("Error finding required elements within the injected skid form!"); alert("Error: Could not initialize the skid form correctly."); return; }
+
+        // Add dynamic title
+        let formTitleElement = formContainer.querySelector('h4.skid-form-title-dynamic');
+        if (!formTitleElement) {
+            formTitleElement = document.createElement('h4');
+            formTitleElement.className = 'skid-form-title-dynamic no-print';
+            formTitleElement.style.color = 'var(--primary-blue)';
+            formTitleElement.style.marginBottom = '15px'; formTitleElement.style.marginTop = '0';
+            formContainer.insertBefore(formTitleElement, form); // Insert before the form
+        }
+
+        // Configure for Add mode
+        indexInput.value = '';
+        contextInput.value = context;
+        form.reset();
+        formTitleElement.innerHTML = `<i class="fas fa-plus-circle"></i> Add New Skid ${context === 'inventory' ? 'to Inventory' : 'to Truck'}`;
+        saveBtn.innerHTML = `<i class="fas fa-plus"></i> Add Skid`;
+        console.log("Attaching submit listener...");
+
+        // Detach previous listener if any, then attach new one
+        form.onsubmit = null;
+        form.onsubmit = function(e) { e.preventDefault(); console.log(`Skid form submitted. Context: ${context}`); saveSkid(this); };
+
+        // Clear any previous validation states
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+
+        console.log(`Displaying container #${formContainerId} and focusing input...`);
+        formContainer.style.display = 'block';
+        setTimeout(() => {
+            // Use class selectors from template
+            const firstInput = formContainer.querySelector('.skid-width');
+            if (firstInput) {
+                firstInput.focus();
+                console.log("Focused on skidWidth input.");
+            } else { console.warn("Could not find skidWidth input to focus."); }
+        }, 50); // Short delay for rendering
+    }
+    function showEditSkidForm(index, context = 'truck') {
+        console.log(`Showing edit skid form for index ${index}, context: ${context}`);
+        const formContainer = (context === 'inventory') ? addInventorySkidFormContainer : addTruckSkidFormContainer;
+        if (!formContainer) { console.error("Target form container not found for context:", context); return; }
+        if (!skidFormTemplate) { console.error("Skid form template not found!"); return; }
+
+        let skid;
+        let projectId;
+        let displaySkidId; // ID for display in title
+
+        if (context === 'inventory') {
+            projectId = appState.inventory.selectedProject;
+            if (!projectId || !appState.inventory.skids[projectId] || !appState.inventory.skids[projectId][index]) { console.error("Invalid project or index for editing inventory skid."); hideAddEditSkidForm(); return; }
+            skid = appState.inventory.skids[projectId][index];
+            displaySkidId = skid.invId || `INV-${projectId}-temp-${index + 1}`;
+        } else { // context === 'truck'
+            if (!appState.truckLoad.skids[index]) { console.error("Invalid index for editing truck skid."); hideAddEditSkidForm(); return; }
+            skid = appState.truckLoad.skids[index];
+            displaySkidId = `#${index + 1}`; // Use positional number for truck skids
+        }
+
+        formContainer.innerHTML = ''; // Clear previous form
+        const templateContent = skidFormTemplate.content.cloneNode(true);
+        formContainer.appendChild(templateContent);
+
+        // Get elements from the newly added template content using class selectors
+        const form = formContainer.querySelector('.add-skid-form');
+        const saveBtn = formContainer.querySelector('.save-skid-btn');
+        const indexInput = formContainer.querySelector('.edit-skid-index');
+        const contextInput = formContainer.querySelector('.skid-context');
+        const widthInput = formContainer.querySelector('.skid-width');
+        const lengthInput = formContainer.querySelector('.skid-length');
+        const weightInput = formContainer.querySelector('.skid-weight');
+        const descriptionInput = formContainer.querySelector('.skid-description');
+
+        // Add dynamic title
+        let formTitleElement = formContainer.querySelector('h4.skid-form-title-dynamic');
+        if (!formTitleElement) {
+            formTitleElement = document.createElement('h4');
+            formTitleElement.className = 'skid-form-title-dynamic no-print';
+            formTitleElement.style.color = 'var(--primary-blue)';
+            formTitleElement.style.marginBottom = '15px'; formTitleElement.style.marginTop = '0';
+            formContainer.insertBefore(formTitleElement, form); // Insert before the form
+        }
+
+        // Configure for Edit mode
+        indexInput.value = index;
+        contextInput.value = context;
+        widthInput.value = skid.width || '';
+        lengthInput.value = skid.length || '';
+        weightInput.value = skid.weight || '';
+        descriptionInput.value = skid.description || '';
+
+        formTitleElement.innerHTML = `<i class="fas fa-edit"></i> Edit Skid ${displaySkidId} ${context === 'inventory' ? '(Inventory)' : '(Truck Load)'}`;
+        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+
+        // Detach previous listener if any, then attach new one
+        form.onsubmit = null;
+        form.onsubmit = function(e) { e.preventDefault(); saveSkid(this); };
+
+        // Clear any previous validation states
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        form.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+
+        formContainer.style.display = 'block';
+        setTimeout(() => { widthInput?.focus(); }, 50);
+    }
+    function hideAddEditSkidForm() {
+        if (addInventorySkidFormContainer) { addInventorySkidFormContainer.style.display = 'none'; addInventorySkidFormContainer.innerHTML = '';}
+        if (addTruckSkidFormContainer) { addTruckSkidFormContainer.style.display = 'none'; addTruckSkidFormContainer.innerHTML = '';}
+    }
+    function saveSkid(formElement) {
+        // Use the validation helper
+        if (!validateSkidForm(formElement)) {
+            console.log("Skid form validation failed.");
+            return;
+        }
+        console.log("Skid form validation passed.");
+
+        // Use class selectors to get values
+        const context = formElement.querySelector('.skid-context').value;
+        const indexStr = formElement.querySelector('.edit-skid-index').value;
+        const width = parseFloat(formElement.querySelector('.skid-width').value);
+        const length = parseFloat(formElement.querySelector('.skid-length').value);
+        const weight = parseFloat(formElement.querySelector('.skid-weight').value);
+        const description = formElement.querySelector('.skid-description').value.trim();
+
+        const skidData = { width, length, weight, description };
+
+        if (context === 'inventory') {
+            const projectId = appState.inventory.selectedProject;
+            if (!projectId) { alert("Error: No inventory project selected!"); return; }
+            if (!appState.inventory.skids[projectId]) appState.inventory.skids[projectId] = [];
+            if (!appState.inventory.nextSkidId[projectId]) appState.inventory.nextSkidId[projectId] = 1;
+
+            if (indexStr === '') { // Adding new inventory skid
+                skidData.invId = `INV-${projectId}-${appState.inventory.nextSkidId[projectId]++}`;
+                appState.inventory.skids[projectId].push(skidData);
+                console.log("Added new inventory skid:", skidData);
+            } else { // Editing existing inventory skid
+                const skidIndex = parseInt(indexStr, 10);
+                if (!isNaN(skidIndex) && appState.inventory.skids[projectId][skidIndex]) {
+                    skidData.invId = appState.inventory.skids[projectId][skidIndex].invId; // Keep original Inv ID
+                    appState.inventory.skids[projectId][skidIndex] = skidData;
+                    console.log("Updated inventory skid:", skidData);
+
+                    // Check if the edited inventory item is on the truck and update it there too
+                    const truckSkidIndex = appState.truckLoad.skids.findIndex(ts => ts.originalInvId === skidData.invId);
+                    if (truckSkidIndex > -1) {
+                        console.log(`Inventory skid ${skidData.invId} is on truck load, updating truck skid too.`);
+                        const truckSkid = appState.truckLoad.skids[truckSkidIndex];
+                        // Update relevant fields, keep truck-specific ID and originalInvId link
+                        truckSkid.width = skidData.width;
+                        truckSkid.length = skidData.length;
+                        truckSkid.weight = skidData.weight;
+                        truckSkid.description = skidData.description;
+                        if (appState.currentPage === 'skidDetailsPage') {
+                            updateTruckSkidTable(); // Update truck table if visible
+                            updateLoadingInstructions();
+                        }
+                    }
+
+                } else {
+                    console.error("Invalid index for editing inventory skid:", indexStr);
+                    hideAddEditSkidForm(); return;
+                }
+            }
+            renderInventorySkidsTable(projectId); // Re-render inventory table
+        } else { // context === 'truck'
+            if (indexStr === '') { // Adding new truck skid
+                skidData.id = `SKID-${appState.truckLoad.nextSkidId++}`; // Internal stable ID
+                appState.truckLoad.skids.push(skidData);
+                console.log("Added new truck skid:", skidData);
+            } else { // Editing existing truck skid
+                const skidIndex = parseInt(indexStr, 10);
+                if (!isNaN(skidIndex) && appState.truckLoad.skids[skidIndex]) {
+                    skidData.id = appState.truckLoad.skids[skidIndex].id; // Keep original internal ID
+                    // Keep originalInvId if it exists (meaning it came from inventory)
+                    if (appState.truckLoad.skids[skidIndex].originalInvId) {
+                        skidData.originalInvId = appState.truckLoad.skids[skidIndex].originalInvId;
+                    }
+                    appState.truckLoad.skids[skidIndex] = skidData;
+                    console.log("Updated truck skid:", skidData);
+                } else {
+                    console.error("Invalid index for editing truck skid:", indexStr);
+                    hideAddEditSkidForm(); return;
+                }
+            }
+            updateTruckSkidTable(); // Re-render truck table
+            updateLoadingInstructions();
+        }
+        hideAddEditSkidForm(); // Hide form after successful save
+        saveState();
+    }
+    function deleteTruckSkid(index) {
+        const skid = appState.truckLoad.skids[index];
+        if (!skid) { console.error("Attempted to delete truck skid with invalid index:", index); return; }
+
+        // Use positional number for confirmation
+        const displaySkidNumber = index + 1;
+
+        if (confirm(`Are you sure you want to remove Truck Skid #${displaySkidNumber} from this load?`)) {
+            const removedSkid = appState.truckLoad.skids.splice(index, 1)[0]; // Remove and get the removed item
+            console.log(`Removed truck skid #${displaySkidNumber} (Internal ID: ${removedSkid.id}) from load.`);
+
+            // If the removed skid originated from inventory, re-enable its checkbox in the selection list
+            if (removedSkid.originalInvId) {
+                enableInventorySelectionCheckbox(removedSkid.originalInvId);
+            }
+
+            updateTruckSkidTable(); // Re-render table, numbers will adjust
+            updateLoadingInstructions();
+            saveState();
+            // Update reset button state
+            const resetBtn = document.getElementById('resetSkidsBtn');
+            if(resetBtn) resetBtn.disabled = (appState.truckLoad.skids?.length || 0) === 0;
+        }
+    }
+    function handleResetTruckSkids() {
+        if (appState.truckLoad.skids.length === 0) { alert("Truck skid list is already empty."); return; }
+        if (confirm('Are you sure you want to remove ALL skids listed for this truck load?')) {
+            console.log("Resetting truck skids list...");
+            // Find all skids that came from inventory before clearing
+            const removedInvIds = appState.truckLoad.skids.filter(skid => skid.originalInvId).map(skid => skid.originalInvId);
+
+            appState.truckLoad.skids = []; // Clear the array
+
+            // Re-enable all corresponding inventory checkboxes
+            removedInvIds.forEach(invId => {
+                enableInventorySelectionCheckbox(invId);
+            });
+
+            updateTruckSkidTable(); // Re-render empty table
+            updateLoadingInstructions();
+            saveState();
+            alert("Truck skid list has been reset.");
+            // Update reset button state
+            const resetBtn = document.getElementById('resetSkidsBtn');
+            if(resetBtn) resetBtn.disabled = true;
+        }
+    }
+
+    // --- Truck Load - Inventory Skid Selection ---
+    function displayInventorySkidsForSelection(projectId) {
+        inventorySkidSelectionBody.innerHTML = ''; // Clear previous list
+        inventorySkidSelectionContainer.style.display = 'none'; // Hide by default
+
+        if (!projectId) { console.log("No truck project selected, hiding inventory selection."); return; }
+
+        const inventorySkids = appState.inventory.skids[projectId] || [];
+        if (inventorySkids.length === 0) {
+            console.log(`No inventory skids found for project ${projectId} to display for selection.`);
+            // Optionally show a message within the container if it should still be visible
+            // inventorySkidSelectionContainer.style.display = 'block';
+            // inventorySkidSelectionBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No inventory skids available for project ${projectId}.</td></tr>`;
+            addSelectedInventorySkidsBtn.disabled = true;
+            return;
+        }
+
+        console.log(`Displaying ${inventorySkids.length} inventory skids from project ${projectId} for selection.`);
+        let hasAvailableSkids = false;
+
+        inventorySkids.forEach((skid, index) => {
+            const invId = skid.invId; // Use the guaranteed invId
+            if (!invId) {
+                console.warn(`Inventory skid at index ${index} for project ${projectId} is missing invId.`);
+                return; // Skip rendering if ID is missing
+            }
+
+            // Check if this inventory item (by invId) is already in the truck load skids
+            const alreadyAdded = appState.truckLoad.skids.some(truckSkid => truckSkid.originalInvId === invId);
+
+            const row = inventorySkidSelectionBody.insertRow();
+            const descriptionText = skid.description ? skid.description.replace(/\n/g, '<br>') : '-';
+            row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="inventory-skid-select" value="${index}"
+                               data-project-id="${projectId}" data-inv-id="${invId}"
+                               id="inv-select-${invId}" ${alreadyAdded ? 'disabled' : ''}>
+                    </td>
+                    <td><label for="inv-select-${invId}" title="${alreadyAdded ? 'Already added to truck' : `Select ${invId}`}">${invId}</label></td>
+                    <td>${skid.width?.toFixed(2) || '?'}</td>
+                    <td>${skid.length?.toFixed(2) || '?'}</td>
+                    <td>${skid.weight?.toFixed(2) || '?'}</td>
+                    <td>${descriptionText}</td>`;
+
+            if (!alreadyAdded) { hasAvailableSkids = true; }
+        });
+
+        inventorySkidSelectionContainer.style.display = 'block'; // Show the container
+        addSelectedInventorySkidsBtn.disabled = !hasAvailableSkids;
+
+        if (!hasAvailableSkids && inventorySkids.length > 0) {
+            const row = inventorySkidSelectionBody.insertRow();
+            row.innerHTML = `<td colspan="6" style="text-align:center; font-style:italic;">All inventory items for this project are already on the truck load.</td>`;
+        }
+    }
+    function addSelectedInventorySkidsToTruck() {
+        const selectedCheckboxes = inventorySkidSelectionBody.querySelectorAll('.inventory-skid-select:checked:not(:disabled)');
+        if (selectedCheckboxes.length === 0) { alert("Please select one or more available inventory skids to add."); return; }
+
+        let addedCount = 0;
+        selectedCheckboxes.forEach(checkbox => {
+            const index = parseInt(checkbox.value, 10);
+            const projectId = checkbox.dataset.projectId;
+            const originalInvId = checkbox.dataset.invId; // Use the invId from data attribute
+
+            if (!isNaN(index) && projectId && originalInvId && appState.inventory.skids[projectId] && appState.inventory.skids[projectId][index]) {
+                const originalSkid = appState.inventory.skids[projectId][index];
+
+                // Double check the invId matches before adding
+                if (originalSkid.invId === originalInvId) {
+                    const newTruckSkid = {
+                        width: originalSkid.width,
+                        length: originalSkid.length,
+                        weight: originalSkid.weight,
+                        description: originalSkid.description || '',
+                        originalInvId: originalInvId, // Link back to inventory
+                        id: `SKID-${appState.truckLoad.nextSkidId++}` // Internal stable ID
+                    };
+                    appState.truckLoad.skids.push(newTruckSkid);
+                    addedCount++;
+                    console.log(`Added inventory skid (Inv ID: ${originalInvId}) as truck skid (ID: ${newTruckSkid.id})`);
+
+                    // Disable the checkbox immediately after adding
+                    checkbox.disabled = true;
+                    checkbox.checked = false; // Uncheck it
+                    const label = inventorySkidSelectionBody.querySelector(`label[for="inv-select-${originalInvId}"]`);
+                    if(label) label.title = "Already added to truck";
+
+                } else {
+                    console.warn(`Mismatch: Inventory skid at index ${index} has ID ${originalSkid.invId}, but checkbox expected ${originalInvId}. Skipping.`);
+                }
+            } else {
+                console.warn("Could not find valid inventory skid for selection:", { projectId, index, originalInvId });
+            }
+        });
+
+        if (addedCount > 0) {
+            updateTruckSkidTable();
+            updateLoadingInstructions();
+            saveState();
+            alert(`Added ${addedCount} skid(s) from inventory to the truck load.`);
+            // Update availability for the add button
+            const remainingCheckboxes = inventorySkidSelectionBody.querySelectorAll('.inventory-skid-select:not(:disabled)');
+            addSelectedInventorySkidsBtn.disabled = remainingCheckboxes.length === 0;
+            // Update reset button state
+            const resetBtn = document.getElementById('resetSkidsBtn');
+            if(resetBtn) resetBtn.disabled = (appState.truckLoad.skids?.length || 0) === 0;
+        }
+    }
+    function enableInventorySelectionCheckbox(invId) {
+        // Only attempt if on the skid details page where the selection list exists
+        if (appState.currentPage === 'skidDetailsPage' && inventorySkidSelectionBody) {
+            const invCheckbox = inventorySkidSelectionBody.querySelector(`.inventory-skid-select[data-inv-id="${invId}"]`);
+            if (invCheckbox) {
+                invCheckbox.disabled = false;
+                invCheckbox.checked = false; // Ensure it's unchecked
+                const label = inventorySkidSelectionBody.querySelector(`label[for="inv-select-${invId}"]`);
+                if(label) label.title = `Select ${invId}`;
+                console.log(`Re-enabled inventory selection checkbox for ${invId}`);
+                // Update the 'Add Selected' button state
+                addSelectedInventorySkidsBtn.disabled = false;
+            } else {
+                console.log(`Inventory checkbox for ${invId} not found in current view, might be for a different project or already removed.`);
+            }
+        } else {
+            console.log(`Not on Skid Details page or selection body not found, skipping checkbox enable for ${invId}.`);
+        }
+    }
+
+    // --- Truck Skid Table Update (Handles Renumbering Display) ---
+    function updateTruckSkidTable() {
+        truckSkidTableBody.innerHTML = ''; // Clear existing rows
+        let totalWeight = 0;
+
+        if (appState.truckLoad.skids.length === 0) {
+            truckSkidTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No skids added to this truck yet.</td></tr>';
+            totalTruckSkidCountSpan.textContent = '0';
+            totalTruckSkidWeightSpan.textContent = '0.00 lbs';
+        } else {
+            appState.truckLoad.skids.forEach((skid, index) => {
+                totalWeight += (skid.weight || 0);
+                const row = truckSkidTableBody.insertRow();
+                let displayDescription = skid.description ? skid.description.replace(/\n/g, '<br>') : '-';
+                if (skid.originalInvId) {
+                    displayDescription += ` <span style="font-size: 0.8em; color: var(--text-muted); white-space: nowrap;">(from Inv: ${skid.originalInvId})</span>`;
+                }
+
+                const displaySkidNumber = index + 1; // Positional number
+
+                row.innerHTML = `
+                        <td>${displaySkidNumber}</td> <!-- Display positional number -->
+                        <td>${skid.width?.toFixed(2) || '?'}</td>
+                        <td>${skid.length?.toFixed(2) || '?'}</td>
+                        <td>${skid.weight?.toFixed(2) || '?'}</td>
+                        <td>${displayDescription}</td>
+                        <td class="action-buttons no-print">
+                            <button class="btn btn-edit btn-sm" onclick="showEditSkidForm(${index}, 'truck')" title="Edit Truck Skid #${displaySkidNumber}"><i class="fas fa-edit"></i> Edit</button>
+                            <button class="btn btn-delete btn-sm" onclick="deleteTruckSkid(${index})" title="Remove Truck Skid #${displaySkidNumber} from Load"><i class="fas fa-trash"></i> Delete</button>
+                        </td>`;
+            });
+            totalTruckSkidCountSpan.textContent = appState.truckLoad.skids.length;
+            totalTruckSkidWeightSpan.textContent = `${totalWeight.toFixed(2)} lbs`;
+        }
+        // Update reset button state
+        const resetBtn = document.getElementById('resetSkidsBtn');
+        if(resetBtn) resetBtn.disabled = (appState.truckLoad.skids?.length || 0) === 0;
+    }
+
+    // --- Loading Instructions ---
+    function updateLoadingInstructions() { loadingInstructionsDiv.innerHTML = generateLoadingSummaryText(); }
+    function generateLoadingSummaryText() {
+        const truckInfo = appState.truckLoad.truckInfo;
+        const truckSkids = appState.truckLoad.skids;
+
+        if (!truckInfo.length || !truckInfo.width || !truckInfo.weight) { return '<p>Enter complete truck information first.</p>'; }
+        if (truckSkids.length === 0) { return '<p>Add skids to the truck load to see loading summary.</p>'; }
+
+        const totalWeight = truckSkids.reduce((s, k) => s + (k.weight || 0), 0);
+        const totalArea = truckSkids.reduce((s, k) => s + ((k.width || 0) * (k.length || 0)), 0);
+        const truckArea = (truckInfo.width || 0) * (truckInfo.length || 0);
+        const truckWeightCap = truckInfo.weight || 0;
+
+        const usedWeightPercent = truckWeightCap > 0 ? (totalWeight / truckWeightCap) * 100 : 0;
+        const usedAreaPercent = truckArea > 0 ? (totalArea / truckArea) * 100 : 0;
+
+        let instructionsHTML = `
+                <p><strong>Summary for Truck ${truckInfo.id || 'N/A'}:</strong></p>
+                <ul>
+                    <li>Total Skids on Truck: ${truckSkids.length}</li>
+                    <li>Total Weight on Truck: ${totalWeight.toFixed(2)} lbs (${usedWeightPercent.toFixed(1)}% of ${truckWeightCap} lbs capacity)</li>
+                    <li>Approx. Area Used: ${totalArea.toFixed(2)} sq ft (${usedAreaPercent.toFixed(1)}% of ${truckArea.toFixed(2)} sq ft available)</li>
+                </ul>`;
+
+        let warningsHTML = '';
+        if (truckWeightCap > 0 && totalWeight > truckWeightCap) {
+            warningsHTML += '<p class="warning"><i class="fas fa-exclamation-triangle"></i> Warning: Total weight exceeds truck capacity!</p>';
+        } else if (usedWeightPercent > 95 && usedWeightPercent <= 100) {
+            warningsHTML += '<p class="warning" style="background-color:#fff3cd;border-color:#ffeeba;color:#856404;"><i class="fas fa-exclamation-circle"></i> Caution: Approaching maximum weight capacity.</p>';
+        }
+
+        if (truckArea > 0 && totalArea > truckArea) {
+            warningsHTML += '<p class="warning"><i class="fas fa-exclamation-triangle"></i> Warning: Total skid area exceeds theoretical truck floor space. Check stacking/dimensions.</p>';
+        } else if (usedAreaPercent > 95 && usedAreaPercent <= 100) {
+            warningsHTML += '<p class="warning" style="background-color:#fff3cd;border-color:#ffeeba;color:#856404;"><i class="fas fa-exclamation-circle"></i> Caution: High space utilization. Consider loading arrangement.</p>';
+        }
+
+        const titleHTML = `<h5><i class="fas fa-info-circle"></i> Loading Summary & Instructions</h5>`;
+        return titleHTML + instructionsHTML + warningsHTML;
+    }
+
+    // --- Packing List ---
+    function collectPackingListData() {
+        if (!appState.truckLoad.packingList) appState.truckLoad.packingList = {};
+        const formData = new FormData(packingListForm);
+        for (const [key, value] of formData.entries()) {
+            // Don't overwrite the auto-filled project name from form data
+            if (key !== 'projectName') {
+                appState.truckLoad.packingList[key] = value;
+            }
+        }
+        updatePackingListProjectName(); // Ensure the stored project name is correct based on state
+    }
+    function populatePackingListForm() {
+        // Reset form before populating to clear stale values
+        if (packingListForm) packingListForm.reset();
+
+        for (const [key, value] of Object.entries(appState.truckLoad.packingList || {})) {
+            const input = packingListForm.querySelector(`[name="${key}"]`);
+            // Exclude project name as it's handled separately
+            if (input && key !== 'projectName') {
+                input.value = value || '';
+            }
+        }
+        updatePackingListProjectName(); // Set the read-only project name field
+        // Clear validation states when populating
+        packingListForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        packingListForm.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+        if(signatureErrorDiv) signatureErrorDiv.style.display = 'none';
+        if(signatureCanvas) signatureCanvas.parentElement.style.border = '2px dashed var(--medium-gray)';
+    }
+    function clearSignature() {
+        if (signaturePad) {
+            signaturePad.clear();
+            signatureErrorDiv.style.display = 'none';
+            if(signatureCanvas) signatureCanvas.parentElement.style.border = '2px dashed var(--medium-gray)';
+            appState.truckLoad.signatureData = null;
+            saveState(); // Save the cleared state
+        }
+    }
+    function handleResetPackingList() {
+        if (confirm('Are you sure you want to reset the Packing List form? This will clear all fields and the signature.')) {
+            if (packingListForm) packingListForm.reset();
+            clearSignature();
+            appState.truckLoad.packingList = {}; // Clear data in state
+            updatePackingListProjectName(); // Reset project name display
+            // Clear validation states
+            packingListForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            packingListForm.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+            if(signatureErrorDiv) signatureErrorDiv.style.display = 'none';
+            if(signatureCanvas) signatureCanvas.parentElement.style.border = '2px dashed var(--medium-gray)';
+            saveState(); // Save the reset state
+            alert("Packing List form has been reset.");
+            // Update reset button state
+            const resetBtn = document.getElementById('resetPackingListBtn');
+            if(resetBtn) resetBtn.disabled = true;
+        }
+    }
+
+    // --- Printing ---
+    function updatePrintSection() {
+        if (!printTruckId || !printProject || !printSkidsBody || !mainProjectSelect /* Check main select existence */) { console.error("Required print elements or project select missing."); return; }
+        const truckInfo = appState.truckLoad.truckInfo;
+        const truckSkids = appState.truckLoad.skids;
+
+        printTruckId.textContent = truckInfo.id || 'N/A';
+        printTruckDimensions.textContent = `${truckInfo.length || '?'}ft L × ${truckInfo.width || '?'}ft W`;
+        printTruckWeight.textContent = `${truckInfo.weight || '?'} lbs`;
+
+        let projText = 'N/A';
+        const project = PROJECT_OPTIONS.find(p => p.value === truckInfo.project);
+        projText = project ? project.text : (truckInfo.project || 'N/A');
+        printProject.textContent = projText;
+
+        printTotalSkids.textContent = truckSkids.length;
+        printSkidsBody.innerHTML = ''; // Clear previous print rows
+        let printWeightTotal = 0;
+
+        truckSkids.forEach((skid, index) => {
+            printWeightTotal += (skid.weight || 0);
+            const row = printSkidsBody.insertRow();
+            let printDescription = skid.description ? skid.description.replace(/\n/g, ', ') : '-';
+            // Add inventory source to print description if available
+            if (skid.originalInvId) {
+                printDescription += ` (Inv: ${skid.originalInvId})`;
+            }
+            const displaySkidNumber = index + 1; // Use positional number for print
+
+            row.innerHTML = `
+                    <td>${displaySkidNumber}</td> <!-- Print positional number -->
+                    <td>${skid.width?.toFixed(2) || '?'}</td>
+                    <td>${skid.length?.toFixed(2) || '?'}</td>
+                    <td>${skid.weight?.toFixed(2) || '?'}</td>
+                    <td>${printDescription}</td>`;
+        });
+        printTotalWeight.textContent = `${printWeightTotal.toFixed(2)} lbs`;
+
+        if (printLoadingSummaryDiv) {
+            let html = generateLoadingSummaryText().replace(/<h5>.*?<\/h5>/, '<h5>Loading Summary</h5>'); // Get summary, replace title
+            printLoadingSummaryDiv.innerHTML = html;
+        }
+    }
+    function printSkidPage() { updatePrintSection(); window.print(); }
+
+    // --- Utility ---
+    function resetEntireProcess() {
+        if (confirm('ARE YOU SURE you want to clear ALL data (Inventory and Truck Loads) and start over? This cannot be undone.')) {
+            if (confirm('FINAL CONFIRMATION: This will erase everything. Proceed?')) {
+                console.log("Resetting entire application state...");
+                localStorage.removeItem(APP_STATE_KEY);
+                // Reset state variable to initial default
+                appState = { currentPage: 'jobSelectionPage', _selectedJobType: null, inventory: { selectedProject: null, skids: {}, nextSkidId: {} }, truckLoad: { truckInfo: { id: '', project: null, length: null, width: null, weight: null }, skids: [], nextSkidId: 1, packingList: {}, signatureData: null } };
+
+                // Reset UI elements
+                if(jobTypeSelect) jobTypeSelect.value = '';
+                if(truckInfoForm) truckInfoForm.reset(); clearTruckInfoFormErrors();
+                if(packingListForm) packingListForm.reset();
+                if (signaturePad) signaturePad.clear();
+                // Clear Select2 if loaded
+                if (typeof $ !== 'undefined' && $.fn.select2 && $(mainProjectSelect).hasClass('select2-hidden-accessible')) {
+                    $(mainProjectSelect).val('').trigger('change.select2');
+                } else { if (mainProjectSelect) mainProjectSelect.value = ''; } // Fallback for no Select2
+
+                clearProjectValidationError(mainProjectSelect, mainProjectSelectErrorDiv); // Clear project errors
+                if(signatureErrorDiv) signatureErrorDiv.style.display = 'none'; // Hide sig error
+                if(signatureCanvas) signatureCanvas.parentElement.style.border = '2px dashed var(--medium-gray)'; // Reset sig border
+
+                // Hide skid forms if they were open
+                hideAddEditSkidForm();
+
+                // Navigate back to the start and render
+                navigateTo('jobSelectionPage'); // This calls renderCurrentPage and updateDynamicContent
+
+                console.log("Application Reset Complete.");
+                alert("All application data has been cleared.");
+            }
+        }
+    }
+</script>
+
+<!-- Add AJAX submission for forms -->
+<script>
+    // Function to submit the truck info form via AJAX
+    function submitTruckInfoForm() {
+        if (!validateTruckInfoForm()) return false;
+
+        const formData = {
+            truckId: document.getElementById('truckId').value.trim(),
+            projectCode: appState.truckLoad.truckInfo.project,
+            length: parseFloat(document.getElementById('length').value),
+            width: parseFloat(document.getElementById('width').value),
+            weight: parseFloat(document.getElementById('weight').value)
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: '/loader/truck-info',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    // Store the load ID for future reference
+                    appState.truckLoad.loadId = response.loadId;
+                    proceedToSkidDetails();
+                } else {
+                    alert('Error saving truck information: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Error communicating with server. Please try again.');
+            }
+        });
+
+        return false;
+    }
+
+    // Function to save skids to server
+    function saveSkidsToServer() {
+        if (!appState.truckLoad.loadId) {
+            alert('Error: No load ID found. Please restart the process.');
+            return;
+        }
+
+        const data = {
+            loadId: appState.truckLoad.loadId,
+            skids: appState.truckLoad.skids
+        };
+
+        $.ajax({
+            type: 'POST',
+            url: '/loader/save-skids',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                if (response.success) {
+                    showSaveStatus('Skids saved successfully!');
+                } else {
+                    showSaveStatus('Error saving skids: ' + response.message, true);
+                }
+            },
+            error: function() {
+                showSaveStatus('Error communicating with server', true);
+            }
+        });
+    }
+
+    // Function to submit packing list
+    function submitPackingList(isComplete = false) {
+        if (isComplete && !validatePackingListForm()) return false;
+
+        // Get form data
+        collectPackingListData();
+
+        const formData = new FormData(document.getElementById('packing-list-form'));
+        formData.append('loadId', appState.truckLoad.loadId);
+        formData.append('status', isComplete ? 'Delivered' : 'Loaded');
+
+        // Add signature if available
+        if (signaturePad && !signaturePad.isEmpty()) {
+            formData.append('signature', signaturePad.toDataURL());
+        }
+
+        $.ajax({
+            type: 'POST',
+            url: '/loader/save-packing-list',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    showSaveStatus(isComplete ? 'Load marked as complete!' : 'Packing list saved successfully!');
+                    if (isComplete) {
+                        setTimeout(() => {
+                            alert('The load has been marked as complete and saved.');
+                            goBackToJobSelection();
+                        }, 1000);
+                    }
+                } else {
+                    showSaveStatus('Error saving packing list: ' + response.message, true);
+                }
+            },
+            error: function() {
+                showSaveStatus('Error communicating with server', true);
+            }
+        });
+
+        return false;
+    }
+
+    // Override the original functions to use AJAX
+    document.addEventListener('DOMContentLoaded', function() {
+        const truckInfoForm = document.getElementById('truckInfoForm');
+        if (truckInfoForm) {
+            truckInfoForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitTruckInfoForm();
+            });
+        }
+
+        // Override saveSkid function to save to server too
+        const originalSaveSkid = window.saveSkid;
+        window.saveSkid = function(formElement) {
+            // Call the original function to update local state
+            if (originalSaveSkid) {
+                const result = originalSaveSkid(formElement);
+                if (result !== false) {
+                    // After local save succeeds, save to server
+                    if (formElement.querySelector('.skid-context').value === 'truck') {
+                        saveSkidsToServer();
+                    }
+                }
+                return result;
+            }
+        };
+
+        // Override proceedToPackingList to ensure data is saved
+        const originalProceedToPackingList = window.proceedToPackingList;
+        window.proceedToPackingList = function() {
+            saveSkidsToServer();
+            if (originalProceedToPackingList) {
+                originalProceedToPackingList();
+            }
+        };
+
+        // Override save buttons in packing list
+        const saveProgressBtn = document.getElementById('saveProgressBtn');
+        if (saveProgressBtn) {
+            saveProgressBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                submitPackingList(false);
+            });
+        }
+
+        // Override complete button
+        window.completePackingList = function() {
+            submitPackingList(true);
+        };
+    });
+</script>
+</body>
+</html>
+

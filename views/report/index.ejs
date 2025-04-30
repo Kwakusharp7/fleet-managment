@@ -1,0 +1,303 @@
+<!-- Reports Page -->
+<div class="data-container">
+    <div class="data-header">
+        <h3>Reports</h3>
+    </div>
+
+    <!-- Report Selection Form -->
+    <form action="/reports/generate" method="POST" class="report-form">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="reportType">Report Type <span class="required-indicator">*</span></label>
+                    <select id="reportType" name="reportType" class="form-control" required>
+                        <option value="" disabled <%= !filters.reportType ? 'selected' : '' %>>Select Report Type</option>
+                        <option value="loads-by-project" <%= filters.reportType === 'loads-by-project' ? 'selected' : '' %>>Loads by Project</option>
+                        <option value="load-status-summary" <%= filters.reportType === 'load-status-summary' ? 'selected' : '' %>>Load Status Summary</option>
+                        <option value="weight-by-date" <%= filters.reportType === 'weight-by-date' ? 'selected' : '' %>>Weight Summary by Date</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="projectCode">Project (Optional)</label>
+                    <select id="projectCode" name="projectCode" class="form-control">
+                        <option value="">All Projects</option>
+                        <% if (projects && projects.length > 0) { %>
+                            <% projects.forEach(project => { %>
+                                <option value="<%= project.code %>" <%= filters.projectCode === project.code ? 'selected' : '' %>>
+                                    <%= project.code %> – <%= project.name %>
+                                </option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="startDate">Start Date (Optional)</label>
+                    <input type="date" id="startDate" name="startDate" class="form-control" value="<%= filters.startDate %>">
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="endDate">End Date (Optional)</label>
+                    <input type="date" id="endDate" name="endDate" class="form-control" value="<%= filters.endDate %>">
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-chart-bar"></i> Generate Report
+            </button>
+        </div>
+    </form>
+
+    <!-- Report Results -->
+    <% if (reportData) { %>
+        <div class="report-results">
+            <h4><%= reportData.title %></h4>
+
+            <% if (reportData.type === 'loads-by-project') { %>
+                <!-- Loads by Project Report -->
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>Project Code</th>
+                            <th>Project Name</th>
+                            <th>Load Count</th>
+                            <th>Total Skids</th>
+                            <th>Total Weight (lbs)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <% if (reportData.data && reportData.data.length > 0) { %>
+                            <% reportData.data.forEach(item => { %>
+                                <tr>
+                                    <td><%= item.projectCode %></td>
+                                    <td><%= item.projectName %></td>
+                                    <td><%= item.loadCount %></td>
+                                    <td><%= item.totalSkids %></td>
+                                    <td><%= item.totalWeight.toFixed(2) %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" style="text-align:center;">No data found for the selected criteria.</td>
+                            </tr>
+                        <% } %>
+                        </tbody>
+                        <% if (reportData.data && reportData.data.length > 0) { %>
+                            <tfoot>
+                            <tr>
+                                <th colspan="2">Totals</th>
+                                <th><%= reportData.totals.loadCount %></th>
+                                <th><%= reportData.totals.totalSkids %></th>
+                                <th><%= reportData.totals.totalWeight.toFixed(2) %></th>
+                            </tr>
+                            </tfoot>
+                        <% } %>
+                    </table>
+                </div>
+            <% } else if (reportData.type === 'load-status-summary') { %>
+                <!-- Load Status Summary Report -->
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Load Count</th>
+                            <th>Total Skids</th>
+                            <th>Total Weight (lbs)</th>
+                            <th>Percentage</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <% if (reportData.data && reportData.data.length > 0) { %>
+                            <% reportData.data.forEach(item => { %>
+                                <tr>
+                                    <td>
+                                        <% if (item.status === 'Planned') { %>
+                                            <span class="status-badge status-planned"><%= item.status %></span>
+                                        <% } else if (item.status === 'Loaded') { %>
+                                            <span class="status-badge status-loaded"><%= item.status %></span>
+                                        <% } else if (item.status === 'Delivered') { %>
+                                            <span class="status-badge status-delivered"><%= item.status %></span>
+                                        <% } else { %>
+                                            <%= item.status %>
+                                        <% } %>
+                                    </td>
+                                    <td><%= item.loadCount %></td>
+                                    <td><%= item.totalSkids %></td>
+                                    <td><%= item.totalWeight.toFixed(2) %></td>
+                                    <td><%= item.percentOfTotal %>%</td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" style="text-align:center;">No data found for the selected criteria.</td>
+                            </tr>
+                        <% } %>
+                        </tbody>
+                        <% if (reportData.data && reportData.data.length > 0) { %>
+                            <tfoot>
+                            <tr>
+                                <th>Totals</th>
+                                <th><%= reportData.totals.loadCount %></th>
+                                <th><%= reportData.totals.totalSkids %></th>
+                                <th><%= reportData.totals.totalWeight.toFixed(2) %></th>
+                                <th>100%</th>
+                            </tr>
+                            </tfoot>
+                        <% } %>
+                    </table>
+                </div>
+            <% } else if (reportData.type === 'weight-by-date') { %>
+                <!-- Weight by Date Report -->
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Load Count</th>
+                            <th>Total Skids</th>
+                            <th>Total Weight (lbs)</th>
+                            <th>Avg Weight per Load (lbs)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <% if (reportData.data && reportData.data.length > 0) { %>
+                            <% reportData.data.forEach(item => { %>
+                                <tr>
+                                    <td><%= item.formattedDate %></td>
+                                    <td><%= item.loadCount %></td>
+                                    <td><%= item.totalSkids %></td>
+                                    <td><%= item.totalWeight.toFixed(2) %></td>
+                                    <td><%= item.averageWeight %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" style="text-align:center;">No data found for the selected criteria.</td>
+                            </tr>
+                        <% } %>
+                        </tbody>
+                        <% if (reportData.data && reportData.data.length > 0) { %>
+                            <tfoot>
+                            <tr>
+                                <th>Totals</th>
+                                <th><%= reportData.totals.loadCount %></th>
+                                <th><%= reportData.totals.totalSkids %></th>
+                                <th><%= reportData.totals.totalWeight.toFixed(2) %></th>
+                                <th><%= reportData.totals.loadCount > 0 ? (reportData.totals.totalWeight / reportData.totals.loadCount).toFixed(2) : '0.00' %></th>
+                            </tr>
+                            </tfoot>
+                        <% } %>
+                    </table>
+                </div>
+            <% } %>
+
+            <!-- Print and Export Buttons -->
+            <div class="report-actions">
+                <button onclick="window.print()" class="btn btn-secondary">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+                <!-- Export functionality would be added here -->
+            </div>
+        </div>
+    <% } else { %>
+        <div class="report-placeholder">
+            <p>Select report criteria and click "Generate Report" to view results.</p>
+        </div>
+    <% } %>
+</div>
+
+<%- contentFor('styles') %>
+<style>
+    .report-form {
+        background-color: var(--light-gray);
+        padding: 20px;
+        border-radius: var(--border-radius);
+        margin-bottom: 25px;
+    }
+
+    .required-indicator {
+        color: var(--danger-red);
+    }
+
+    .report-results {
+        margin-top: 30px;
+    }
+
+    .report-results h4 {
+        margin-bottom: 15px;
+        color: var(--primary-blue);
+        font-weight: 600;
+    }
+
+    .report-placeholder {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+        background-color: var(--light-gray);
+        border-radius: var(--border-radius);
+    }
+
+    .report-actions {
+        margin-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    tfoot th, tfoot td {
+        background-color: var(--light-gray);
+        font-weight: bold;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -10px;
+    }
+
+    .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+        padding: 0 10px;
+    }
+
+    @media (max-width: 768px) {
+        .col-md-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .report-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .report-actions button {
+            width: 100%;
+        }
+    }
+
+    @media print {
+        .report-form, .button-group, .report-actions, .header-bar, .sidebar {
+            display: none !important;
+        }
+
+        .report-results {
+            margin-top: 0;
+        }
+    }
+</style>

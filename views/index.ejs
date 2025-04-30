@@ -1,0 +1,138 @@
+<!-- Home Page -->
+<div class="welcome-container">
+    <div class="welcome-header">
+        <h1>Welcome to Fleet Management System</h1>
+        <p class="welcome-subtitle">Complete Loading & Packing Solution</p>
+    </div>
+
+    <div class="welcome-content">
+        <p>This system helps you manage your truck loads, projects, packing lists, and more.</p>
+
+        <div class="welcome-features">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-truck-loading"></i></div>
+                <h3>Load Management</h3>
+                <p>Track truck loads, skids, and weight capacity</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-briefcase"></i></div>
+                <h3>Project Management</h3>
+                <p>Organize loads by project with detailed tracking</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-clipboard-list"></i></div>
+                <h3>Packing Lists</h3>
+                <p>Generate and print delivery documentation</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                <h3>Reports</h3>
+                <p>Generate analytics and summaries</p>
+            </div>
+        </div>
+
+        <div class="welcome-actions">
+            <a href="/dashboard" class="btn btn-primary">
+                <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+            </a>
+
+            <a href="/loads/create" class="btn btn-success">
+                <i class="fas fa-plus"></i> Create New Load
+            </a>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('styles') %>
+<style>
+    .welcome-container {
+        background-color: var(--white);
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .welcome-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .welcome-header h1 {
+        color: var(--primary-blue);
+        margin-bottom: 10px;
+    }
+
+    .welcome-subtitle {
+        color: var(--text-muted);
+        font-size: 1.2rem;
+    }
+
+    .welcome-content {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .welcome-content > p {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+    }
+
+    .welcome-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .feature-card {
+        background-color: var(--light-gray);
+        padding: 25px;
+        border-radius: var(--border-radius);
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+        color: var(--primary-blue);
+        margin-bottom: 15px;
+    }
+
+    .feature-card h3 {
+        margin: 0 0 10px 0;
+        font-size: 1.3rem;
+        color: var(--dark-gray);
+    }
+
+    .feature-card p {
+        margin: 0;
+        color: var(--text-muted);
+    }
+
+    .welcome-actions {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .welcome-actions {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .welcome-actions .btn {
+            width: 100%;
+        }
+    }
+</style>

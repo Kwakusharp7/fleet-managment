@@ -1,0 +1,75 @@
+<!-- Edit User Form -->
+<div class="data-container">
+    <div class="data-header">
+        <h3>Edit User: <%= userToEdit.username %></h3>
+    </div>
+
+    <form action="/users/<%= userToEdit._id %>?_method=PUT" method="POST" class="form">
+        <div class="form-group">
+            <label for="username">Username <span class="required-indicator">*</span></label>
+            <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'username') ? 'is-invalid' : '' %>"
+                    value="<%= userToEdit.username %>"
+                    required
+                    minlength="3"
+                    maxlength="30"
+            >
+            <small class="form-text text-muted">Username must be at least 3 characters long</small>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'password') ? 'is-invalid' : '' %>"
+                    minlength="6"
+            >
+            <small class="form-text text-muted">Leave blank to keep current password</small>
+        </div>
+
+        <div class="form-group">
+            <label for="role">Role</label>
+            <select id="role" name="role" class="form-control" <%= user && user._id.toString() === userToEdit._id.toString() && userToEdit.role === 'Admin' ? 'disabled' : '' %>>
+                <option value="Viewer" <%= userToEdit.role === 'Viewer' ? 'selected' : '' %>>Viewer (Read Only)</option>
+                <option value="Admin" <%= userToEdit.role === 'Admin' ? 'selected' : '' %>>Administrator</option>
+            </select>
+            <% if (user && user._id.toString() === userToEdit._id.toString() && userToEdit.role === 'Admin') { %>
+                <small class="form-text text-muted">You cannot change your own admin role</small>
+                <!-- Hidden input to ensure value is submitted even if select is disabled -->
+                <input type="hidden" name="role" value="<%= userToEdit.role %>">
+            <% } %>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="form-control" <%= user && user._id.toString() === userToEdit._id.toString() ? 'disabled' : '' %>>
+                <option value="Active" <%= userToEdit.status === 'Active' ? 'selected' : '' %>>Active</option>
+                <option value="Inactive" <%= userToEdit.status === 'Inactive' ? 'selected' : '' %>>Inactive</option>
+            </select>
+            <% if (user && user._id.toString() === userToEdit._id.toString()) { %>
+                <small class="form-text text-muted">You cannot change your own status</small>
+                <!-- Hidden input to ensure value is submitted even if select is disabled -->
+                <input type="hidden" name="status" value="<%= userToEdit.status %>">
+            <% } %>
+        </div>
+
+        <div class="form-group">
+            <label>Last Login</label>
+            <p><%= userToEdit.lastLogin ? new Date(userToEdit.lastLogin).toLocaleString() : 'Never' %></p>
+        </div>
+
+        <div class="button-group">
+            <a href="/users" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Update User
+            </button>
+        </div>
+    </form>
+</div>

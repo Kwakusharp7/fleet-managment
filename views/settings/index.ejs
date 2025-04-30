@@ -1,0 +1,113 @@
+<!-- Settings Page -->
+<div class="data-container">
+    <div class="data-header">
+        <h3>System Settings</h3>
+    </div>
+
+    <form action="/settings" method="POST" class="form">
+        <div class="setting-section">
+            <h4 class="section-title">General Settings</h4>
+
+            <div class="form-group">
+                <label for="weightUnit">Weight Unit</label>
+                <select id="weightUnit" name="weightUnit" class="form-control">
+                    <option value="lbs" <%= settings.weightUnit === 'lbs' ? 'selected' : '' %>>Pounds (lbs)</option>
+                <option value="kg" <%= settings.weightUnit === 'kg' ? 'selected' : '' %>>Kilograms (kg)</option>
+        </select>
+        <small class="form-text text-muted">Unit used for weight measurements throughout the application</small>
+</div>
+
+<div class="form-group">
+    <label for="dimensionUnit">Dimension Unit</label>
+    <select id="dimensionUnit" name="dimensionUnit" class="form-control">
+        <option value="ft" <%= settings.dimensionUnit === 'ft' ? 'selected' : '' %>>Feet (ft)</option>
+    <option value="m" <%= settings.dimensionUnit === 'm' ? 'selected' : '' %>>Meters (m)</option>
+</select>
+<small class="form-text text-muted">Unit used for dimension measurements throughout the application</small>
+</div>
+</div>
+
+<div class="setting-section">
+    <h4 class="section-title">Notification Settings</h4>
+
+    <div class="form-group">
+        <label for="adminEmail">Admin Email</label>
+        <input type="email" id="adminEmail" name="adminEmail" class="form-control"
+               value="<%= settings.adminEmail %>"
+               placeholder="Enter email for notifications">
+            <small class="form-text text-muted">Email address for system notifications</small>
+    </div>
+
+    <div class="form-group">
+        <label for="emailNotifications">Email Notifications</label>
+        <select id="emailNotifications" name="emailNotifications" class="form-control">
+            <option value="enabled" <%= settings.emailNotifications === 'enabled' ? 'selected' : '' %>>Enabled</option>
+        <option value="disabled" <%= settings.emailNotifications === 'disabled' ? 'selected' : '' %>>Disabled</option>
+</select>
+<small class="form-text text-muted">Enable or disable email notifications</small>
+</div>
+</div>
+
+<div class="setting-section">
+    <h4 class="section-title">Application Settings</h4>
+
+    <div class="form-group">
+        <label for="companyName">Company Name</label>
+        <input type="text" id="companyName" name="companyName" class="form-control"
+               value="<%= settings.companyName || 'Desa Systems' %>"
+               placeholder="Enter company name">
+            <small class="form-text text-muted">Company name to display in reports and packing lists</small>
+    </div>
+
+    <div class="form-group">
+        <label for="companyAddress">Company Address</label>
+        <textarea id="companyAddress" name="companyAddress" class="form-control"
+                  placeholder="Enter company address" rows="3"><%= settings.companyAddress || '285079 Bluegrass Drive\nRocky View, AB T1X 0P5\nCanada' %></textarea>
+        <small class="form-text text-muted">Company address to display in reports and packing lists</small>
+    </div>
+
+    <div class="form-group">
+        <label for="companyPhone">Company Phone</label>
+        <input type="text" id="companyPhone" name="companyPhone" class="form-control"
+               value="<%= settings.companyPhone || '403.230.5011' %>"
+               placeholder="Enter company phone">
+            <small class="form-text text-muted">Company phone to display in reports and packing lists</small>
+    </div>
+</div>
+
+<div class="button-group">
+    <a href="/dashboard" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> Save Settings
+    </button>
+</div>
+</form>
+</div>
+
+<%- contentFor('styles') %>
+<style>
+.setting-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--medium-gray);
+}
+
+.setting-section:last-of-type {
+    border-bottom: none;
+}
+
+.section-title {
+    color: var(--primary-blue);
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.form-text {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+</style>

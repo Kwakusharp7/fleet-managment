@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %>Desa - Fleet Management</title>
+    <link rel="icon" type="image/png" href="/img/favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Page-specific CSS -->
+    <% if (typeof styles !== 'undefined') { %>
+        <%- styles %>
+    <% } %>
+</head>
+<body>
+<!-- Sidebar Navigation -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <img src="/img/img.webp" alt="Desa Logo" class="sidebar-logo">
+        <h2 class="sidebar-title">Fleet Management</h2>
+    </div>
+    <%- include('../partials/sidebar') %>
+    <div class="sidebar-footer">
+        © <%= new Date().getFullYear() %> Desa Systems
+    </div>
+</aside>
+
+<!-- Main Content Area -->
+<main class="main-content">
+    <!-- Header Bar -->
+    <header class="header-bar">
+        <div class="header-title">
+            <h1 id="pageTitle"><%= typeof title !== 'undefined' ? title : 'Dashboard' %></h1>
+        </div>
+        <div class="header-actions">
+            <div class="user-profile">
+                <i class="fas fa-user-circle"></i>
+                <span><%= user ? user.username : 'Guest' %></span>
+            </div>
+            <a href="/logout" class="logout-btn" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+        <%- include('../partials/messages') %>
+        <%- body %>
+    </div>
+</main>
+
+<!-- Common JS -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+<!-- Page-specific JS -->
+<% if (typeof scripts !== 'undefined') { %>
+    <%- scripts %>
+<% } %>
+</body>
+</html>

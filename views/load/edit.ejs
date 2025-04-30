@@ -1,0 +1,534 @@
+<!-- Edit Load Form -->
+<div class="data-container">
+    <div class="data-header">
+        <h3>Edit Load: <%= load.truckId %></h3>
+    </div>
+
+    <form action="/loads/<%= load._id %>?_method=PUT" method="POST" class="form" id="editLoadForm">
+        <div class="form-group">
+            <label for="truckId">Truck ID <span class="required-indicator">*</span></label>
+            <input
+                    type="text"
+                    id="truckId"
+                    name="truckId"
+                    class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'truckId') ? 'is-invalid' : '' %>"
+                    value="<%= load.truckId %>"
+                    required
+                    placeholder="Enter truck ID or license plate"
+            >
+            <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'truckId')) { %>
+                <div class="invalid-feedback">
+                    <%= errors.find(err => err.param === 'truckId').msg %>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="form-control">
+                <option value="Planned" <%= load.status === 'Planned' ? 'selected' : '' %>>Planned</option>
+                <option value="Loaded" <%= load.status === 'Loaded' ? 'selected' : '' %>>Loaded</option>
+                <option value="Delivered" <%= load.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="projectCode">Project <span class="required-indicator">*</span></label>
+            <select
+                    id="projectCode"
+                    name="projectCode"
+                    class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'projectCode') ? 'is-invalid' : '' %>"
+                    required
+            >
+                <option value="" disabled>Select a Project...</option>
+                <% if (projects && projects.length > 0) { %>
+                    <% projects.forEach(project => { %>
+                        <option value="<%= project.code %>" <%= load.projectCode === project.code ? 'selected' : '' %>>
+                            <%= project.code %> – <%= project.name %>
+                        </option>
+                    <% }); %>
+                <% } %>
+            </select>
+            <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'projectCode')) { %>
+                <div class="invalid-feedback">
+                    <%= errors.find(err => err.param === 'projectCode').msg %>
+                </div>
+            <% } %>
+        </div>
+
+        <fieldset>
+            <legend>Truck Information</legend>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="length">Length <span class="unit-label">(feet)</span> <span class="required-indicator">*</span></label>
+                        <input
+                                type="number"
+                                id="length"
+                                name="length"
+                                class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'length') ? 'is-invalid' : '' %>"
+                                value="<%= load.truckInfo.length %>"
+                                min="1"
+                                step="0.01"
+                                required
+                                placeholder="e.g., 53"
+                        >
+                        <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'length')) { %>
+                            <div class="invalid-feedback">
+                                <%= errors.find(err => err.param === 'length').msg %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="width">Width <span class="unit-label">(feet)</span> <span class="required-indicator">*</span></label>
+                        <input
+                                type="number"
+                                id="width"
+                                name="width"
+                                class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'width') ? 'is-invalid' : '' %>"
+                                value="<%= load.truckInfo.width %>"
+                                min="1"
+                                step="0.01"
+                                required
+                                placeholder="e.g., 8.5"
+                        >
+                        <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'width')) { %>
+                            <div class="invalid-feedback">
+                                <%= errors.find(err => err.param === 'width').msg %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="weight">Weight Capacity <span class="unit-label">(pounds)</span> <span class="required-indicator">*</span></label>
+                        <input
+                                type="number"
+                                id="weight"
+                                name="weight"
+                                class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'weight') ? 'is-invalid' : '' %>"
+                                value="<%= load.truckInfo.weight %>"
+                                min="1000"
+                                step="1"
+                                required
+                                placeholder="e.g., 45000"
+                        >
+                        <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'weight')) { %>
+                            <div class="invalid-feedback">
+                                <%= errors.find(err => err.param === 'weight').msg %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <h4 class="section-title">Skids</h4>
+
+        <!-- Skid management interface -->
+        <div class="skid-management">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Skid ID</th>
+                        <th>Width (ft)</th>
+                        <th>Length (ft)</th>
+                        <th>Weight (lbs)</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="skidTableBody">
+                    <% if (load.skids && load.skids.length > 0) { %>
+                        <% load.skids.forEach((skid, index) => { %>
+                            <tr data-index="<%= index %>">
+                                <td><%= skid.id %></td>
+                                <td><%= skid.width.toFixed(2) %></td>
+                                <td><%= skid.length.toFixed(2) %></td>
+                                <td><%= skid.weight.toFixed(2) %></td>
+                                <td><%= skid.description || '-' %></td>
+                                <td class="action-buttons">
+                                    <button type="button" class="btn btn-sm btn-primary edit-skid" data-index="<%= index %>">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger delete-skid" data-index="<%= index %>">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" class="text-center">No skids added</td>
+                        </tr>
+                    <% } %>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td colspan="6">
+                            <button type="button" id="addSkidBtn" class="btn btn-sm btn-success">
+                                <i class="fas fa-plus"></i> Add Skid
+                            </button>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Skid edit form (initially hidden) -->
+            <div id="skidFormContainer" class="skid-form-container" style="display: none;">
+                <h5 id="skidFormTitle">Add New Skid</h5>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="skidWidth">Width <span class="unit-label">(feet)</span> <span class="required-indicator">*</span></label>
+                            <input type="number" id="skidWidth" class="form-control" min="0.1" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="skidLength">Length <span class="unit-label">(feet)</span> <span class="required-indicator">*</span></label>
+                            <input type="number" id="skidLength" class="form-control" min="0.1" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="skidWeight">Weight <span class="unit-label">(pounds)</span> <span class="required-indicator">*</span></label>
+                            <input type="number" id="skidWeight" class="form-control" min="1" step="1" required>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="skidDescription">Description</label>
+                            <input type="text" id="skidDescription" class="form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="skid-form-actions">
+                    <input type="hidden" id="skidIndex" value="">
+                    <button type="button" id="cancelSkidBtn" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" id="saveSkidBtn" class="btn btn-sm btn-primary">
+                        <i class="fas fa-save"></i> Save Skid
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden input to store skids data -->
+        <input type="hidden" id="skids" name="skids" value="">
+
+        <div class="button-group">
+            <a href="/loads/<%= load._id %>" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Update Load
+            </button>
+        </div>
+    </form>
+</div>
+
+<%- contentFor('styles') %>
+<style>
+    fieldset {
+        border: 1px solid var(--medium-gray);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    legend {
+        width: auto;
+        padding: 0 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-blue);
+    }
+
+    .unit-label {
+        font-weight: normal;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .section-title {
+        margin-top: 20px;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        color: var(--primary-blue);
+        font-weight: 600;
+    }
+
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 80%;
+        color: var(--danger-red);
+    }
+
+    .required-indicator {
+        color: var(--danger-red);
+    }
+
+    .skid-management {
+        margin-bottom: 30px;
+    }
+
+    .skid-form-container {
+        background-color: var(--light-gray);
+        padding: 20px;
+        border-radius: var(--border-radius);
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+
+    .skid-form-container h5 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .skid-form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    @media (max-width: 768px) {
+        .row {
+            flex-direction: column;
+            margin: 0;
+        }
+
+        .col-md-3, .col-md-4 {
+            width: 100%;
+            padding: 0;
+            margin-bottom: 15px;
+        }
+    }
+</style>
+
+<%- contentFor('scripts') %>
+<script>
+    // Initialize variables to store skids data
+    let skidsData = [];
+
+    // Initialize on document ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load existing skids data
+        initializeSkidsData();
+
+        // Set up event listeners
+        document.getElementById('addSkidBtn').addEventListener('click', showAddSkidForm);
+        document.getElementById('cancelSkidBtn').addEventListener('click', hideSkidForm);
+        document.getElementById('saveSkidBtn').addEventListener('click', saveSkid);
+
+        // Set up event delegation for dynamic buttons
+        document.getElementById('skidTableBody').addEventListener('click', function(e) {
+            if (e.target.classList.contains('edit-skid') || e.target.parentElement.classList.contains('edit-skid')) {
+                const btn = e.target.classList.contains('edit-skid') ? e.target : e.target.parentElement;
+                const index = btn.getAttribute('data-index');
+                editSkid(index);
+            } else if (e.target.classList.contains('delete-skid') || e.target.parentElement.classList.contains('delete-skid')) {
+                const btn = e.target.classList.contains('delete-skid') ? e.target : e.target.parentElement;
+                const index = btn.getAttribute('data-index');
+                deleteSkid(index);
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('editLoadForm').addEventListener('submit', function(e) {
+            // Update hidden input with skids data
+            document.getElementById('skids').value = JSON.stringify(skidsData);
+        });
+    });
+
+    // Initialize skids data from existing load
+    function initializeSkidsData() {
+        try {
+            skidsData = <%- JSON.stringify(load.skids || []) %>;
+        } catch (e) {
+            console.error('Error parsing skids data:', e);
+            skidsData = [];
+        }
+    }
+
+    // Show add skid form
+    function showAddSkidForm() {
+        // Reset form
+        document.getElementById('skidFormTitle').textContent = 'Add New Skid';
+        document.getElementById('skidIndex').value = '';
+        document.getElementById('skidWidth').value = '';
+        document.getElementById('skidLength').value = '';
+        document.getElementById('skidWeight').value = '';
+        document.getElementById('skidDescription').value = '';
+
+        // Show form
+        document.getElementById('skidFormContainer').style.display = 'block';
+
+        // Focus first field
+        document.getElementById('skidWidth').focus();
+    }
+
+    // Show edit skid form
+    function editSkid(index) {
+        const skid = skidsData[index];
+        if (!skid) return;
+
+        // Set form title
+        document.getElementById('skidFormTitle').textContent = `Edit Skid: ${skid.id}`;
+
+        // Set form values
+        document.getElementById('skidIndex').value = index;
+        document.getElementById('skidWidth').value = skid.width;
+        document.getElementById('skidLength').value = skid.length;
+        document.getElementById('skidWeight').value = skid.weight;
+        document.getElementById('skidDescription').value = skid.description || '';
+
+        // Show form
+        document.getElementById('skidFormContainer').style.display = 'block';
+
+        // Focus first field
+        document.getElementById('skidWidth').focus();
+    }
+
+    // Hide skid form
+    function hideSkidForm() {
+        document.getElementById('skidFormContainer').style.display = 'none';
+    }
+
+    // Save skid
+    function saveSkid() {
+        // Get form values
+        const width = parseFloat(document.getElementById('skidWidth').value);
+        const length = parseFloat(document.getElementById('skidLength').value);
+        const weight = parseFloat(document.getElementById('skidWeight').value);
+        const description = document.getElementById('skidDescription').value;
+
+        // Validate
+        if (isNaN(width) || width <= 0) {
+            alert('Width must be a positive number');
+            document.getElementById('skidWidth').focus();
+            return;
+        }
+
+        if (isNaN(length) || length <= 0) {
+            alert('Length must be a positive number');
+            document.getElementById('skidLength').focus();
+            return;
+        }
+
+        if (isNaN(weight) || weight <= 0) {
+            alert('Weight must be a positive number');
+            document.getElementById('skidWeight').focus();
+            return;
+        }
+
+        // Get index from hidden input
+        const index = document.getElementById('skidIndex').value;
+
+        if (index === '') {
+            // Add new skid
+            const newSkid = {
+                id: generateSkidId(),
+                width,
+                length,
+                weight,
+                description
+            };
+
+            skidsData.push(newSkid);
+        } else {
+            // Update existing skid
+            skidsData[index] = {
+                ...skidsData[index],
+                width,
+                length,
+                weight,
+                description
+            };
+        }
+
+        // Update table
+        renderSkidsTable();
+
+        // Hide form
+        hideSkidForm();
+    }
+
+    // Delete skid
+    function deleteSkid(index) {
+        if (confirm('Are you sure you want to delete this skid?')) {
+            skidsData.splice(index, 1);
+            renderSkidsTable();
+        }
+    }
+
+    // Generate a unique skid ID
+    function generateSkidId() {
+        // Find existing skid IDs that use number format
+        const existingIds = skidsData
+            .map(skid => skid.id)
+            .filter(id => id.startsWith('SKID-'))
+            .map(id => parseInt(id.replace('SKID-', ''), 10))
+            .filter(num => !isNaN(num));
+
+        // Find the next available number
+        const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0;
+        const nextId = maxId + 1;
+
+        return `SKID-${nextId}`;
+    }
+
+    // Render skids table
+    function renderSkidsTable() {
+        const tbody = document.getElementById('skidTableBody');
+        tbody.innerHTML = '';
+
+        if (skidsData.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="6" class="text-center">No skids added</td>';
+            tbody.appendChild(row);
+            return;
+        }
+
+        skidsData.forEach((skid, index) => {
+            const row = document.createElement('tr');
+            row.setAttribute('data-index', index);
+
+            row.innerHTML = `
+                <td>${skid.id}</td>
+                <td>${skid.width.toFixed(2)}</td>
+                <td>${skid.length.toFixed(2)}</td>
+                <td>${skid.weight.toFixed(2)}</td>
+                <td>${skid.description || '-'}</td>
+                <td class="action-buttons">
+                    <button type="button" class="btn btn-sm btn-primary edit-skid" data-index="${index}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger delete-skid" data-index="${index}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        });
+    }
+</script>

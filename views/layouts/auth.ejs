@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %>Desa - Fleet Management</title>
+    <link rel="icon" type="image/png" href="/img/favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--light-gray);
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            margin: 20px;
+        }
+
+        .auth-header {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 25px 30px;
+            text-align: center;
+            border-bottom: 5px solid var(--secondary-blue);
+        }
+
+        .auth-header img {
+            display: block;
+            height: 50px;
+            width: auto;
+            margin: 0 auto 15px auto;
+        }
+
+        .auth-header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .auth-header p {
+            margin: 5px 0 0;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .auth-content {
+            padding: 30px;
+        }
+
+        .auth-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .auth-form .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .auth-links {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .auth-links a {
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="auth-container">
+    <div class="auth-header">
+        <img src="/img/img.webp" alt="Desa Logo" class="header-logo">
+        <h1>Fleet Management</h1>
+        <p><%= typeof title !== 'undefined' ? title : 'Login' %></p>
+    </div>
+
+    <div class="auth-content">
+        <%- include('../partials/messages') %>
+        <%- body %>
+    </div>
+</div>
+
+<!-- Common JS -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</body>
+</html>

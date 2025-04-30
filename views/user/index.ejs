@@ -1,0 +1,59 @@
+<!-- User Management -->
+<div class="data-container">
+    <div class="data-header">
+        <h3>User Management</h3>
+        <div class="search-bar">
+            <a href="/users/create" class="btn btn-success">
+                <i class="fas fa-user-plus"></i> Add User
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table" id="usersTable">
+            <thead>
+            <tr>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% if (users && users.length > 0) { %>
+                <% users.forEach(userItem => { %>
+                    <tr>
+                        <td><%= userItem.username %></td>
+                        <td><%= userItem.role %></td>
+                        <td>
+                            <% if (userItem.status === 'Active') { %>
+                                <span class="status-badge status-active">Active</span>
+                            <% } else { %>
+                                <span class="status-badge status-inactive">Inactive</span>
+                            <% } %>
+                        </td>
+                        <td><%= userItem.lastLogin ? new Date(userItem.lastLogin).toLocaleString() : 'Never' %></td>
+                        <td class="action-buttons">
+                            <a href="/users/<%= userItem._id %>/edit" title="Edit User">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <% if (userItem.username !== 'admin' && user && userItem._id.toString() !== user._id.toString()) { %>
+                                <form action="/users/<%= userItem._id %>?_method=DELETE" method="POST" class="delete-form" style="display:inline;">
+                                    <button type="submit" class="delete" title="Delete User" onclick="return confirm('Are you sure you want to delete this user?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }); %>
+            <% } else { %>
+                <tr>
+                    <td colspan="5" style="text-align:center;">No users found.</td>
+                </tr>
+            <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>

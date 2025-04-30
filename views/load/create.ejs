@@ -1,0 +1,167 @@
+<!-- Create Load Form -->
+<div class="data-container">
+    <div class="data-header">
+        <h3>Create New Load</h3>
+    </div>
+
+    <form action="/loads" method="POST" class="form" id="createLoadForm">
+        <div class="form-group">
+            <label for="truckId">Truck ID <span class="required-indicator">*</span></label>
+            <input
+                    type="text"
+                    id="truckId"
+                    name="truckId"
+                    class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'truckId') ? 'is-invalid' : '' %>"
+                    value="<%= typeof formData !== 'undefined' ? formData.truckId || '' : '' %>"
+                    required
+                    placeholder="Enter truck ID or license plate"
+            >
+            <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'truckId')) { %>
+                <div class="invalid-feedback">
+                    <%= errors.find(err => err.param === 'truckId').msg %>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="form-group">
+            <label for="projectCode">Project <span class="required-indicator">*</span></label>
+            <select
+                    id="projectCode"
+                    name="projectCode"
+                    class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'projectCode') ? 'is-invalid' : '' %>"
+                    required
+            >
+                <option value="" disabled selected>Select a Project...</option>
+                <% if (projects && projects.length > 0) { %>
+                    <% projects.forEach(project => { %>
+                        <option value="<%= project.code %>" <%= typeof formData !== 'undefined' && formData.projectCode === project.code ? 'selected' : '' %>>
+                            <%= project.code %> – <%= project.name %>
+                        </option>
+                    <% }); %>
+                <% } %>
+            </select>
+            <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'projectCode')) { %>
+                <div class="invalid-feedback">
+                    <%= errors.find(err => err.param === 'projectCode').msg %>
+                </div>
+            <% } %>
+        </div>
+
+        <fieldset>
+            <legend>Truck Information</legend>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="length">Length <span class="unit-label">(feet)</span> <span class="required-indicator">*</span></label>
+                        <input
+                                type="number"
+                                id="length"
+                                name="length"
+                                class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'length') ? 'is-invalid' : '' %>"
+                                value="<%= typeof formData !== 'undefined' ? formData.length || '' : '' %>"
+                                min="1"
+                                step="0.01"
+                                required
+                                placeholder="e.g., 53"
+                        >
+                        <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'length')) { %>
+                            <div class="invalid-feedback">
+                                <%= errors.find(err => err.param === 'length').msg %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="width">Width <span class="unit-label">(feet)</span> <span class="required-indicator">*</span></label>
+                        <input
+                                type="number"
+                                id="width"
+                                name="width"
+                                class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'width') ? 'is-invalid' : '' %>"
+                                value="<%= typeof formData !== 'undefined' ? formData.width || '' : '' %>"
+                                min="1"
+                                step="0.01"
+                                required
+                                placeholder="e.g., 8.5"
+                        >
+                        <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'width')) { %>
+                            <div class="invalid-feedback">
+                                <%= errors.find(err => err.param === 'width').msg %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="weight">Weight Capacity <span class="unit-label">(pounds)</span> <span class="required-indicator">*</span></label>
+                        <input
+                                type="number"
+                                id="weight"
+                                name="weight"
+                                class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'weight') ? 'is-invalid' : '' %>"
+                                value="<%= typeof formData !== 'undefined' ? formData.weight || '' : '' %>"
+                                min="1000"
+                                step="1"
+                                required
+                                placeholder="e.g., 45000"
+                        >
+                        <% if (typeof errors !== 'undefined' && errors.find(err => err.param === 'weight')) { %>
+                            <div class="invalid-feedback">
+                                <%= errors.find(err => err.param === 'weight').msg %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Hidden fields for skids and packing list data -->
+        <input type="hidden" id="skids" name="skids" value="[]">
+        <input type="hidden" id="packingList" name="packingList" value="{}">
+
+        <div class="button-group">
+            <a href="/loads" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Create Load
+            </button>
+        </div>
+    </form>
+</div>
+
+<%- contentFor('styles') %>
+<style>
+    fieldset {
+        border: 1px solid var(--medium-gray);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    legend {
+        width: auto;
+        padding: 0 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-blue);
+    }
+
+    .unit-label {
+        font-weight: normal;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 80%;
+        color: var(--danger-red);
+    }
+</style>
