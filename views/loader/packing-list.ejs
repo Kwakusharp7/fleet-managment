@@ -27,7 +27,7 @@
                     </div>
                     <div class="form-field">
                         <label for="workOrder">WORK ORDER NO.:</label>
-                        <input type="text" id="workOrder" name="workOrder" class="form-control" value="<%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : project.workOrder || '' %>" readonly>
+                        <input type="text" id="workOrder" name="workOrder" class="form-control" value="<%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : project.code || '' %>" readonly>
                     </div>
                 </div>
                 <div class="form-field">
