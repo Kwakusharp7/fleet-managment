@@ -1,0 +1,163 @@
+<!-- Print View for Truck Load -->
+<div class="print-container">
+    <div class="print-header">
+        <div class="logo-container">
+            <img src="/img/img.webp" alt="Desa Logo">
+        </div>
+        <div class="title-container">
+            <h1 class="print-title">TRUCK LOAD <%= load.truckId %></h1>
+            <p class="print-subtitle">DESA PANELS - PACKING LIST</p>
+        </div>
+        <div class="print-info">
+            <p><strong>Date:</strong> <%= formattedDate %></p>
+        </div>
+    </div>
+
+    <!-- Project Information -->
+    <div class="section">
+        <h2 class="section-title">Project Information</h2>
+        <div class="info-group">
+            <div class="info-item"><strong>Project Code:</strong> <%= project.code %></div>
+            <div class="info-item"><strong>Project Name:</strong> <%= project.name %></div>
+            <div class="info-item"><strong>Work Order:</strong> <%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : project.workOrder || 'N/A' %></div>
+            <div class="info-item"><strong>Address:</strong> <%= project.address || 'N/A' %></div>
+        </div>
+    </div>
+
+    <!-- Truck Information -->
+    <div class="section">
+        <h2 class="section-title">Truck Information</h2>
+        <div class="info-group">
+            <div class="info-item"><strong>Truck ID:</strong> <%= load.truckId %></div>
+            <div class="info-item"><strong>Status:</strong> <%= load.status %></div>
+            <div class="info-item"><strong>Length:</strong> <%= load.truckInfo.length %> ft</div>
+            <div class="info-item"><strong>Width:</strong> <%= load.truckInfo.width %> ft</div>
+            <div class="info-item"><strong>Weight Capacity:</strong> <%= load.truckInfo.weight.toLocaleString() %> lbs</div>
+            <div class="info-item"><strong>Date Entered:</strong> <%= new Date(load.dateEntered).toLocaleString() %></div>
+        </div>
+    </div>
+
+    <!-- Load Summary -->
+    <div class="section">
+        <h2 class="section-title">Load Summary</h2>
+        <div class="info-group">
+            <div class="info-item"><strong>Total Skids:</strong> <%= load.skids.length %></div>
+            <div class="info-item"><strong>Total Weight:</strong> <%= load.totalWeight ? load.totalWeight.toFixed(2) : '0.00' %> lbs</div>
+            <div class="info-item"><strong>Space Utilization:</strong> <%= spaceUtilization.formattedPercentage %></div>
+            <div class="info-item"><strong>Weight Status:</strong> <%= isOverweight ? 'OVERWEIGHT' : 'Within Capacity' %></div>
+        </div>
+
+        <% if (isOverweight) { %>
+            <div class="warning">
+                <strong>WARNING:</strong> This load exceeds the truck's weight capacity by <%= (load.totalWeight - load.truckInfo.weight).toFixed(2) %> lbs.
+            </div>
+        <% } %>
+
+        <% if (spaceUtilization.percentage > 100) { %>
+            <div class="notice">
+                <strong>NOTICE:</strong> This load's theoretical area exceeds the truck's floor space. Verify that items are properly stacked or arranged.
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Skid Details -->
+    <div class="section">
+        <h2 class="section-title">Skid Details</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Skid #</th>
+                <th>Width (ft)</th>
+                <th>Length (ft)</th>
+                <th>Weight (lbs)</th>
+                <th>Description</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% load.skids.forEach((skid, index) => { %>
+                <tr>
+                    <td><%= index + 1 %></td>
+                    <td><%= skid.width.toFixed(2) %></td>
+                    <td><%= skid.length.toFixed(2) %></td>
+                    <td><%= skid.weight.toFixed(2) %></td>
+                    <td><%= skid.description || '-' %><%= skid.originalInvId ? ` (from ${skid.originalInvId})` : '' %></td>
+                </tr>
+            <% }); %>
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
+                <td><strong><%= load.totalWeight ? load.totalWeight.toFixed(2) : '0.00' %></strong></td>
+                <td></td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Delivery Information -->
+    <% if (load.packingList) { %>
+        <div class="section">
+            <h2 class="section-title">Delivery Information</h2>
+            <div class="info-group">
+                <% if (load.packingList.requestedBy) { %>
+                    <div class="info-item"><strong>Requested By:</strong> <%= load.packingList.requestedBy %></div>
+                <% } %>
+                <% if (load.packingList.carrier) { %>
+                    <div class="info-item"><strong>Carrier:</strong> <%= load.packingList.carrier %></div>
+                <% } %>
+                <% if (load.packingList.consignee) { %>
+                    <div class="info-item"><strong>Consignee:</strong> <%= load.packingList.consignee %></div>
+                <% } %>
+                <% if (load.packingList.consigneeAddress) { %>
+                    <div class="info-item"><strong>Delivery Address:</strong> <%= load.packingList.consigneeAddress %></div>
+                <% } %>
+                <% if (load.packingList.siteContact) { %>
+                    <div class="info-item"><strong>Site Contact:</strong> <%= load.packingList.siteContact %></div>
+                <% } %>
+                <% if (load.packingList.sitePhone) { %>
+                    <div class="info-item"><strong>Site Phone:</strong> <%= load.packingList.sitePhone %></div>
+                <% } %>
+                <% if (load.packingList.deliveryDate) { %>
+                    <div class="info-item"><strong>Delivery Date:</strong> <%= new Date(load.packingList.deliveryDate).toLocaleDateString() %></div>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Processing Information</h2>
+            <div class="info-group">
+                <% if (load.packingList.packagedBy) { %>
+                    <div class="info-item"><strong>Packaged By:</strong> <%= load.packingList.packagedBy %></div>
+                <% } %>
+                <% if (load.packingList.checkedBy) { %>
+                    <div class="info-item"><strong>Loaded By:</strong> <%= load.packingList.checkedBy %></div>
+                <% } %>
+                <% if (load.packingList.receivedBy) { %>
+                    <div class="info-item"><strong>Received By:</strong> <%= load.packingList.receivedBy %></div>
+                <% } %>
+            </div>
+        </div>
+
+        <% if (load.packingList.signature) { %>
+            <div class="section signature-section">
+                <h2 class="section-title">Driver Signature</h2>
+                <div style="text-align: center;">
+                    <img src="<%= load.packingList.signature %>" alt="Driver Signature" style="max-width: 100%; max-height: 200px;">
+                </div>
+            </div>
+        <% } %>
+    <% } %>
+
+    <!-- Record Information -->
+    <div class="section">
+        <h2 class="section-title">Record Information</h2>
+        <div class="info-group">
+            <div class="info-item"><strong>Created By:</strong> <%= load.createdBy ? load.createdBy.username : 'System' %></div>
+            <div class="info-item"><strong>Created Date:</strong> <%= new Date(load.createdAt).toLocaleString() %></div>
+            <% if (load.updatedBy) { %>
+                <div class="info-item"><strong>Last Updated By:</strong> <%= load.updatedBy.username %></div>
+                <div class="info-item"><strong>Last Updated Date:</strong> <%= new Date(load.updatedAt).toLocaleString() %></div>
+            <% } %>
+        </div>
+    </div>
+</div>

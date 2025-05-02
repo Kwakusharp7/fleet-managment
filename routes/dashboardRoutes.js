@@ -2,9 +2,13 @@ const express = require('express');
 const router = express.Router();
 const dashboardController = require('../controllers/dashboardController');
 const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
+const { redirectToDashboard } = require('../middleware/roleRedirect');
 
 // Apply authentication middleware to all routes
 router.use(ensureAuthenticated);
+
+// Apply role-specific redirect middleware
+router.use(redirectToDashboard);
 
 // @route   GET /dashboard
 // @desc    Get dashboard

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %>Desa - Loading & Inventory System</title>
+    <link rel="icon" type="image/png" href="/img/favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet" href="/css/loader-style.css">
+    <!-- Page-specific CSS -->
+    <% if (typeof styles !== 'undefined') { %>
+        <%- styles %>
+    <% } %>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img src="/img/img.webp" alt="Desa Company Logo" class="header-logo">
+        <h1>Desa</h1>
+        <p>Loading & Inventory System</p>
+        <div class="user-info">
+            <span><%= user ? user.username : 'Guest' %> (<%= user ? user.role : 'Viewer' %>)</span>
+            <a href="/logout" class="logout-link" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- Flash Messages -->
+        <%- include('../partials/messages') %>
+
+        <!-- Main Content -->
+        <%- body %>
+    </div>
+
+    <div class="footer">
+        &copy; <%= new Date().getFullYear() %> Desa Systems
+    </div>
+</div>
+
+<!-- Common JS -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+<!-- Common Loader Functions -->
+<script>
+    // Select2 initialization
+    $(document).ready(function() {
+        $('.select2-control').select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+
+        // Auto-close flash messages
+        setTimeout(function() {
+            $('.alert').each(function() {
+                $(this).fadeOut('slow');
+            });
+        }, 5000);
+
+        // Add click event to all close buttons
+        $('.close-button').on('click', function() {
+            $(this).closest('.alert').fadeOut('slow');
+        });
+    });
+
+    // Form validation
+    function validateForm(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return true;
+
+        let isValid = true;
+        const requiredFields = form.querySelectorAll('[required]');
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+
+        return isValid;
+    }
+
+    // Print function
+    function printContent() {
+        window.print();
+    }
+</script>
+
+<!-- Page-specific JS -->
+<% if (typeof scripts !== 'undefined') { %>
+    <%- scripts %>
+<% } %>
+</body>
+</html>

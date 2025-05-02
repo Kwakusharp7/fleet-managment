@@ -36,6 +36,23 @@ exports.ensureAdmin = (req, res, next) => {
 };
 
 /**
+ * Ensure user has loader role or admin role
+ * If not, redirect to dashboard
+ */
+exports.ensureLoader = (req, res, next) => {
+    if (req && req.isAuthenticated && req.isAuthenticated() && req.user &&
+        (req.user.role === 'Loader' || req.user.role === 'Admin')) {
+        return next();
+    }
+
+    // Flash message
+    if (req && req.flash) {
+        req.flash('error_msg', 'You must have loader privileges to access this page');
+    }
+    res.redirect('/dashboard');
+};
+
+/**
  * Check if user is authenticated
  * Can be used for conditionally showing elements in templates
  */
@@ -52,32 +69,12 @@ exports.isAdmin = (req) => {
 };
 
 /**
- * Ensure user has loader role
- */
-exports.ensureLoader = (req, res, next) => {
-    if (req.isAuthenticated() && req.user.role === 'Loader') {
-        return next();
-    }
-
-    req.flash('error_msg', 'You must have loader privileges to access this page');
-    res.redirect('/');
-};
-
-/**
- * Redirect non-loader users to dashboard and loader users to loader interface
- */
-exports.redirectLoaderToDedicatedInterface = (req, res, next) => {
-    if (req.isAuthenticated() && req.user.role === 'Loader') {
-        return res.redirect('/loader');
-    }
-    next();
-};
-
-/**
  * Check if user has loader role
+ * Can be used for conditionally showing elements in templates
  */
 exports.isLoader = (req) => {
-    return req.isAuthenticated() && req.user.role === 'Loader';
+    return req && req.isAuthenticated && req.isAuthenticated() && req.user &&
+        (req.user.role === 'Loader' || req.user.role === 'Admin');
 };
 
 /**
@@ -88,7 +85,8 @@ exports.addAuthHelpers = (req, res, next) => {
     if (req && res) {
         res.locals.isAuthenticated = req.isAuthenticated ? req.isAuthenticated() : false;
         res.locals.isAdmin = req.isAuthenticated && req.isAuthenticated() && req.user && req.user.role === 'Admin';
-        res.locals.isLoader = req.isAuthenticated() && req.user.role === 'Loader';
+        res.locals.isLoader = req.isAuthenticated && req.isAuthenticated() && req.user &&
+            (req.user.role === 'Loader' || req.user.role === 'Admin');
         res.locals.user = req.user || null;
     }
     next();

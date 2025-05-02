@@ -8,7 +8,7 @@ const passport = require('passport');
 const methodOverride = require('method-override');
 const helmet = require('helmet');
 const config = require('./config/config');
-const { addAuthHelpers, redirectLoaderToDedicatedInterface} = require('./middleware/auth');
+const { addAuthHelpers } = require('./middleware/auth');
 const { globalErrorHandler, notFoundHandler } = require('./utils/errorHandler');
 
 // Initialize express
@@ -83,6 +83,25 @@ app.use((req, res, next) => {
 // Add authentication helpers to res.locals
 app.use(addAuthHelpers);
 
+// Set layout based on user role
+app.use((req, res, next) => {
+    // If user is authenticated and has loader role, set loader layout as default
+    if (req.isAuthenticated() && req.user && req.user.role === 'Loader') {
+        // Only set loader layout for loader routes
+        if (req.path.startsWith('/loader')) {
+            res.locals.layout = 'layouts/loader';
+        }
+    }
+
+    // For print routes, use print layout
+    if (req.path.includes('/print')) {
+        res.locals.layout = 'layouts/print';
+    }
+
+    next();
+});
+
+
 // Routes
 app.use('/', require('./routes/authRoutes'));
 app.use('/dashboard', require('./routes/dashboardRoutes'));
@@ -91,17 +110,64 @@ app.use('/projects', require('./routes/projectRoutes'));
 app.use('/users', require('./routes/userRoutes'));
 app.use('/reports', require('./routes/reportRoutes')); // Add reports routes
 app.use('/settings', require('./routes/settingsRoutes')); // Add settings routes
-// Apply loader redirection to dashboard routes
-app.use('/dashboard', redirectLoaderToDedicatedInterface, require('./routes/dashboardRoutes'));
-
-// Regular routes - not accessible to loaders who get redirected
-app.use('/loads', redirectLoaderToDedicatedInterface, require('./routes/loadRoutes'));
-app.use('/projects', redirectLoaderToDedicatedInterface, require('./routes/projectRoutes'));
-app.use('/users', redirectLoaderToDedicatedInterface, require('./routes/userRoutes'));
-
-// Loader-specific routes
 app.use('/loader', require('./routes/loaderRoutes'));
 
+// Add API route for loader stats
+app.get('/loader/stats', async (req, res) => {
+    try {
+        const Load = require('./models/Load');
+        const moment = require('moment');
+
+        // Get today's date range
+        const startOfToday = moment().startOf('day');
+        const endOfToday = moment().endOf('day');
+
+        // Get start of week
+        const startOfWeek = moment().startOf('week');
+
+        // Count planned loads
+        const plannedLoads = await Load.countDocuments({
+            status: 'Planned',
+            isInventory: { $ne: true } // Exclude inventory "loads"
+        });
+
+        // Count loads loaded today
+        const loadedToday = await Load.countDocuments({
+            status: 'Loaded',
+            updatedAt: {
+                $gte: startOfToday.toDate(),
+                $lte: endOfToday.toDate()
+            }
+        });
+
+        // Count delivered this week
+        const deliveredWeek = await Load.countDocuments({
+            status: 'Delivered',
+            updatedAt: {
+                $gte: startOfWeek.toDate()
+            }
+        });
+
+        // Count all skids added (in both inventory and loaded trucks)
+        const loadCounts = await Load.aggregate([
+            { $match: { createdAt: { $gte: startOfWeek.toDate() } } },
+            { $group: { _id: null, totalSkids: { $sum: "$skidCount" } } }
+        ]);
+
+        const skidsAdded = loadCounts.length > 0 ? loadCounts[0].totalSkids : 0;
+
+        // Return stats
+        res.json({
+            plannedLoads,
+            loadedToday,
+            deliveredWeek,
+            skidsAdded
+        });
+    } catch (err) {
+        console.error('Error fetching loader stats:', err);
+        res.status(500).json({ error: 'Failed to fetch loader stats' });
+    }
+});
 
 // 404 handler
 app.use(notFoundHandler);

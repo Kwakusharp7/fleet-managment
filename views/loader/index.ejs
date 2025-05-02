@@ -1,0 +1,154 @@
+<!-- ==== Job Selection ==== -->
+<div id="jobSelectionPage" class="page active">
+    <h2 class="section-title"><i class="fas fa-tasks"></i> Select Task</h2>
+    <div class="form-group" style="padding: 20px;">
+        <form action="/loader/project-selection" method="GET">
+            <label for="jobTypeSelect">Choose the task you want to perform:</label>
+            <select id="jobTypeSelect" name="task" class="form-control" required>
+                <option value="" disabled selected>-- Select Task Type --</option>
+                <option value="inventory">Inventory Skid Entry</option>
+                <option value="truckEntry">Truck Load Entry & Packing</option>
+            </select>
+
+            <div class="button-group" style="padding: 0 20px 20px;">
+                <a href="/dashboard" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-arrow-right"></i> Next: Select Project
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Dashboard Stats -->
+    <div class="dashboard-stats">
+        <h3 class="section-title" style="font-size: 1.2rem;"><i class="fas fa-chart-line"></i> Your Recent Activity</h3>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-truck-loading"></i>
+                    <h4>Planned Loads</h4>
+                </div>
+                <div class="stat-count" id="plannedLoads">Loading...</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-check-circle"></i>
+                    <h4>Loaded Today</h4>
+                </div>
+                <div class="stat-count" id="loadedToday">Loading...</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-clipboard-check"></i>
+                    <h4>Delivered This Week</h4>
+                </div>
+                <div class="stat-count" id="deliveredWeek">Loading...</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <i class="fas fa-boxes"></i>
+                    <h4>Skids Added</h4>
+                </div>
+                <div class="stat-count" id="skidsAdded">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this script to load the dashboard stats -->
+<%- contentFor('scripts') %>
+<script>
+    // Function to fetch loader stats
+    function fetchLoaderStats() {
+        fetch('/loader/stats')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update the stats on the page
+                document.getElementById('plannedLoads').textContent = data.plannedLoads || 0;
+                document.getElementById('loadedToday').textContent = data.loadedToday || 0;
+                document.getElementById('deliveredWeek').textContent = data.deliveredWeek || 0;
+                document.getElementById('skidsAdded').textContent = data.skidsAdded || 0;
+            })
+            .catch(error => {
+                console.error('Error fetching loader stats:', error);
+                // Set fallback values if fetch fails
+                document.getElementById('plannedLoads').textContent = '0';
+                document.getElementById('loadedToday').textContent = '0';
+                document.getElementById('deliveredWeek').textContent = '0';
+                document.getElementById('skidsAdded').textContent = '0';
+            });
+    }
+
+    // Call the function when the page loads
+    document.addEventListener('DOMContentLoaded', fetchLoaderStats);
+</script>
+
+<%- contentFor('styles') %>
+<style>
+    .dashboard-stats {
+        padding: 20px;
+        margin-top: 30px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .stat-card {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-header {
+        margin-bottom: 15px;
+    }
+
+    .stat-header i {
+        font-size: 2rem;
+        color: var(--primary-blue);
+    }
+
+    .stat-header h4 {
+        margin: 10px 0 0;
+        font-size: 1rem;
+        color: var(--text-muted);
+    }
+
+    .stat-count {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--dark-gray);
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+
+        .stat-count {
+            font-size: 1.5rem;
+        }
+    }
+</style>

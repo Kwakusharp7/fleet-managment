@@ -1,10 +1,10 @@
 <!-- Edit User Form -->
 <div class="data-container">
     <div class="data-header">
-        <h3>Edit User: <%= userToEdit.username %></h3>
+        <h3>Edit User: <%= user.username %></h3>
     </div>
 
-    <form action="/users/<%= userToEdit._id %>?_method=PUT" method="POST" class="form">
+    <form action="/users/<%= user._id %>?_method=PUT" method="POST" class="form">
         <div class="form-group">
             <label for="username">Username <span class="required-indicator">*</span></label>
             <input
@@ -12,7 +12,7 @@
                     id="username"
                     name="username"
                     class="form-control <%= typeof errors !== 'undefined' && errors.find(err => err.param === 'username') ? 'is-invalid' : '' %>"
-                    value="<%= userToEdit.username %>"
+                    value="<%= user.username %>"
                     required
                     minlength="3"
                     maxlength="30"
@@ -34,33 +34,40 @@
 
         <div class="form-group">
             <label for="role">Role</label>
-            <select id="role" name="role" class="form-control" <%= user && user._id.toString() === userToEdit._id.toString() && userToEdit.role === 'Admin' ? 'disabled' : '' %>>
-                <option value="Viewer" <%= userToEdit.role === 'Viewer' ? 'selected' : '' %>>Viewer (Read Only)</option>
-                <option value="Admin" <%= userToEdit.role === 'Admin' ? 'selected' : '' %>>Administrator</option>
+            <select id="role" name="role" class="form-control" <%= currentUser._id.toString() === user._id.toString() && user.role === 'Admin' ? 'disabled' : '' %>>
+                <option value="Viewer" <%= user.role === 'Viewer' ? 'selected' : '' %>>Viewer (Read Only)</option>
+                <option value="Loader" <%= user.role === 'Loader' ? 'selected' : '' %>>Loader (Inventory & Load Management)</option>
+                <option value="Admin" <%= user.role === 'Admin' ? 'selected' : '' %>>Administrator</option>
             </select>
-            <% if (user && user._id.toString() === userToEdit._id.toString() && userToEdit.role === 'Admin') { %>
+            <% if (currentUser._id.toString() === user._id.toString() && user.role === 'Admin') { %>
                 <small class="form-text text-muted">You cannot change your own admin role</small>
                 <!-- Hidden input to ensure value is submitted even if select is disabled -->
-                <input type="hidden" name="role" value="<%= userToEdit.role %>">
+                <input type="hidden" name="role" value="<%= user.role %>">
+            <% } else { %>
+                <small class="form-text text-muted">
+                    <strong>Viewer:</strong> Can view all data but cannot make changes<br>
+                    <strong>Loader:</strong> Can manage inventory and truck loads<br>
+                    <strong>Administrator:</strong> Full access to all features
+                </small>
             <% } %>
         </div>
 
         <div class="form-group">
             <label for="status">Status</label>
-            <select id="status" name="status" class="form-control" <%= user && user._id.toString() === userToEdit._id.toString() ? 'disabled' : '' %>>
-                <option value="Active" <%= userToEdit.status === 'Active' ? 'selected' : '' %>>Active</option>
-                <option value="Inactive" <%= userToEdit.status === 'Inactive' ? 'selected' : '' %>>Inactive</option>
+            <select id="status" name="status" class="form-control" <%= currentUser._id.toString() === user._id.toString() ? 'disabled' : '' %>>
+                <option value="Active" <%= user.status === 'Active' ? 'selected' : '' %>>Active</option>
+                <option value="Inactive" <%= user.status === 'Inactive' ? 'selected' : '' %>>Inactive</option>
             </select>
-            <% if (user && user._id.toString() === userToEdit._id.toString()) { %>
+            <% if (currentUser._id.toString() === user._id.toString()) { %>
                 <small class="form-text text-muted">You cannot change your own status</small>
                 <!-- Hidden input to ensure value is submitted even if select is disabled -->
-                <input type="hidden" name="status" value="<%= userToEdit.status %>">
+                <input type="hidden" name="status" value="<%= user.status %>">
             <% } %>
         </div>
 
         <div class="form-group">
             <label>Last Login</label>
-            <p><%= userToEdit.lastLogin ? new Date(userToEdit.lastLogin).toLocaleString() : 'Never' %></p>
+            <p><%= user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never' %></p>
         </div>
 
         <div class="button-group">

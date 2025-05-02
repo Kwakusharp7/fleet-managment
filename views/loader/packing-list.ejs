@@ -1,0 +1,375 @@
+<!-- ==== Packing List Page ==== -->
+<div id="packingListPage" class="page active">
+    <h2 class="section-title no-print"><i class="fas fa-file-invoice"></i> Packing List & Delivery Confirmation</h2>
+    <div class="document-container">
+        <!-- Packing Header -->
+        <div class="packing-header">
+            <div class="logo-container">
+                <img src="/img/img.webp" alt="Desa Packing List Logo">
+            </div>
+            <div class="packing-title-area">
+                <div class="packing-title">TRUCK LOAD <%= load.truckId %></div>
+                <div class="subtitle">DESA PANELS - PACKING LIST</div>
+            </div>
+        </div>
+
+        <!-- Packing List Form -->
+        <form id="packing-list-form" action="/loader/truck/<%= project.code %>/packing-list" method="POST">
+            <input type="hidden" name="loadId" value="<%= load._id %>">
+            <input type="hidden" name="signature" id="signature-data">
+
+            <!-- Section 1: General Info -->
+            <div class="form-section">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="date">DELIVERY DATE: </label>
+                        <input type="date" id="date" name="date" class="form-control" value="<%= load.packingList && load.packingList.date ? new Date(load.packingList.date).toISOString().split('T')[0] : formattedDate %>">
+                    </div>
+                    <div class="form-field">
+                        <label for="workOrder">WORK ORDER NO.:</label>
+                        <input type="text" id="workOrder" name="workOrder" class="form-control" value="<%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : project.workOrder || '' %>" readonly>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="projectName">PROJECT NAME:</label>
+                    <input type="text" id="projectName" name="projectName" class="form-control" value="<%= load.packingList && load.packingList.projectName ? load.packingList.projectName : project.name || '' %>" readonly>
+                </div>
+                <div class="form-field">
+                    <label for="projectAddress">PROJECT ADDRESS:</label>
+                    <input type="text" id="projectAddress" name="projectAddress" class="form-control" value="<%= load.packingList && load.packingList.projectAddress ? load.packingList.projectAddress : project.address || '' %>" readonly>
+                </div>
+            </div>
+            <div class="divider"></div>
+
+            <!-- Section 2: Shipper/Contact -->
+            <div class="form-section">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="fixed-info">
+                            <p><strong>SHIPPER / FROM:</strong><br>DESA Glass<br>285079 Bluegrass Drive<br>Rocky View, AB T1X 0P5 Canada</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fixed-info">
+                            <p><strong>CONTACT:</strong><br>Phone: 403.230.5011<br>Toll Free: 1.877.508.3965</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Delivery Info -->
+            <div class="form-section">
+                <div class="section-title">DELIVERY INFORMATION</div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="requestedBy">REQUESTED BY:</label>
+                        <input type="text" id="requestedBy" name="requestedBy" class="form-control" placeholder="Name of person requesting" value="<%= load.packingList && load.packingList.requestedBy ? load.packingList.requestedBy : '' %>">
+                    </div>
+                    <div class="form-field">
+                        <label for="carrier">CARRIER:</label>
+                        <input type="text" id="carrier" name="carrier" class="form-control" placeholder="Shipping Company Name" value="<%= load.packingList && load.packingList.carrier ? load.packingList.carrier : '' %>">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Consignee -->
+            <div class="form-section">
+                <div class="section-title">CONSIGNEE DETAILS</div>
+                <div class="form-field">
+                    <label for="consignee">CONSIGNEE / TO:</label>
+                    <input type="text" id="consignee" name="consignee" class="form-control" placeholder="Receiving Company or Person" value="<%= load.packingList && load.packingList.consignee ? load.packingList.consignee : '' %>">
+                </div>
+                <div class="form-field">
+                    <label for="consigneeAddress">DELIVERY ADDRESS:</label>
+                    <input type="text" id="consigneeAddress" name="consigneeAddress" class="form-control" placeholder="Delivery Address" value="<%= load.packingList && load.packingList.consigneeAddress ? load.packingList.consigneeAddress : project.address || '' %>">
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="siteContact">SITE CONTACT:</label>
+                        <input type="text" id="siteContact" name="siteContact" class="form-control" placeholder="Site Contact" value="<%= load.packingList && load.packingList.siteContact ? load.packingList.siteContact : '' %>">
+                    </div>
+                    <div class="form-field">
+                        <label for="sitePhone">SITE PHONE:</label>
+                        <input type="tel" id="sitePhone" name="sitePhone" class="form-control" pattern="[0-9]{3}-?[0-9]{3}-?[0-9]{4}" placeholder="Site Phone" value="<%= load.packingList && load.packingList.sitePhone ? load.packingList.sitePhone : '' %>">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 5: Confirmation -->
+            <div class="form-section">
+                <div class="section-title">SHIPMENT CONFIRMATION</div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="deliveryDate">ACTUAL DELIVERY DATE:</label>
+                        <input type="date" id="deliveryDate" name="deliveryDate" class="form-control" value="<%= load.packingList && load.packingList.deliveryDate ? new Date(load.packingList.deliveryDate).toISOString().split('T')[0] : '' %>">
+                    </div>
+                    <div class="form-field">
+                        <label for="packagedBy">PACKAGED BY:</label>
+                        <input type="text" id="packagedBy" name="packagedBy" class="form-control" placeholder="Initials or Name" value="<%= load.packingList && load.packingList.packagedBy ? load.packingList.packagedBy : '' %>">
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="checkedBy">LOADED BY (LOADER):</label>
+                    <input type="text" id="checkedBy" name="checkedBy" class="form-control" placeholder="Initials or Name" value="<%= load.packingList && load.packingList.checkedBy ? load.packingList.checkedBy : user ? user.username : '' %>">
+                </div>
+            </div>
+
+            <!-- Section 6: Signature -->
+            <div class="signature-area">
+                <div class="form-field">
+                    <label for="receivedBy" class="required">DRIVER BY (PRINT NAME):</label>
+                    <input type="text" id="receivedBy" name="receivedBy" class="form-control" placeholder="Print Name of Receiver" value="<%= load.packingList && load.packingList.receivedBy ? load.packingList.receivedBy : '' %>" required>
+                    <div class="invalid-feedback">Driver's printed name is required.</div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <label class="required">DRIVER SIGNATURE:</label>
+                    <div class="signature-container">
+                        <canvas id="signature-pad"></canvas>
+                    </div>
+                    <button type="button" class="signature-clear no-print"><i class="fas fa-eraser"></i> Clear Signature</button>
+                    <div class="signature-required-error" id="signature-error">Signature is required for completion.</div>
+                </div>
+            </div>
+
+            <!-- Save Status -->
+            <div class="save-status no-print" id="save-status"></div>
+
+            <!-- Hidden Print Section -->
+            <div id="printTruckInfo" style="display: none;">
+                <h3 class="print-section-title">Load Details</h3>
+                <h4 class="print-section-subtitle">Truck Information</h4>
+                <p><strong>Truck ID:</strong> <%= load.truckId %></p>
+                <p class="project-info"><strong>Project:</strong> <%= project.name %> (<%= project.code %>)</p>
+                <p><strong>Dimensions:</strong> <%= load.truckInfo.length %>ft L × <%= load.truckInfo.width %>ft W</p>
+                <p><strong>Weight Capacity:</strong> <%= load.truckInfo.weight.toLocaleString() %> lbs</p>
+                <h4 class="print-section-subtitle">Skid Details (<%= load.skids.length %> Total)</h4>
+                <table class="print-skids-table">
+                    <thead>
+                    <tr>
+                        <th>Skid #</th>
+                        <th>Width (ft)</th>
+                        <th>Length (ft)</th>
+                        <th>Weight (lbs)</th>
+                        <th>Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <% load.skids.forEach((skid, index) => { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= skid.width.toFixed(2) %></td>
+                            <td><%= skid.length.toFixed(2) %></td>
+                            <td><%= skid.weight.toFixed(2) %></td>
+                            <td><%= skid.description || '-' %></td>
+                        </tr>
+                    <% }); %>
+                    </tbody>
+                    <tfoot>
+                    <tr style="font-weight: bold;">
+                        <td colspan="3" style="text-align: right;">Total Weight:</td>
+                        <td><%= load.totalWeight ? load.totalWeight.toFixed(2) : '0.00' %></td>
+                        <td></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </form> <!-- End Packing List Form -->
+    </div> <!-- End document-container -->
+
+    <!-- Packing List Action Buttons -->
+    <div class="packing-action-buttons no-print">
+        <a href="/loader/truck/<%= project.code %>/skids?loadId=<%= load._id %>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Skid Details
+        </a>
+        <button id="resetPackingListBtn" type="button" class="btn btn-cancel">
+            <i class="fas fa-undo"></i> Reset Form
+        </button>
+        <button type="button" class="btn btn-print" id="printPackingListBtn">
+            <i class="fas fa-print"></i> Print Packing List
+        </button>
+        <button type="button" class="btn btn-primary" id="saveProgressBtn">
+            <i class="fas fa-save"></i> Save Progress
+        </button>
+        <button type="button" class="btn btn-success" id="completeBtn">
+            <i class="fas fa-check-circle"></i> Mark as Complete & Save
+        </button>
+    </div>
+</div> <!-- End packingListPage -->
+
+<%- contentFor('scripts') %>
+<script>
+    let signaturePad;
+    let saveTimeout;
+
+    // Initialize signature pad
+    function initializeSignaturePad() {
+        const canvas = document.getElementById('signature-pad');
+        if (!canvas) return;
+
+        // Resize canvas to container
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const container = canvas.parentElement;
+
+            // Save data if exists
+            let data = null;
+            if (signaturePad && !signaturePad.isEmpty()) {
+                data = signaturePad.toDataURL();
+            }
+
+            // Set canvas size
+            canvas.width = container.offsetWidth * ratio;
+            canvas.height = container.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+
+            // Clear and restore
+            if (signaturePad) {
+                signaturePad.clear();
+                if (data) {
+                    signaturePad.fromDataURL(data);
+                }
+            }
+        }
+
+        // Create signature pad
+        signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(255, 255, 255)',
+            penColor: 'rgb(0, 0, 0)'
+        });
+
+        // Load existing signature if available
+        <% if (load.packingList && load.packingList.signature) { %>
+        try {
+            signaturePad.fromDataURL("<%= load.packingList.signature %>");
+        } catch (e) {
+            console.error("Error loading signature:", e);
+        }
+        <% } %>
+
+        // Handle resize
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Prevent scrolling when drawing
+        canvas.addEventListener('touchstart', function(e) {
+            if (e.cancelable) e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', function(e) {
+            if (e.cancelable) e.preventDefault();
+        }, { passive: false });
+
+        // Add end stroke event listener
+        signaturePad.addEventListener("endStroke", function() {
+            if (!signaturePad.isEmpty()) {
+                document.getElementById('signature-error').style.display = 'none';
+                canvas.parentElement.style.border = '2px dashed var(--medium-gray)';
+
+                // Store signature data in hidden input
+                document.getElementById('signature-data').value = signaturePad.toDataURL();
+            }
+        });
+
+        // Clear signature button
+        document.querySelector('.signature-clear').addEventListener('click', function() {
+            signaturePad.clear();
+            document.getElementById('signature-data').value = '';
+        });
+    }
+
+    // Show save status
+    function showSaveStatus(message, isError = false) {
+        const statusDiv = document.getElementById('save-status');
+        if (!statusDiv) return;
+
+        statusDiv.textContent = message;
+        statusDiv.style.color = isError ? 'var(--danger-red)' : 'var(--success-green)';
+        statusDiv.classList.add('visible');
+
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            statusDiv.classList.remove('visible');
+        }, 3000);
+    }
+
+    // Validate form before submission
+    function validateForm() {
+        const form = document.getElementById('packing-list-form');
+        let isValid = true;
+
+        // Clear previous validation states
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.getElementById('signature-error').style.display = 'none';
+
+        // Check required fields
+        const receivedBy = document.getElementById('receivedBy');
+        if (!receivedBy.value.trim()) {
+            receivedBy.classList.add('is-invalid');
+            isValid = false;
+        }
+
+        // Check signature for completion only
+        if (document.getElementById('completeBtn').clicked && (!signaturePad || signaturePad.isEmpty())) {
+            document.getElementById('signature-error').style.display = 'block';
+            document.getElementById('signature-pad').parentElement.style.border = '2px dashed var(--danger-red)';
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    // Handle form submission
+    function submitForm(isComplete = false) {
+        // Set clicked button flag for validation
+        document.getElementById('completeBtn').clicked = isComplete;
+
+        // Validate form
+        if (!validateForm()) {
+            return false;
+        }
+
+        // Get form and update signature data
+        const form = document.getElementById('packing-list-form');
+        if (signaturePad && !signaturePad.isEmpty()) {
+            document.getElementById('signature-data').value = signaturePad.toDataURL();
+        }
+
+        // Submit form
+        form.submit();
+        return true;
+    }
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize signature pad
+        initializeSignaturePad();
+
+        // Print button
+        document.getElementById('printPackingListBtn').addEventListener('click', function() {
+            window.print();
+        });
+
+        // Save progress button
+        document.getElementById('saveProgressBtn').addEventListener('click', function() {
+            if (submitForm(false)) {
+                showSaveStatus('Progress saved successfully!');
+            }
+        });
+
+        // Complete button
+        document.getElementById('completeBtn').addEventListener('click', function() {
+            if (submitForm(true)) {
+                showSaveStatus('Packing list completed and saved!');
+            }
+        });
+
+        // Reset form button
+        document.getElementById('resetPackingListBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to reset the form? Unsaved changes will be lost.')) {
+                document.getElementById('packing-list-form').reset();
+                if (signaturePad) signaturePad.clear();
+                document.getElementById('signature-data').value = '';
+            }
+        });
+    });
+</script>

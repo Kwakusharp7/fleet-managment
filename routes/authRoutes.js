@@ -5,12 +5,17 @@ const { check, validationResult } = require('express-validator');
 const User = require('../models/User');
 const authController = require('../controllers/authController');
 const { ensureAuthenticated } = require('../middleware/auth');
+const { redirectToDashboard, handleFirstLogin } = require('../middleware/roleRedirect');
+
+// Apply role-specific redirect middleware
+router.use(handleFirstLogin);
 
 // @route   GET /
-// @desc    Redirect to login or dashboard
+// @desc    Redirect to login or appropriate dashboard
 // @access  Public
-router.get('/', (req, res) => {
+router.get('/', redirectToDashboard, (req, res) => {
     if (req.isAuthenticated()) {
+        // Default redirect based on role is handled in redirectToDashboard middleware
         return res.redirect('/dashboard');
     }
     res.redirect('/login');

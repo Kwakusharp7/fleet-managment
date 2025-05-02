@@ -37,9 +37,14 @@
             <label for="role">Role</label>
             <select id="role" name="role" class="form-control">
                 <option value="Viewer" <%= typeof user !== 'undefined' && user.role === 'Viewer' ? 'selected' : '' %>>Viewer (Read Only)</option>
+                <option value="Loader" <%= typeof user !== 'undefined' && user.role === 'Loader' ? 'selected' : '' %>>Loader (Inventory & Load Management)</option>
                 <option value="Admin" <%= typeof user !== 'undefined' && user.role === 'Admin' ? 'selected' : '' %>>Administrator</option>
-                <option value="Loader" <%= typeof user !== 'undefined' && user.role === 'Loader' ? 'selected' : '' %>>Loader</option>
             </select>
+            <small class="form-text text-muted">
+                <strong>Viewer:</strong> Can view all data but cannot make changes<br>
+                <strong>Loader:</strong> Can manage inventory and truck loads<br>
+                <strong>Administrator:</strong> Full access to all features
+            </small>
         </div>
 
         <div class="form-group">
