@@ -891,36 +891,40 @@ exports.addSkidsFromInventory = async (req, res) => {
 
 // @desc    Get load packing list generation page
 // @route   GET /loads/:id/packing-list
+// @desc    Get packing list page
+// @route   GET /loader/truck/:projectId/packing-list
 exports.getPackingListPage = async (req, res) => {
     try {
-        const load = await Load.findById(req.params.id);
+        const { projectId } = req.params;
+        const { loadId } = req.query;
 
-        if (!load) {
-            req.flash('error_msg', 'Load not found');
-            return res.redirect('/loads');
+        if (!loadId) {
+            req.flash('error_msg', 'Load ID is required');
+            return res.redirect(`/loader/truck/${projectId}`);
         }
 
-        // Fetch the project associated with this load
-        const project = await Project.findOne({ code: load.projectCode });
+        // Find the load
+        const load = await Load.findById(loadId);
 
-        if (!project) {
-            req.flash('error_msg', 'Project not found for this load');
-            return res.redirect(`/loads/${load._id}`);
+        if (!load || load.projectCode !== projectId) {
+            req.flash('error_msg', 'Invalid load selected');
+            return res.redirect(`/loader/truck/${projectId}`);
         }
 
-        res.render('load/packing-list', {
-            title: `Packing List: ${load.truckId}`,
-            load: {
-                ...load.toObject(),
-                projectName: project ? project.name : 'Unknown Project',
-                projectFullName: project ? `${load.projectCode} – ${project.name}` : load.projectCode
-            },
-            project: project  // Pass the project to the template
+        // Find the project
+        const project = await Project.findOne({ code: projectId });
+
+        res.render('loader/packing-list', {
+            title: 'Packing List',
+            layout: 'layouts/loader',
+            project,
+            load,
+            formattedDate: new Date().toISOString().split('T')[0] // Today's date as default
         });
     } catch (err) {
         console.error(err);
-        req.flash('error_msg', 'Error retrieving load');
-        res.redirect('/loads');
+        req.flash('error_msg', 'Error loading packing list page');
+        res.redirect(`/loader/truck/${req.params.projectId}`);
     }
 };
 

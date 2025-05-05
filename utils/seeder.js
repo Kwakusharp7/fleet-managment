@@ -706,67 +706,100 @@ const projects =[
 
 const loads = [
     {
-      truckId: 'TRUCK-ABC',
-      projectCode: '47697',
-      dateEntered: new Date('2023-10-27T10:30:00'),
-      status: 'Loaded',
-      truckInfo: {
-        length: 53,
-        width: 8.5,
-        weight: 45000
-      },
-      skids: [
-        { id: 'SKID-1', width: 4, length: 4, weight: 500, description: 'Pallet 1' },
-        { id: 'SKID-2', width: 4, length: 4, weight: 600, description: '' },
-        { id: 'SKID-3', width: 4, length: 4, weight: 550, description: 'Fragile' }
-      ],
-      packingList: {
-        date: new Date('2023-10-27'),
-        workOrder: 'WO-111',
-        projectName: 'We Wai Kai',
-        projectAddress: 'Ketza Pacific',
-        requestedBy: 'Client A',
-        carrier: 'Fast Freight',
-        consignee: 'Job Site A',
-        consigneeAddress: 'Delivery Addr A',
-        siteContact: 'Foreman Bill',
-        sitePhone: '555-111-2222',
-        deliveryDate: new Date('2023-10-28'),
-        packagedBy: 'PK',
-        checkedBy: 'LD',
-        receivedBy: 'John D.',
-        signature: 'data:image/png;base64,…'
-      },
-      skidCount: 3,
-      totalWeight: 1650
+        truckId: 'TRUCK-ABC',
+        projectCode: '47290',
+        dateEntered: new Date('2023-10-27T10:30:00'),
+        status: 'Loaded',
+        truckInfo: {
+            length: 53,
+            width: 8.5,
+            weight: 45000
+        },
+        skids: [
+            { id: 'SKID-1', width: 4, length: 4, weight: 500, description: 'Pallet 1' },
+            { id: 'SKID-2', width: 4, length: 4, weight: 600, description: '' },
+            { id: 'SKID-3', width: 4, length: 4, weight: 550, description: 'Fragile' }
+        ],
+        packingList: {
+            date: new Date('2023-10-27'),
+            workOrder: 'WO-111',
+            projectName: 'We Wai Kai',
+            projectAddress: 'Site Address A',
+            requestedBy: 'Client A',
+            carrier: 'Fast Freight',
+            consignee: 'Job Site A',
+            consigneeAddress: 'Delivery Addr A',
+            siteContact: 'Foreman Bill',
+            sitePhone: '555-111-2222',
+            deliveryDate: new Date('2023-10-28'),
+            packagedBy: 'PK',
+            checkedBy: 'LD',
+            receivedBy: 'John D.',
+            signature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+        },
+        skidCount: 3,
+        totalWeight: 1650
     },
     {
-      truckId: 'PLATE-123',
-      projectCode: '47602',
-      dateEntered: new Date('2023-10-27T09:15:00'),
-      status: 'Planned',
-      truckInfo: {
-        length: 48,
-        width: 8,
-        weight: 40000
-      },
-      skids: [
-        { id: 'SKID-4', width: 8, length: 6, weight: 1200, description: 'Heavy materials' }
-      ],
-      packingList: {
-        date: new Date('2023-10-27'),
-        workOrder: 'WO-112',
-        projectName: '45HP Caps DQ#34388',
-        projectAddress: 'Chinook Glass & Screen Ltd.',
-        requestedBy: 'Client B',
-        carrier: 'ABC Trucking'
-      },
-      skidCount: 1,
-      totalWeight: 1200
+        truckId: 'PLATE-123',
+        projectCode: '47402',
+        dateEntered: new Date('2023-10-27T09:15:00'),
+        status: 'Planned',
+        truckInfo: {
+            length: 48,
+            width: 8,
+            weight: 40000
+        },
+        skids: [
+            { id: 'SKID-4', width: 8, length: 6, weight: 1200, description: 'Heavy materials' }
+        ],
+        packingList: {
+            date: new Date('2023-10-27'),
+            workOrder: 'WO-112',
+            projectName: '104Ave',
+            projectAddress: '456 104th Ave, Surrey, BC',
+            requestedBy: 'Client B',
+            carrier: 'ABC Trucking'
+        },
+        skidCount: 1,
+        totalWeight: 1200
+    },
+    {
+        truckId: 'TRUCK-XYZ',
+        projectCode: '45863',
+        dateEntered: new Date('2023-10-26T14:00:00'),
+        status: 'Delivered',
+        truckInfo: {
+            length: 53,
+            width: 8.5,
+            weight: 45000
+        },
+        skids: [
+            { id: 'SKID-5', width: 4, length: 4, weight: 800, description: 'Glass panels' },
+            { id: 'SKID-6', width: 4, length: 4, weight: 750, description: 'Frames' },
+            { id: 'SKID-7', width: 4, length: 4, weight: 600, description: 'Hardware' }
+        ],
+        packingList: {
+            date: new Date('2023-10-26'),
+            workOrder: 'WO-113',
+            projectName: 'DeVille Tower',
+            projectAddress: '789 West St, Calgary, AB',
+            requestedBy: 'Client C',
+            carrier: 'FastFreight',
+            consignee: 'DeVille Construction',
+            consigneeAddress: '789 West St, Calgary, AB',
+            siteContact: 'Site Manager',
+            sitePhone: '555-333-4444',
+            deliveryDate: new Date('2023-10-27'),
+            packagedBy: 'JD',
+            checkedBy: 'TS',
+            receivedBy: 'Bob Smith',
+            signature: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+        },
+        skidCount: 3,
+        totalWeight: 2150
     }
-  ];
-  
-  
+];
 
 // Function to delete existing data and seed new data
 const seedData = async () => {
