@@ -262,7 +262,6 @@
 
 <%- contentFor('scripts') %>
 <script>
-    // Toggle Add Skid Form
     function toggleAddSkidForm() {
         const formContainer = document.getElementById('addTruckSkidFormContainer');
         if (formContainer.style.display === 'none') {
@@ -276,6 +275,13 @@
             const form = formContainer.querySelector('.add-skid-form');
             form.action = '/loader/truck/<%= project.code %>/skid';
             form.method = 'POST';
+
+            // Add hidden input for loadId
+            const loadIdInput = document.createElement('input');
+            loadIdInput.type = 'hidden';
+            loadIdInput.name = 'loadId';
+            loadIdInput.value = '<%= load._id %>';
+            form.appendChild(loadIdInput);
 
             formContainer.style.display = 'block';
             setTimeout(() => {
@@ -312,6 +318,13 @@
             form.action = '/loader/truck/<%= project.code %>/skid/' + skidId + '?_method=PUT';
             form.method = 'POST';
 
+            // Add hidden input for loadId
+            const loadIdInput = document.createElement('input');
+            loadIdInput.type = 'hidden';
+            loadIdInput.name = 'loadId';
+            loadIdInput.value = '<%= load._id %>';
+            form.appendChild(loadIdInput);
+
             // Fill form with skid data
             form.querySelector('.skid-width').value = skid.width;
             form.querySelector('.skid-length').value = skid.length;
@@ -325,6 +338,38 @@
         }, 100);
     }
 
+    // Initialize event listeners when document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listeners for add skid button
+        document.getElementById('addTruckSkidBtn').addEventListener('click', toggleAddSkidForm);
+
+        // Set up form validation for all forms
+        document.addEventListener('submit', function(e) {
+            if (e.target.classList.contains('add-skid-form')) {
+                const form = e.target;
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Show validation messages
+                    const inputs = form.querySelectorAll('[required]');
+                    inputs.forEach(input => {
+                        if (!input.validity.valid) {
+                            input.classList.add('is-invalid');
+                        } else {
+                            input.classList.remove('is-invalid');
+                        }
+                    });
+
+                    // Focus first invalid input
+                    const firstInvalid = form.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.focus();
+                    }
+                }
+            }
+        });
+    });
     // Form validation
     document.addEventListener('submit', function(e) {
         if (e.target.classList.contains('add-skid-form')) {

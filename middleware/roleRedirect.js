@@ -13,6 +13,9 @@ exports.redirectToDashboard = (req, res, next) => {
 
     // If no role or path is root (/)
     if (!req.user || !req.user.role || req.path === '/') {
+        if (req.user && req.user.role === 'Loader') {
+            return res.redirect('/loader');
+        }
         return next();
     }
 
@@ -21,8 +24,16 @@ exports.redirectToDashboard = (req, res, next) => {
         return next();
     }
 
-    // Redirect Loader users to loader dashboard if they access regular dashboard
-    if (req.user.role === 'Loader' && req.path === '/dashboard') {
+    // Redirect Loader users to loader dashboard for all non-loader paths
+    // except for specific paths like logout, settings, etc.
+    if (req.user.role === 'Loader' &&
+        !req.path.startsWith('/loader') &&
+        !req.path.startsWith('/logout') &&
+        !req.path.startsWith('/settings') &&
+        !req.path.startsWith('/assets') &&
+        !req.path.startsWith('/css') &&
+        !req.path.startsWith('/js') &&
+        !req.path.startsWith('/img')) {
         return res.redirect('/loader');
     }
 
