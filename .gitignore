@@ -39,3 +39,4 @@ tmp/
 
 # Coverage directory
 coverage/
+.vercel
