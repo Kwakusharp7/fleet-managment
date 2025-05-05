@@ -141,6 +141,7 @@ app.use('/loader', require('./routes/loaderRoutes'));
 // Add admin routes for seeding
 app.use('/admin', require('./routes/adminRoutes'));
 
+
 // Add API route for loader stats
 app.get('/loader/stats', async (req, res) => {
     try {

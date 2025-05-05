@@ -8,6 +8,7 @@ const { seedData } = require('../utils/seeder');
 // @access  Admin only
 router.get('/seed', ensureAuthenticated, ensureAdmin, async (req, res) => {
   try {
+    console.log('Seeding database...'); // Log the seeding process
     const result = await seedData();
     if (result.success) {
       res.json({ success: true, message: 'Database seeded successfully' });
