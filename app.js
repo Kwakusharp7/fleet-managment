@@ -138,8 +138,6 @@ app.use('/users', require('./routes/userRoutes'));
 app.use('/reports', require('./routes/reportRoutes')); // Add reports routes
 app.use('/settings', require('./routes/settingsRoutes')); // Add settings routes
 app.use('/loader', require('./routes/loaderRoutes'));
-// Add admin routes for seeding
-app.use('/admin', require('./routes/adminRoutes'));
 
 
 // Add API route for loader stats

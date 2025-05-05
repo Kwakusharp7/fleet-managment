@@ -71,6 +71,7 @@ exports.getDashboard = async (req, res) => {
 
         // Enhance recent loads with project info
         const enhancedRecentLoads = recentLoads.map(load => {
+
             const project = projectMap[load.projectCode] || { name: 'Unknown Project' };
             return {
                 ...load,
