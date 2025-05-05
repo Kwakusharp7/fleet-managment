@@ -45,20 +45,47 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('layout', 'layouts/main');
 
 // Session configuration
+ 
+// Session configuration
+
 app.use(session({
+
     secret: config.session.secret,
+
     resave: false,
+
     saveUninitialized: false,
+
     store: MongoStore.create({
+
         mongoUrl: config.db.uri,
+
         ttl: 14 * 24 * 60 * 60, // 14 days
+
+        // Add these settings for Vercel's serverless environment
+
+        touchAfter: 24 * 3600, // time period in seconds
+
+        autoRemove: 'native'
+
     }),
+
     cookie: {
+
         secure: process.env.NODE_ENV === 'production',
+
         httpOnly: true,
-        maxAge: config.session.duration
+
+        maxAge: config.session.duration,
+
+        // Important for Vercel deployment
+
+        sameSite: 'lax'
+
     }
+
 }));
+ 
 
 // Passport initialization
 require('./config/auth');
@@ -111,6 +138,7 @@ app.use('/users', require('./routes/userRoutes'));
 app.use('/reports', require('./routes/reportRoutes')); // Add reports routes
 app.use('/settings', require('./routes/settingsRoutes')); // Add settings routes
 app.use('/loader', require('./routes/loaderRoutes'));
+
 
 // Add API route for loader stats
 app.get('/loader/stats', async (req, res) => {
