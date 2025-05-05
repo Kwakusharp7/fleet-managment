@@ -19,7 +19,7 @@
         <div class="info-group">
             <div class="info-item"><strong>Project Code:</strong> <%= project.code %></div>
             <div class="info-item"><strong>Project Name:</strong> <%= project.name %></div>
-            <div class="info-item"><strong>Work Order:</strong> <%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : project.workOrder || 'N/A' %></div>
+            <div class="info-item"><strong>Work Order:</strong> <%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : load.projectCode %></div>
             <div class="info-item"><strong>Address:</strong> <%= project.address || 'N/A' %></div>
         </div>
     </div>

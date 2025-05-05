@@ -29,14 +29,14 @@
             <% if (inventorySkids && inventorySkids.length > 0) { %>
                 <% inventorySkids.forEach((skid, index) => { %>
                     <tr>
-                        <td><%= skid.skidId %></td>
+                        <td><%= skid.id %></td>
                         <td><%= skid.width?.toFixed(2) || '?' %></td>
                         <td><%= skid.length?.toFixed(2) || '?' %></td>
                         <td><%= skid.weight?.toFixed(2) || '?' %></td>
                         <td><%= skid.description || '-' %></td>
                         <td class="action-buttons no-print">
                             <button type="button" class="btn-edit"
-                                    data-skid-id="<%= skid.skidId %>"
+                                    data-skid-id="<%= skid.id %>"
                                     data-width="<%= skid.width %>"
                                     data-length="<%= skid.length %>"
                                     data-weight="<%= skid.weight %>"
@@ -44,7 +44,7 @@
                                     title="Edit Skid">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <form action="/loader/inventory/<%= project.code %>/skid/<%= skid.skidId %>?_method=DELETE"
+                            <form action="/loader/inventory/<%= project.code %>/skid/<%= skid.id %>?_method=DELETE"
                                   method="POST" style="display:inline;"
                                   onsubmit="return confirm('Are you sure you want to delete this inventory skid?')">
                                 <button type="submit" class="btn-delete" title="Delete Skid">

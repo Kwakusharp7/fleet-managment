@@ -93,8 +93,8 @@ exports.getEditUserForm = async (req, res) => {
 
         res.render('user/edit', {
             title: 'Edit User',
-            user: req.user,
-            userToEdit: userToEdit
+            currentUser: req.user,  // Pass the logged-in user as currentUser
+            user: userToEdit        // Pass the user being edited as user
         });
     } catch (err) {
         console.error('Error retrieving user:', err);

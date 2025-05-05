@@ -91,7 +91,7 @@
             <h3 style="margin-top: 0; color: var(--primary-blue);">
                 <i class="fas fa-info-circle"></i> Existing Load Information
             </h3>
-            <p>This truck already has <%= existingLoad.skids.length %> skid(s) loaded with a total weight of <%= existingLoad.totalWeight.toFixed(2) %> lbs.</p>
+            <p>This truck already has <%= existingLoad.skids.length %> skid(s) loaded with a total weight of <%= existingLoad.totalWeight ? existingLoad.totalWeight.toFixed(2) : '0.00' %> lbs.</p>
             <div style="text-align: center; margin-top: 20px;">
                 <a href="/loader/truck/<%= project.code %>/skids?loadId=<%= existingLoad._id %>" class="btn btn-primary">
                     <i class="fas fa-truck-loading"></i> Continue with Existing Skids

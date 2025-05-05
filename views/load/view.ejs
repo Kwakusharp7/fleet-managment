@@ -175,10 +175,10 @@
                     </div>
                 <% } %>
 
-                <% if (load.packingList.workOrder) { %>
+                <% if (load.packingList.workOrder||load.packingList.projectCode) { %>
                     <div class="info-item">
                         <div class="info-label">Work Order</div>
-                        <div class="info-value"><%= load.packingList.workOrder %></div>
+                        <div class="info-value"><%= load.packingList.workOrder||load.projectCode %></div>
                     </div>
                 <% } %>
 

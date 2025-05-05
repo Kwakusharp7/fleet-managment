@@ -44,9 +44,8 @@
                     <div class="form-field">
                         <label for="workOrder">WORK ORDER NO.:</label>
                         <input type="text" id="workOrder" name="workOrder" class="form-control"
-                               placeholder="Enter Work Order Number"
-                               value="<%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : '' %>"
-                                <%= load.status === 'Delivered' ? 'disabled' : '' %>>
+                               value="<%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : load.projectCode %>"
+                               readonly>
                     </div>
                 </div>
                 <div class="form-field">
@@ -527,6 +526,73 @@
             border-bottom: 2px solid #000;
         }
     }
+    @media print {
+        /* Hide elements not needed for printing */
+        .header-bar, .sidebar, .no-print, .packing-action-buttons,
+        .button-group, #saveProgressBtn, #printPackingListBtn, #completeBtn,
+        #resetPackingListBtn, .sidebar-nav, .sidebar-header, .sidebar-footer {
+            display: none !important;
+        }
+
+        /* Show the hidden print section */
+        #printTruckInfo {
+            display: block !important;
+            page-break-before: always;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+        }
+
+        /* Remove background colors and shadows */
+        body, .main-content, .page-content, .data-container, .document-container {
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: white !important;
+            box-shadow: none !important;
+            border: none !important;
+            width: 100% !important;
+        }
+
+        /* Format print header and sections */
+        .print-section-title {
+            font-size: 18pt;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        .print-section-subtitle {
+            font-size: 14pt;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+
+        /* Format print tables */
+        .print-skids-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+
+        .print-skids-table th, .print-skids-table td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: left;
+        }
+
+        .print-skids-table th {
+            background-color: #f5f5f5 !important;
+            font-weight: bold;
+        }
+
+        /* Set page margins */
+        @page {
+            size: portrait;
+            margin: 0.5in;
+        }
+    }
 </style>
 
 <%- contentFor('scripts') %>
@@ -569,6 +635,129 @@
         // Enable auto-save on input changes
         document.getElementById('packing-list-form').addEventListener('input', debounce(handleFormChanged, 1000));
     });
+
+    // Improve print functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Find the print button
+        const printBtn = document.getElementById('printPackingListBtn');
+
+        // Only add the event listener if the button exists
+        if (printBtn) {
+            printBtn.addEventListener('click', function() {
+                // Make sure the hidden print section is populated with data before printing
+                updatePrintSection();
+
+                // Wait for data to be updated before printing
+                setTimeout(function() {
+                    window.print();
+                }, 100);
+            });
+        }
+
+        // Function to update the hidden print section with current data
+        function updatePrintSection() {
+            // Check if all required elements exist before updating them
+            const elements = {
+                truckId: document.getElementById('printTruckId'),
+                project: document.getElementById('printProject'),
+                dimensions: document.getElementById('printTruckDimensions'),
+                weight: document.getElementById('printTruckWeight'),
+                totalSkids: document.getElementById('printTotalSkids'),
+                totalWeight: document.getElementById('printTotalWeight'),
+                skidsBody: document.getElementById('printSkidsBody'),
+                summary: document.getElementById('printLoadingSummary')
+            };
+
+            // Update elements that exist
+            if (elements.truckId) elements.truckId.textContent = '<%= load.truckId %>';
+            if (elements.project) elements.project.textContent = '<%= load.projectFullName || (project.code + " – " + project.name) %>';
+            if (elements.dimensions) elements.dimensions.textContent = '<%= load.truckInfo.length %>ft L × <%= load.truckInfo.width %>ft W';
+            if (elements.weight) elements.weight.textContent = '<%= load.truckInfo.weight.toLocaleString() %>';
+            if (elements.totalSkids) elements.totalSkids.textContent = '<%= load.skids.length %>';
+            if (elements.totalWeight) elements.totalWeight.textContent = '<%= load.totalWeight?.toFixed(2) || "0.00" %>';
+
+            // Update skids table if it exists
+            if (elements.skidsBody) {
+                elements.skidsBody.innerHTML = '';
+
+                <% if (load.skids && load.skids.length > 0) { %>
+                <% load.skids.forEach((skid, index) => { %>
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                        <td><%= index + 1 %></td>
+                        <td><%= skid.width.toFixed(2) %></td>
+                        <td><%= skid.length.toFixed(2) %></td>
+                        <td><%= skid.weight.toFixed(2) %></td>
+                        <td><%= skid.description || '-' %><%= skid.originalInvId ? ` (from ${skid.originalInvId})` : '' %></td>
+                    `;
+                elements.skidsBody.appendChild(row);
+                <% }); %>
+                <% } %>
+            }
+
+            // Update summary if it exists
+            if (elements.summary) {
+                elements.summary.innerHTML = `
+                <h5>Loading Summary</h5>
+                <p><strong>Summary for Truck <%= load.truckId %>:</strong></p>
+                <ul>
+                    <li>Total Skids on Truck: <%= load.skidCount || 0 %></li>
+                    <li>Total Weight on Truck: <%= load.totalWeight?.toFixed(2) || '0.00' %> lbs
+                        (<%= load.truckInfo.weight ? ((load.totalWeight || 0) / load.truckInfo.weight * 100).toFixed(1) : 0 %>%
+                        of <%= load.truckInfo.weight %> lbs capacity)</li>
+                </ul>
+                <% if (load.totalWeight && load.truckInfo.weight && load.totalWeight > load.truckInfo.weight) { %>
+                    <p class="warning"><i class="fas fa-exclamation-triangle"></i> Warning: Total weight exceeds truck capacity!</p>
+                <% } %>
+            `;
+            }
+        }
+    });
+
+    // Function to update the hidden print section with current data
+    function updatePrintSection() {
+        // Update truck information
+        document.getElementById('printTruckId').textContent = '<%= load.truckId %>';
+        document.getElementById('printProject').textContent = '<%= load.projectFullName %>';
+        document.getElementById('printTruckDimensions').textContent = '<%= load.truckInfo.length %>ft L × <%= load.truckInfo.width %>ft W';
+        document.getElementById('printTruckWeight').textContent = '<%= load.truckInfo.weight.toLocaleString() %>';
+        document.getElementById('printTotalSkids').textContent = '<%= load.skids.length %>';
+        document.getElementById('printTotalWeight').textContent = '<%= load.totalWeight?.toFixed(2) || "0.00" %>';
+
+        // Clear and update skids table
+        const skidsBody = document.getElementById('printSkidsBody');
+        skidsBody.innerHTML = '';
+
+        <% if (load.skids && load.skids.length > 0) { %>
+        <% load.skids.forEach((skid, index) => { %>
+        const row = document.createElement('tr');
+        row.innerHTML = `
+                    <td><%= index + 1 %></td>
+                    <td><%= skid.width.toFixed(2) %></td>
+                    <td><%= skid.length.toFixed(2) %></td>
+                    <td><%= skid.weight.toFixed(2) %></td>
+                    <td><%= skid.description || '-' %><%= skid.originalInvId ? ` (from ${skid.originalInvId})` : '' %></td>
+                `;
+        skidsBody.appendChild(row);
+        <% }); %>
+        <% } %>
+
+        // Update loading summary
+        const summaryDiv = document.getElementById('printLoadingSummary');
+        summaryDiv.innerHTML = `
+            <h5>Loading Summary</h5>
+            <p><strong>Summary for Truck <%= load.truckId %>:</strong></p>
+            <ul>
+                <li>Total Skids on Truck: <%= load.skidCount || 0 %></li>
+                <li>Total Weight on Truck: <%= load.totalWeight?.toFixed(2) || '0.00' %> lbs
+                    (<%= load.truckInfo.weight ? ((load.totalWeight || 0) / load.truckInfo.weight * 100).toFixed(1) : 0 %>%
+                    of <%= load.truckInfo.weight %> lbs capacity)</li>
+            </ul>
+            <% if (load.totalWeight && load.truckInfo.weight && load.totalWeight > load.truckInfo.weight) { %>
+                <p class="warning"><i class="fas fa-exclamation-triangle"></i> Warning: Total weight exceeds truck capacity!</p>
+            <% } %>
+        `;
+    }
 
     // Initialize signature pad
     function initializeSignaturePad(canvas) {
