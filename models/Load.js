@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const moment = require('moment');
 
+
 // Skid Schema (embedded in Load)
 const SkidSchema = new mongoose.Schema({
     id: {
@@ -115,6 +116,10 @@ const LoadSchema = new mongoose.Schema({
         required: [true, 'Truck ID is required'],
         trim: true,
         maxlength: [50, 'Truck ID cannot exceed 50 characters']
+    },
+    isInventory: {
+        type: Boolean,
+        default: false
     },
     projectCode: {
         type: String,

@@ -206,7 +206,7 @@
 
             <!-- Print and Export Buttons -->
             <div class="report-actions">
-                <button onclick="window.print()" class="btn btn-secondary">
+                <button id="printReportBtn" class="btn btn-secondary">
                     <i class="fas fa-print"></i> Print Report
                 </button>
                 <!-- Export functionality would be added here -->
@@ -292,12 +292,88 @@
     }
 
     @media print {
+        /* Hide elements that shouldn't be printed */
         .report-form, .button-group, .report-actions, .header-bar, .sidebar {
             display: none !important;
         }
 
+        /* Reset margins for printing */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: white !important;
+            color: black !important;
+        }
+
+        /* Ensure tables print properly */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: none !important;
+        }
+
+        /* Make sure page breaks don't cut through table rows */
+        tr { page-break-inside: avoid; }
+
+        /* Improve text contrast for printing */
+        body, .data-table td, .data-table th {
+            color: black !important;
+        }
+
+        .data-container {
+            box-shadow: none !important;
+            border: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 10px !important;
+        }
+
+        .status-badge {
+            border: 1px solid #333 !important;
+            color: #000 !important;
+            background-color: #fff !important;
+        }
+
         .report-results {
-            margin-top: 0;
+            margin-top: 0 !important;
+        }
+
+        /* Add page header and footer for printing */
+        @page {
+            size: portrait;
+            margin: 0.5in;
+        }
+
+        h4 {
+            margin-top: 0 !important;
         }
     }
 </style>
+
+<%- contentFor('scripts') %>
+<script>
+    // Add print functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const printBtn = document.getElementById('printReportBtn');
+        if (printBtn) {
+            printBtn.addEventListener('click', function() {
+                // Set up printing
+                const originalTitle = document.title;
+
+                // Change the page title for the print job
+                if (document.querySelector('.report-results h4')) {
+                    document.title = document.querySelector('.report-results h4').innerText + ' - Report';
+                }
+
+                // Print the report
+                window.print();
+
+                // Restore the original title
+                setTimeout(function() {
+                    document.title = originalTitle;
+                }, 100);
+            });
+        }
+    });
+</script>

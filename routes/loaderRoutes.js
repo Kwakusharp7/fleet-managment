@@ -27,7 +27,7 @@ router.post('/project-selection', loaderController.processProjectSelection);
 // @access  Loader/Admin
 router.get('/inventory/:projectId', loaderController.getInventoryPage);
 
-// @route   POST /loader/inventory/:projectId
+// @route   POST /loader/inventory/:projectId/skid
 // @desc    Add skid to inventory
 // @access  Loader/Admin
 router.post('/inventory/:projectId/skid', loaderController.addInventorySkid);

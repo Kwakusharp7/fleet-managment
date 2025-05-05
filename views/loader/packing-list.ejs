@@ -27,7 +27,7 @@
                     </div>
                     <div class="form-field">
                         <label for="workOrder">WORK ORDER NO.:</label>
-                        <input type="text" id="workOrder" name="workOrder" class="form-control" value="<%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : project.code || '' %>" readonly>
+                        <input type="text" id="workOrder" name="workOrder" class="form-control" value="<%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : load.projectCode || '' %>" readonly>
                     </div>
                 </div>
                 <div class="form-field">
@@ -141,8 +141,9 @@
                 <p><strong>Truck ID:</strong> <%= load.truckId %></p>
                 <p class="project-info"><strong>Project:</strong> <%= project.name %> (<%= project.code %>)</p>
                 <p><strong>Dimensions:</strong> <%= load.truckInfo.length %>ft L × <%= load.truckInfo.width %>ft W</p>
-                <p><strong>Weight Capacity:</strong> <%= load.truckInfo.weight.toLocaleString() %> lbs</p>
-                <h4 class="print-section-subtitle">Skid Details (<%= load.skids.length %> Total)</h4>
+                <p><strong>Weight Capacity:</strong> <%= load.truckInfo.weight ? load.truckInfo.weight.toLocaleString() : '0' %> lbs</p>
+
+                <h4 class="print-section-subtitle">Skid Details (<%= load.skids ? load.skids.length : 0 %> Total)</h4>
                 <table class="print-skids-table">
                     <thead>
                     <tr>
@@ -154,24 +155,43 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <% load.skids.forEach((skid, index) => { %>
+                    <% if (load.skids && load.skids.length > 0) { %>
+                        <% load.skids.forEach((skid, index) => { %>
+                            <tr>
+                                <td><%= index + 1 %></td>
+                                <td><%= skid.width.toFixed(2) %></td>
+                                <td><%= skid.length.toFixed(2) %></td>
+                                <td><%= skid.weight.toFixed(2) %></td>
+                                <td><%= skid.description || '-' %></td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
                         <tr>
-                            <td><%= index + 1 %></td>
-                            <td><%= skid.width.toFixed(2) %></td>
-                            <td><%= skid.length.toFixed(2) %></td>
-                            <td><%= skid.weight.toFixed(2) %></td>
-                            <td><%= skid.description || '-' %></td>
+                            <td colspan="5" style="text-align: center;">No skids added to this load.</td>
                         </tr>
-                    <% }); %>
+                    <% } %>
                     </tbody>
-                    <tfoot>
-                    <tr style="font-weight: bold;">
-                        <td colspan="3" style="text-align: right;">Total Weight:</td>
-                        <td><%= load.totalWeight ? load.totalWeight.toFixed(2) : '0.00' %></td>
-                        <td></td>
-                    </tr>
-                    </tfoot>
+                    <% if (load.skids && load.skids.length > 0) { %>
+                        <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align: right;"><strong>Total Weight:</strong></td>
+                            <td><strong><%= load.totalWeight ? load.totalWeight.toFixed(2) : '0.00' %></strong></td>
+                            <td></td>
+                        </tr>
+                        </tfoot>
+                    <% } %>
                 </table>
+
+                <div id="printLoadingSummary">
+                    <h5>Loading Summary</h5>
+                    <p><strong>Total Skids:</strong> <%= load.skids ? load.skids.length : 0 %></p>
+                    <p><strong>Total Weight:</strong> <%= load.totalWeight ? load.totalWeight.toFixed(2) : '0.00' %> lbs
+                        (<%= load.truckInfo && load.truckInfo.weight ? ((load.totalWeight || 0) / load.truckInfo.weight * 100).toFixed(1) : 0 %>% of capacity)</p>
+
+                    <% if (load.totalWeight && load.truckInfo && load.truckInfo.weight && load.totalWeight > load.truckInfo.weight) { %>
+                        <p class="warning"><strong>Warning:</strong> Load exceeds truck capacity by <%= (load.totalWeight - load.truckInfo.weight).toFixed(2) %> lbs</p>
+                    <% } %>
+                </div>
             </div>
         </form> <!-- End Packing List Form -->
     </div> <!-- End document-container -->
@@ -196,8 +216,385 @@
     </div>
 </div> <!-- End packingListPage -->
 
+<%- contentFor('styles') %>
+<style>
+    .packing-list-container {
+        padding-bottom: 30px;
+    }
+
+    .document-container {
+        background-color: var(--white);
+        padding: 40px;
+        box-shadow: none;
+        border: 1px solid var(--medium-gray);
+        border-radius: var(--border-radius);
+        position: relative;
+        margin-bottom: 30px;
+    }
+
+    .packing-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid var(--primary-blue);
+    }
+
+    .logo-container {
+        width: 150px;
+        height: 75px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .logo-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .packing-title-area {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0 20px;
+    }
+
+    .packing-title {
+        font-size: 1.8rem;
+        margin-bottom: 5px;
+        color: var(--dark-gray);
+        font-weight: 700;
+    }
+
+    .subtitle {
+        font-weight: bold;
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 1rem;
+        line-height: 1.4;
+    }
+
+    .divider {
+        border: 0;
+        height: 1px;
+        background: var(--medium-gray);
+        margin: 30px 0;
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+    }
+
+    .form-section .section-title {
+        font-weight: 600;
+        color: var(--primary-blue);
+        margin-bottom: 15px;
+        font-size: 1.1rem;
+        border-bottom: 1px solid var(--medium-gray);
+        padding-bottom: 8px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 25px;
+        margin-bottom: 20px;
+    }
+
+    .form-row .form-field {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .form-field {
+        margin-bottom: 20px;
+    }
+
+    .form-field label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--dark-gray);
+    }
+
+    .form-field label.required::after {
+        content: " *";
+        color: var(--danger-red);
+        font-weight: normal;
+    }
+
+    .form-field input[type="text"],
+    .form-field input[type="date"],
+    .form-field input[type="tel"] {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ced4da;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+    }
+
+    .form-field input:focus,
+    .form-field input[type="tel"]:focus {
+        border-color: var(--secondary-blue);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    }
+
+    .fixed-info {
+        margin-bottom: 20px;
+        padding: 15px 20px;
+        background-color: var(--light-gray);
+        border-radius: var(--border-radius);
+        border-left: 4px solid var(--secondary-blue);
+    }
+
+    .fixed-info p {
+        margin: 8px 0;
+        line-height: 1.5;
+    }
+
+    .fixed-info strong {
+        color: var(--primary-blue);
+    }
+
+    .signature-area {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px dashed var(--medium-gray);
+    }
+
+    .signature-container {
+        border: 2px dashed var(--medium-gray);
+        border-radius: var(--border-radius);
+        margin-top: 10px;
+        position: relative;
+        height: 200px;
+        background-color: #fdfdfd;
+        cursor: crosshair;
+    }
+
+    #signature-pad {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+    }
+
+    .signature-clear {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        background: var(--danger-red);
+        color: var(--white);
+        border: none;
+        padding: 6px 12px;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: background-color 0.3s;
+    }
+
+    .signature-clear:hover {
+        background-color: #c82333;
+    }
+
+    .signature-image {
+        border: 1px solid var(--medium-gray);
+        background-color: #fff;
+        padding: 10px;
+        border-radius: var(--border-radius);
+        display: inline-block;
+        margin-top: 10px;
+    }
+
+    .signature-image img {
+        max-width: 300px;
+        max-height: 150px;
+    }
+
+    .save-status {
+        font-size: 0.85rem;
+        text-align: right;
+        margin-top: 15px;
+        height: 1em;
+        opacity: 0;
+        transition: opacity 0.5s;
+        color: var(--success-green);
+    }
+
+    .save-status.visible {
+        opacity: 1;
+    }
+
+    .save-status.error {
+        color: var(--danger-red);
+    }
+
+    /* Hidden Print Section Styling */
+    #printTruckInfo {
+        display: none; /* Hidden by default */
+    }
+
+    .print-section-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: var(--primary-blue);
+    }
+
+    .print-section-subtitle {
+        font-size: 16px;
+        font-weight: bold;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        color: var(--dark-gray);
+    }
+
+    .print-skids-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+
+    .print-skids-table th,
+    .print-skids-table td {
+        border: 1px solid var(--medium-gray);
+        padding: 8px;
+        text-align: left;
+    }
+
+    .print-skids-table th {
+        background-color: var(--light-gray);
+        font-weight: bold;
+    }
+
+    .print-skids-table tfoot td {
+        font-weight: bold;
+        background-color: var(--light-gray);
+    }
+
+    #printLoadingSummary {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: var(--light-gray);
+        border-radius: var(--border-radius);
+        border: 1px solid var(--medium-gray);
+    }
+
+    #printLoadingSummary h5 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    #printLoadingSummary p {
+        margin: 5px 0;
+    }
+
+    #printLoadingSummary .warning {
+        color: var(--danger-red);
+        margin-top: 10px;
+        padding: 5px 10px;
+        background-color: #fff3cd;
+        border: 1px solid #ffecb5;
+        border-radius: var(--border-radius);
+    }
+
+    @media (max-width: 768px) {
+        .document-container {
+            padding: 20px;
+        }
+
+        .packing-header {
+            flex-direction: column;
+        }
+
+        .logo-container {
+            margin-bottom: 15px;
+        }
+
+        .packing-title {
+            font-size: 1.5rem;
+        }
+
+        .form-row {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .signature-container {
+            height: 150px;
+        }
+
+        .signature-image img {
+            max-width: 100%;
+        }
+
+        .load-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .load-actions button {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+    }
+
+    @media print {
+        .load-actions, .button-group, .save-status, .signature-clear, .no-print {
+            display: none !important;
+        }
+
+        .document-container {
+            border: none;
+            padding: 10px;
+            box-shadow: none;
+        }
+
+        .packing-header {
+            border-bottom: 2px solid #000;
+        }
+
+        /* Show hidden print section */
+        #printTruckInfo {
+            display: block !important;
+            page-break-before: always;
+            margin-top: 30px;
+        }
+
+        .print-skids-table th {
+            background-color: #eee !important;
+            color: #000 !important;
+        }
+
+        .print-skids-table tfoot td {
+            background-color: #eee !important;
+        }
+
+        #printLoadingSummary {
+            background-color: #f8f9fa !important;
+            border: 1px solid #ddd;
+        }
+
+        #printLoadingSummary .warning {
+            background-color: #fff3cd !important;
+            color: #856404 !important;
+            border-color: #ffecb5 !important;
+        }
+    }
+</style>
+
 <%- contentFor('scripts') %>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
+    // Global variables
     let signaturePad;
     let saveTimeout;
 
@@ -346,6 +743,7 @@
 
         // Print button
         document.getElementById('printPackingListBtn').addEventListener('click', function() {
+            // Print the document
             window.print();
         });
 
