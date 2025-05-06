@@ -22,6 +22,11 @@ router.get('/project-selection', loaderController.getProjectSelection);
 // @access  Loader/Admin
 router.post('/project-selection', loaderController.processProjectSelection);
 
+// @route   GET /loader/recent-projects
+// @desc    Get recent projects for selection page
+// @access  Loader/Admin
+router.get('/recent-projects', loaderController.getRecentProjects);
+
 // @route   GET /loader/inventory/:projectId
 // @desc    Inventory management for a project
 // @access  Loader/Admin
@@ -101,5 +106,10 @@ router.post('/truck/:projectId/packing-list', loaderController.savePackingList);
 // @desc    Print truck load information
 // @access  Loader/Admin
 router.get('/truck/:projectId/print', loaderController.printTruckLoad);
+
+// @route   GET /loader/stats
+// @desc    Get loader dashboard stats
+// @access  Loader/Admin
+router.get('/stats', loaderController.getLoaderStats);
 
 module.exports = router;

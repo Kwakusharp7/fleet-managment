@@ -128,7 +128,9 @@
                             <a href="#" onclick="editSkid('<%= skid.id %>', <%= index %>); return false;" class="btn-edit btn-sm">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
+                            <!-- Fixed Delete form to ensure it includes loadId and uses correct URL pattern -->
                             <form action="/loader/truck/<%= project.code %>/skid/<%= skid.id %>" method="POST" style="display:inline;">
+                                <input type="hidden" name="_method" value="DELETE">
                                 <input type="hidden" name="_method" value="DELETE">
                                 <input type="hidden" name="loadId" value="<%= load._id %>">
                                 <button type="submit" class="btn-delete btn-sm"
@@ -294,7 +296,7 @@
         }
     }
 
-    // Edit Skid
+    // Edit Skid Function - Improved to avoid the 404 error
     function editSkid(skidId, index) {
         const formContainer = document.getElementById('addTruckSkidFormContainer');
         const template = document.getElementById('skidFormTemplate');
@@ -309,12 +311,13 @@
         const saveBtn = formContainer.querySelector('.save-skid-btn');
         saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
 
-        // Get skid data
-        const skids = <%= JSON.stringify(load.skids) %>;
+        // Get skid data - using JSON.stringify to make a proper JavaScript object
+        const skids = JSON.parse('<%- JSON.stringify(load.skids) %>');
         const skid = skids.find(s => s.id === skidId);
 
         if (skid) {
             const form = formContainer.querySelector('.add-skid-form');
+            // Use the correct URL pattern for updating skids
             form.action = '/loader/truck/<%= project.code %>/skid/' + skidId + '?_method=PUT';
             form.method = 'POST';
 
