@@ -195,14 +195,17 @@
 
     <!-- Navigation Buttons -->
     <div class="button-group no-print" style="margin-top: 30px;">
+        <!-- Back all the way to Task Selection -->
         <a href="/loader" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Task Selection
         </a>
-        <a href="/loader/truck/<%= project.code %>" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Truck Info
-        </a>
-        <a href="/loader/truck/<%= project.code %>/packing-list?loadId=<%= load._id %>" class="btn btn-next">
-            <i class="fas fa-clipboard-list"></i> Next: Packing List
+
+        <!-- Next → Truck Information Entry -->
+        <a
+          href="/loader/truck/<%= project.code %>/info?loadId=<%= load._id %>"
+          class="btn btn-success btn-next"
+        >
+            <i class="fas fa-truck"></i> Next: Truck Information Entry
         </a>
     </div>
 </div>

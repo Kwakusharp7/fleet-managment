@@ -435,11 +435,29 @@ exports.getTruckInfoPage = async (req, res) => {
             isInventory: { $ne: true } // Not an inventory load
         }).sort({ dateEntered: -1 });
 
+        if (existingLoad) {
+            return res.redirect(
+                `/loader/truck/${projectId}/skids?loadId=${existingLoad._id}`
+            );
+        } else {
+            // Create a minimal new load so skid-details has something to attach to
+            const newLoad = new Load({
+                projectCode: projectId,
+                status: 'Planned',
+                createdBy: req.user._id
+            });
+            await newLoad.save();
+            return res.redirect(
+                `/loader/truck/${projectId}/skids?loadId=${newLoad._id}`
+            );
+        }
+
         res.render('loader/truck-info', {
             title: 'Truck Information',
             layout: 'layouts/loader',
             project,
-            existingLoad
+            existingLoad,
+            value: "<%= existingLoad ? existingLoad.truckId : '' %>"
         });
     } catch (err) {
         console.error(err);
@@ -1206,3 +1224,22 @@ exports.getLoaderStats = async (req, res) => {
       res.status(500).json({ error: 'Failed to fetch loader stats' });
     }
   };
+// Add this function near your other exports (for example, after getTruckInfoPage)
+exports.showTruckInfo = async (req, res) => {
+  try {
+    const projectId = req.params.projectId;
+    const loadId    = req.query.loadId;
+    const project   = await Project.findOne({ code: projectId });
+    const load      = await Load.findById(loadId);
+    res.render('loader/truck-info', {
+      title: 'Truck Information Entry',
+      layout: 'layouts/loader',
+      project,
+      load
+    });
+  } catch (err) {
+    console.error('Error loading truck information entry form:', err);
+    req.flash('error_msg', 'Error loading truck information entry form');
+    res.redirect('/loader/project-selection?task=truckEntry');
+  }
+};
