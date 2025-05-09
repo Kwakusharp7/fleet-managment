@@ -1,4 +1,19 @@
-<!-- ==== Skid Details Page ==== -->
+<!-- Action Buttons -->
+    <div class="d-flex justify-content-between align-items-center mb-3 mt-3 no-print">
+        <div>
+            <form action="/loader/truck/<%= project.code %>/skids/clear" method="POST" style="display:inline;">
+                <input type="hidden" name="_method" value="DELETE">
+                <input type="hidden" name="loadId" value="<%= load._id %>">
+                <button type="submit" id="resetSkidsBtn" class="btn btn-secondary"
+                        <%= load.skids.length === 0 ? 'disabled' : '' %>>
+                    <i class="fas fa-undo"></i> Reset Truck Skids List
+                </button>
+            </form>
+        </div>
+        <a href="/loader/truck/<%= project.code %>/print?loadId=<%= load._id %>" class="btn btn-print" target="_blank">
+            <i class="fas fa-print"></i> Print Loading Plan
+        </a>
+    </div><!-- ==== Skid Details Page ==== -->
 <div id="skidDetailsPage" class="page active">
     <h2 class="section-title">
         <i class="fas fa-pallet"></i> Skids for Truck:
@@ -8,88 +23,93 @@
 
     <p class="intro-paragraph">
         Add skids directly, select from inventory for this project, or edit/remove skids for this load.
-        <span id="truckSizeDisplay">
-            (<%= load.truckInfo.length %>ft L × <%= load.truckInfo.width %>ft W, <%= load.truckInfo.weight %>lbs Cap.)
-        </span>
+        <% if (load.truckInfo && load.truckInfo.length && load.truckInfo.width && load.truckInfo.weight) { %>
+            <span id="truckSizeDisplay">
+                (<%= load.truckInfo.length %>ft L × <%= load.truckInfo.width %>ft W, <%= load.truckInfo.weight %>lbs Cap.)
+            </span>
+        <% } %>
     </p>
 
     <!-- Inventory Skid Selection -->
     <% if (inventorySkids && inventorySkids.length > 0) { %>
+        <!-- Improved Inventory Skid Selection Table with better visual indicators -->
         <div id="inventorySkidSelectionContainer">
             <h4><i class="fas fa-clipboard-check"></i> Select Inventory Skids to Add to Truck</h4>
+            
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-info-circle"></i> Once a skid is added to the truck, it cannot be selected again. 
+                Skids that are already on the truck are marked as "Already Added" below.
+            </div>
+            
             <form action="/loader/truck/<%= project.code %>/skids/add-from-inventory" method="POST" id="inventorySkidForm">
                 <input type="hidden" name="loadId" value="<%= load._id %>">
 
                 <div class="table-responsive">
-                    <table id="inventorySkidSelectionTable">
+                    <table id="inventorySkidSelectionTable" class="table table-striped">
                         <thead>
-                        <tr>
-                            <th>Add</th>
-                            <th>Inv. ID</th>
-                            <th>W (ft)</th>
-                            <th>L (ft)</th>
-                            <th>Wt (lbs)</th>
-                            <th>Description</th>
-                        </tr>
+                            <tr>
+                                <th width="5%">Add</th>
+                                <th width="15%">Inv. ID</th>
+                                <th width="10%">W (ft)</th>
+                                <th width="10%">L (ft)</th>
+                                <th width="10%">Wt (lbs)</th>
+                                <th width="50%">Description</th>
+                            </tr>
                         </thead>
                         <tbody id="inventorySkidSelectionBody">
-                        <% inventorySkids.forEach(skid => { %>
-                            <tr class="<%= skid.alreadyOnTruck ? 'already-selected' : '' %>">
-                                <td>
-                                    <input type="checkbox"
-                                           name="selectedSkids"
-                                           value="<%= skid.id %>"
-                                           id="inv-select-<%= skid.id %>"
-                                           class="inventory-skid-checkbox"
-                                           <%= skid.alreadyOnTruck ? 'disabled checked' : '' %>>
-                                </td>
-                                <td>
-                                    <label for="inv-select-<%= skid.id %>"
-                                           title="<%= skid.alreadyOnTruck ? 'Already added to truck' : `Select ${skid.id}` %>">
-                                        <%= skid.id %>
-                                    </label>
-                                </td>
-                                <td><%= skid.width.toFixed(2) %></td>
-                                <td><%= skid.length.toFixed(2) %></td>
-                                <td><%= skid.weight.toFixed(2) %></td>
-                                <td><%= skid.description || '-' %></td>
+                        <% if (inventorySkids && inventorySkids.length > 0) { %>
+                            <% inventorySkids.forEach(skid => { %>
+                                <tr class="<%= skid.alreadyOnTruck ? 'already-selected' : '' %>" data-skid-id="<%= skid.id %>">
+                                    <td>
+                                        <input type="checkbox"
+                                               name="selectedSkids"
+                                               value="<%= skid.id %>"
+                                               id="inv-select-<%= skid.id %>"
+                                               class="inventory-skid-checkbox"
+                                               <%= skid.alreadyOnTruck ? 'disabled checked' : '' %>>
+                                    </td>
+                                    <td>
+                                        <label for="inv-select-<%= skid.id %>"
+                                               class="<%= skid.alreadyOnTruck ? 'disabled-label' : '' %>"
+                                               title="<%= skid.alreadyOnTruck ? 'Already added to truck' : `Select ${skid.id}` %>">
+                                            <%= skid.id %>
+                                        </label>
+                                    </td>
+                                    <td><%= skid.width.toFixed(2) %></td>
+                                    <td><%= skid.length.toFixed(2) %></td>
+                                    <td><%= skid.weight.toFixed(2) %></td>
+                                    <td>
+                                        <%= skid.description || '-' %>
+                                        <% if (skid.alreadyOnTruck) { %>
+                                            <span class="already-added-note">(Already on truck)</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" style="text-align: center;">No inventory skids available.</td>
                             </tr>
-                        <% }); %>
+                        <% } %>
                         </tbody>
                     </table>
                 </div>
-
-                <button type="submit" id="addSelectedInventorySkidsBtn" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus-circle"></i> Add Selected Inventory Skids to Truck Load
+                
+                <button type="submit" class="btn btn-primary mt-3" id="addSelectedSkidsBtn">
+                    <i class="fas fa-plus"></i> Add Selected Skids to Truck
                 </button>
             </form>
         </div>
     <% } %>
 
-    <!-- Add/Edit Skid Form Container -->
-    <div class="form-container no-print" id="addTruckSkidFormContainer" style="display: none;">
-        <!-- Content will be populated by JavaScript -->
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="d-flex justify-content-between align-items-center mb-3 mt-3 no-print">
-        <div>
-            <button class="btn btn-success" id="addTruckSkidBtn">
-                <i class="fas fa-plus"></i> Add Skid Directly to Truck
-            </button>
-            <form action="/loader/truck/<%= project.code %>/skids/clear" method="POST" style="display:inline;">
-                <input type="hidden" name="_method" value="DELETE">
-                <input type="hidden" name="loadId" value="<%= load._id %>">
-                <button type="submit" id="resetSkidsBtn" class="btn btn-secondary"
-                        style="margin-left: 10px;"
-                        <%= load.skids.length === 0 ? 'disabled' : '' %>>
-                    <i class="fas fa-undo"></i> Reset Truck Skids List
-                </button>
-            </form>
-        </div>
-        <a href="/loader/truck/<%= project.code %>/print?loadId=<%= load._id %>" class="btn btn-print" target="_blank">
-            <i class="fas fa-print"></i> Print Loading Plan
-        </a>
+    <!-- Ensure we have an explicit form container for adding skids directly -->
+    <div class="mt-3 mb-4">
+        <button class="btn btn-success" id="addTruckSkidBtn">
+            <i class="fas fa-plus"></i> Add Skid Directly to Truck
+        </button>
+        
+        <!-- Container for the form that will be added dynamically -->
+        <div id="addTruckSkidFormContainer" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;"></div>
     </div>
 
     <!-- Truck Skid Table -->
@@ -239,11 +259,10 @@
                 <div class="form-group">
                     <label class="form-label required">Weight <span class="unit-label">(lbs)</span></label>
                     <div class="input-group">
-                        <input type="number" name="weight" class="form-control skid-weight" min="1" required placeholder="e.g., 500" readonly>
+                        <input type="number" name="weight" class="form-control skid-weight" min="1" required placeholder="e.g., 500">
                         <span class="input-group-text">lbs</span>
                     </div>
                     <div class="invalid-feedback">Please enter a valid weight (min 1).</div>
-                    <small class="form-text text-muted">Weight is automatically calculated</small>
                 </div>
             </div>
             <div class="col-md-3">
@@ -331,30 +350,24 @@
 
 <%- contentFor('scripts') %>
 <script>
-    // Weight calculation function
-    function calculateSkidWeight(width, length, height = 0.5) {
-        // Default density for wood (40 lbs per cubic foot)
-        const density = 40;
-        
-        // Calculate volume in cubic feet
-        const volume = width * length * height;
-        
-        // Calculate weight (volume × density)
-        const weight = volume * density;
-        
-        // Round to 2 decimal places
-        return Math.round(weight * 100) / 100;
-    }
+    // Weight calculation function removed - now using manual input
 
     // Initialize event listeners when document is ready
     document.addEventListener('DOMContentLoaded', function() {
         console.log("DOM Content Loaded");
         
         // Add event listeners for add skid button
-        document.getElementById('addTruckSkidBtn').addEventListener('click', function() {
-            console.log("Add skid button clicked");
-            toggleAddSkidForm();
-        });
+        const addTruckSkidBtn = document.getElementById('addTruckSkidBtn');
+        if (addTruckSkidBtn) {
+            addTruckSkidBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Prevent any default action
+                console.log("Add skid button clicked");
+                toggleAddSkidForm();
+            });
+            console.log("Add skid button listener attached");
+        } else {
+            console.error("Add skid button not found!");
+        }
 
         // Set up event listeners for edit buttons
         document.querySelectorAll('.edit-skid-btn').forEach(button => {
@@ -435,14 +448,97 @@
         // Check if form is being submitted
         const inventoryForm = document.getElementById('inventorySkidForm');
         if (inventoryForm) {
-            inventoryForm.addEventListener('submit', function() {
-                // When form submits, disable the selected checkboxes to prevent multiple selections
-                inventoryCheckboxes.forEach(checkbox => {
-                    if (checkbox.checked) {
-                        checkbox.disabled = true;
-                        checkbox.closest('tr').classList.add('selected-skid');
+            inventoryForm.addEventListener('submit', async function (e) {
+                e.preventDefault(); // Prevent default form submission
+
+                const form = this;
+                const formData = new FormData(form);
+                const loadId = form.querySelector('input[name="loadId"]').value;
+                const selectedSkids = Array.from(form.querySelectorAll('input[name="selectedSkids"]:checked')).map(checkbox => checkbox.value);
+
+                try {
+                    // Submit the form data to the server
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        // Fetch the updated load data from the server
+                        const loadResponse = await fetch(`/loader/truck/<%= project.code %>/skids?loadId=${loadId}`);
+                        const loadData = await loadResponse.json(); // Expecting the server to return JSON with updated load data
+
+                        // Update the truck skid table dynamically
+                        const skidTableBody = document.getElementById('truckSkidTableBody');
+                        skidTableBody.innerHTML = ''; // Clear existing rows
+
+                        if (loadData.skids && loadData.skids.length > 0) {
+                            loadData.skids.forEach((skid, index) => {
+                                const row = `
+                                    <tr data-skid-id="${skid.id}" data-index="${index}">
+                                        <td>${index + 1}</td>
+                                        <td>${skid.width.toFixed(2)}</td>
+                                        <td>${skid.length.toFixed(2)}</td>
+                                        <td class="skid-weight-cell">${skid.weight.toFixed(2)}</td>
+                                        <td>
+                                            ${skid.description || '-'}
+                                            ${skid.originalInvId ? `<span style="font-size: 0.8em; color: var(--text-muted); white-space: nowrap;">(from Inv: ${skid.originalInvId})</span>` : ''}
+                                        </td>
+                                        <td class="action-buttons no-print">
+                                            <button class="btn-edit btn-sm edit-skid-btn" data-skid-id="${skid.id}" data-index="${index}">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <form action="/loader/truck/<%= project.code %>/skids/delete-skid" method="POST" class="delete-skid-form">
+                                                <input type="hidden" name="skidId" value="${skid.id}">
+                                                <input type="hidden" name="loadId" value="${loadId}">
+                                                <button type="submit" class="btn-delete btn-sm delete-skid-btn">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>`;
+                                skidTableBody.insertAdjacentHTML('beforeend', row);
+                            });
+                        } else {
+                            skidTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No skids added to this truck yet.</td></tr>';
+                        }
+
+                        // Reattach event listeners for edit and delete buttons
+                        document.querySelectorAll('.edit-skid-btn').forEach(button => {
+                            button.addEventListener('click', function () {
+                                const skidId = this.getAttribute('data-skid-id');
+                                const index = parseInt(this.getAttribute('data-index'), 10);
+                                editSkid(skidId, index);
+                            });
+                        });
+
+                        document.querySelectorAll('.delete-skid-form').forEach(form => {
+                            form.addEventListener('submit', function (e) {
+                                if (!confirm('Are you sure you want to remove this skid from the truck?')) {
+                                    e.preventDefault();
+                                }
+                            });
+                        });
+
+                        // Update totals
+                        updateTotalWeightFromTable();
+
+                        // Disable selected checkboxes and mark as added
+                        selectedSkids.forEach(skidId => {
+                            const checkbox = document.querySelector(`input[value="${skidId}"]`);
+                            if (checkbox) {
+                                checkbox.disabled = true;
+                                checkbox.checked = true;
+                                checkbox.closest('tr').classList.add('already-selected');
+                            }
+                        });
+                    } else {
+                        alert('Failed to add skids. Please try again.');
                     }
-                });
+                } catch (error) {
+                    console.error('Error adding skids:', error);
+                    alert('An error occurred while adding skids. Please try again.');
+                }
             });
         }
         
@@ -476,18 +572,8 @@
             const lengthInput = form.querySelector('.skid-length');
             const weightInput = form.querySelector('.skid-weight');
 
-            function updateWeight() {
-                const width = parseFloat(widthInput.value);
-                const length = parseFloat(lengthInput.value);
-                
-                if (width > 0 && length > 0) {
-                    const weight = calculateSkidWeight(width, length);
-                    weightInput.value = weight.toFixed(2);
-                }
-            }
-
-            widthInput.addEventListener('input', updateWeight);
-            lengthInput.addEventListener('input', updateWeight);
+            // We're not automatically calculating weight anymore
+            // The user will input the weight manually
             
             // Add cancel button event listener
             form.querySelector('.cancel-skid-btn').addEventListener('click', function() {
