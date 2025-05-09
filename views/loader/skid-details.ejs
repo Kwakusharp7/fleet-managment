@@ -131,7 +131,6 @@
                             <!-- Fixed Delete form to ensure it includes loadId and uses correct URL pattern -->
                             <form action="/loader/truck/<%= project.code %>/skid/<%= skid.id %>" method="POST" style="display:inline;">
                                 <input type="hidden" name="_method" value="DELETE">
-                                <input type="hidden" name="_method" value="DELETE">
                                 <input type="hidden" name="loadId" value="<%= load._id %>">
                                 <button type="submit" class="btn-delete btn-sm"
                                         onclick="return confirm('Are you sure you want to remove this skid from the truck?')">
