@@ -1,7 +1,8 @@
 const express           = require('express');
 const router            = express.Router();
-const loaderController  = require('../controllers/loaderController'); // Fixed import path
+const loaderController  = require('../controllers/loaderController');
 const { ensureAuthenticated, ensureLoader } = require('../middleware/auth');
+const Load = require('../models/Load'); // Add this import
 
 // Apply authentication and loader‐role middleware to all routes
 router.use(ensureAuthenticated);
@@ -79,8 +80,76 @@ router.post('/truck/:projectId/skid', loaderController.addTruckSkid);
 router.put('/truck/:projectId/skid/:skidId', loaderController.updateTruckSkid);
 
 // @route   DELETE /loader/truck/:projectId/skid/:skidId
-// @desc    Delete truck skid
-router.delete('/truck/:projectId/skid/:skidId', loaderController.deleteTruckSkid);
+// @desc    Delete truck skid (direct DELETE requests)
+router.delete('/truck/:projectId/skid/:skidId', ensureAuthenticated, ensureLoader, loaderController.deleteTruckSkid);
+
+// @route   POST /loader/truck/:projectId/skid/:skidId
+// @desc    Handle DELETE requests from forms with _method=DELETE
+router.post('/truck/:projectId/skid/:skidId', ensureAuthenticated, ensureLoader, (req, res, next) => {
+  if (req.body._method === 'DELETE') {
+    console.log('Handling DELETE for:', req.url);
+    return loaderController.deleteTruckSkid(req, res, next);
+  }
+  // If it's not a DELETE request, continue to the next route
+  next();
+});
+
+// @route   POST /loader/truck/:projectId/skids/delete-skid
+// @desc    Alternative delete route that uses a simple POST (no method override)
+router.post('/truck/:projectId/skids/delete-skid', ensureAuthenticated, ensureLoader, async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { skidId, loadId } = req.body;
+
+    console.log(`Deleting skid ${skidId} from load ${loadId} in project ${projectId}`);
+
+    if (!loadId) {
+      req.flash('error_msg', 'Load ID is required');
+      return res.redirect(`/loader/truck/${projectId}`);
+    }
+
+    // Find the load
+    const load = await Load.findById(loadId);
+
+    if (!load) {
+      console.error(`Load ${loadId} not found`);
+      req.flash('error_msg', 'Load not found');
+      return res.redirect(`/loader/truck/${projectId}`);
+    }
+
+    if (load.projectCode !== projectId) {
+      console.error(`Load ${loadId} does not belong to project ${projectId}`);
+      req.flash('error_msg', 'Invalid load selected for this project');
+      return res.redirect(`/loader/truck/${projectId}`);
+    }
+
+    // Find the skid to be removed
+    const skidToRemove = load.skids.find(skid => skid.id === skidId);
+
+    if (!skidToRemove) {
+      console.error(`Skid ${skidId} not found in load ${loadId}`);
+      req.flash('error_msg', 'Skid not found in truck load');
+      return res.redirect(`/loader/truck/${projectId}/skids?loadId=${loadId}`);
+    }
+
+    // Remove the skid
+    load.skids = load.skids.filter(skid => skid.id !== skidId);
+
+    // Update skid count and total weight
+    load.skidCount = load.skids.length;
+    load.totalWeight = load.skids.reduce((sum, skid) => sum + (parseFloat(skid.weight) || 0), 0);
+
+    // Save the updated load
+    await load.save();
+
+    req.flash('success_msg', 'Truck skid removed');
+    res.redirect(`/loader/truck/${projectId}/skids?loadId=${loadId}`);
+  } catch (err) {
+    console.error('Error removing truck skid:', err);
+    req.flash('error_msg', 'Error removing truck skid');
+    res.redirect(`/loader/truck/${req.params.projectId}/skids?loadId=${req.body.loadId || ''}`);
+  }
+});
 
 // @route   DELETE /loader/truck/:projectId/skids/clear
 // @desc    Clear all truck skids

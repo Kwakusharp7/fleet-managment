@@ -5,7 +5,6 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const flash = require('connect-flash');
 const passport = require('passport');
-const methodOverride = require('method-override');
 const helmet = require('helmet');
 const config = require('./config/config');
 const { addAuthHelpers } = require('./middleware/auth');
@@ -13,6 +12,28 @@ const { globalErrorHandler, notFoundHandler } = require('./utils/errorHandler');
 
 // Initialize express
 const app = express();
+
+// Debugging middleware to log requests
+app.use((req, res, next) => {
+  console.log('Request:', {
+    method: req.method,
+    url: req.url,
+    params: req.params,
+    query: req.query,
+    body: req.body
+  });
+  next();
+});
+
+// Check if method-override is properly installed
+try {
+  const methodOverride = require('method-override');
+  console.log('Method override is available');
+  // Configure method-override
+  app.use(methodOverride('_method'));
+} catch (err) {
+  console.error('Method override is NOT available, install it with: npm install method-override');
+}
 
 // Security headers
 app.use(helmet({
@@ -32,9 +53,6 @@ app.use(helmet({
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-// Method override
-app.use(methodOverride('_method'));
-
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -45,47 +63,23 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('layout', 'layouts/main');
 
 // Session configuration
- 
-// Session configuration
-
 app.use(session({
-
     secret: config.session.secret,
-
     resave: false,
-
     saveUninitialized: false,
-
     store: MongoStore.create({
-
         mongoUrl: config.db.uri,
-
         ttl: 14 * 24 * 60 * 60, // 14 days
-
-        // Add these settings for Vercel's serverless environment
-
         touchAfter: 24 * 3600, // time period in seconds
-
         autoRemove: 'native'
-
     }),
-
     cookie: {
-
         secure: process.env.NODE_ENV === 'production',
-
         httpOnly: true,
-
         maxAge: config.session.duration,
-
-        // Important for Vercel deployment
-
         sameSite: 'lax'
-
     }
-
 }));
- 
 
 // Passport initialization
 require('./config/auth');
@@ -112,15 +106,12 @@ app.use(addAuthHelpers);
 
 // Set layout based on user role
 app.use((req, res, next) => {
-    // If user is authenticated and has loader role, set loader layout as default
     if (req.isAuthenticated() && req.user && req.user.role === 'Loader') {
-        // Only set loader layout for loader routes
         if (req.path.startsWith('/loader')) {
             res.locals.layout = 'layouts/loader';
         }
     }
 
-    // For print routes, use print layout
     if (req.path.includes('/print')) {
         res.locals.layout = 'layouts/print';
     }
@@ -128,17 +119,15 @@ app.use((req, res, next) => {
     next();
 });
 
-
 // Routes
 app.use('/', require('./routes/authRoutes'));
 app.use('/dashboard', require('./routes/dashboardRoutes'));
 app.use('/loads', require('./routes/loadRoutes'));
 app.use('/projects', require('./routes/projectRoutes'));
 app.use('/users', require('./routes/userRoutes'));
-app.use('/reports', require('./routes/reportRoutes')); // Add reports routes
-app.use('/settings', require('./routes/settingsRoutes')); // Add settings routes
+app.use('/reports', require('./routes/reportRoutes'));
+app.use('/settings', require('./routes/settingsRoutes'));
 app.use('/loader', require('./routes/loaderRoutes'));
-
 
 // Add API route for loader stats
 app.get('/loader/stats', async (req, res) => {
@@ -146,20 +135,15 @@ app.get('/loader/stats', async (req, res) => {
         const Load = require('./models/Load');
         const moment = require('moment');
 
-        // Get today's date range
         const startOfToday = moment().startOf('day');
         const endOfToday = moment().endOf('day');
-
-        // Get start of week
         const startOfWeek = moment().startOf('week');
 
-        // Count planned loads
         const plannedLoads = await Load.countDocuments({
             status: 'Planned',
-            isInventory: { $ne: true } // Exclude inventory "loads"
+            isInventory: { $ne: true }
         });
 
-        // Count loads loaded today
         const loadedToday = await Load.countDocuments({
             status: 'Loaded',
             updatedAt: {
@@ -168,7 +152,6 @@ app.get('/loader/stats', async (req, res) => {
             }
         });
 
-        // Count delivered this week
         const deliveredWeek = await Load.countDocuments({
             status: 'Delivered',
             updatedAt: {
@@ -176,7 +159,6 @@ app.get('/loader/stats', async (req, res) => {
             }
         });
 
-        // Count all skids added (in both inventory and loaded trucks)
         const loadCounts = await Load.aggregate([
             { $match: { createdAt: { $gte: startOfWeek.toDate() } } },
             { $group: { _id: null, totalSkids: { $sum: "$skidCount" } } }
@@ -184,7 +166,6 @@ app.get('/loader/stats', async (req, res) => {
 
         const skidsAdded = loadCounts.length > 0 ? loadCounts[0].totalSkids : 0;
 
-        // Return stats
         res.json({
             plannedLoads,
             loadedToday,
