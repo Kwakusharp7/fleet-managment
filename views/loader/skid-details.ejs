@@ -115,7 +115,7 @@
                         <td><%= index + 1 %></td>
                         <td><%= skid.width.toFixed(2) %></td>
                         <td><%= skid.length.toFixed(2) %></td>
-                        <td><%= skid.weight.toFixed(2) %></td>
+                        <td class="skid-weight-cell"><%= skid.weight.toFixed(2) %></td>
                         <td>
                             <%= skid.description || '-' %>
                             <% if (skid.originalInvId) { %>
@@ -241,10 +241,11 @@
                 <div class="form-group">
                     <label class="form-label required">Weight <span class="unit-label">(lbs)</span></label>
                     <div class="input-group">
-                        <input type="number" name="weight" class="form-control skid-weight" min="1" required placeholder="e.g., 500">
+                        <input type="number" name="weight" class="form-control skid-weight" min="1" required placeholder="e.g., 500" readonly>
                         <span class="input-group-text">lbs</span>
                     </div>
                     <div class="invalid-feedback">Please enter a valid weight (min 1).</div>
+                    <small class="form-text text-muted">Weight is automatically calculated</small>
                 </div>
             </div>
             <div class="col-md-3">
@@ -267,6 +268,21 @@
 
 <%- contentFor('scripts') %>
 <script>
+    // Weight calculation function
+    function calculateSkidWeight(width, length, height = 0.5) {
+        // Default density for wood (40 lbs per cubic foot)
+        const density = 40;
+        
+        // Calculate volume in cubic feet
+        const volume = width * length * height;
+        
+        // Calculate weight (volume × density)
+        const weight = volume * density;
+        
+        // Round to 2 decimal places
+        return Math.round(weight * 100) / 100;
+    }
+
     function toggleAddSkidForm() {
         const formContainer = document.getElementById('addTruckSkidFormContainer');
         if (formContainer.style.display === 'none') {
@@ -287,6 +303,24 @@
             loadIdInput.name = 'loadId';
             loadIdInput.value = '<%= load._id %>';
             form.appendChild(loadIdInput);
+
+            // Add event listeners for automatic weight calculation
+            const widthInput = form.querySelector('.skid-width');
+            const lengthInput = form.querySelector('.skid-length');
+            const weightInput = form.querySelector('.skid-weight');
+
+            function updateWeight() {
+                const width = parseFloat(widthInput.value);
+                const length = parseFloat(lengthInput.value);
+                
+                if (width > 0 && length > 0) {
+                    const weight = calculateSkidWeight(width, length);
+                    weightInput.value = weight.toFixed(2);
+                }
+            }
+
+            widthInput.addEventListener('input', updateWeight);
+            lengthInput.addEventListener('input', updateWeight);
 
             formContainer.style.display = 'block';
             setTimeout(() => {
@@ -332,16 +366,60 @@
             form.appendChild(loadIdInput);
 
             // Fill form with skid data
-            form.querySelector('.skid-width').value = skid.width;
-            form.querySelector('.skid-length').value = skid.length;
-            form.querySelector('.skid-weight').value = skid.weight;
+            const widthInput = form.querySelector('.skid-width');
+            const lengthInput = form.querySelector('.skid-length');
+            const weightInput = form.querySelector('.skid-weight');
+            
+            widthInput.value = skid.width;
+            lengthInput.value = skid.length;
+            weightInput.value = skid.weight;
             form.querySelector('.skid-description').value = skid.description || '';
+            
+            // Add event listeners for automatic weight calculation
+            function updateWeight() {
+                const width = parseFloat(widthInput.value);
+                const length = parseFloat(lengthInput.value);
+                
+                if (width > 0 && length > 0) {
+                    const weight = calculateSkidWeight(width, length);
+                    weightInput.value = weight.toFixed(2);
+                }
+            }
+
+            widthInput.addEventListener('input', updateWeight);
+            lengthInput.addEventListener('input', updateWeight);
         }
 
         formContainer.style.display = 'block';
         setTimeout(() => {
             formContainer.querySelector('.skid-width').focus();
         }, 100);
+    }
+
+    // Calculate total weight and update display
+    function updateTotalWeight() {
+        const weightCells = document.querySelectorAll('.skid-weight-cell');
+        let totalWeight = 0;
+        let skidCount = 0;
+        
+        weightCells.forEach(cell => {
+            const weight = parseFloat(cell.textContent);
+            if (!isNaN(weight)) {
+                totalWeight += weight;
+                skidCount++;
+            }
+        });
+        
+        const totalWeightElement = document.getElementById('totalTruckSkidWeight');
+        const totalSkidsElement = document.getElementById('totalTruckSkidCount');
+        
+        if (totalWeightElement) {
+            totalWeightElement.textContent = totalWeight.toFixed(2) + ' lbs';
+        }
+        
+        if (totalSkidsElement) {
+            totalSkidsElement.textContent = skidCount;
+        }
     }
 
     // Initialize event listeners when document is ready
@@ -375,7 +453,11 @@
                 }
             }
         });
+        
+        // Calculate initial total weight
+        updateTotalWeight();
     });
+    
     // Form validation
     document.addEventListener('submit', function(e) {
         if (e.target.classList.contains('add-skid-form')) {
@@ -442,5 +524,11 @@
         .col-md-3 {
             width: 100%;
         }
+    }
+    
+    /* Readonly field styling */
+    input[readonly] {
+        background-color: #f8f9fa;
+        cursor: default;
     }
 </style>

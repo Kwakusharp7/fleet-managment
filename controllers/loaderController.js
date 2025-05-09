@@ -3,6 +3,22 @@ const Project = require('../models/Project');
 const Load = require('../models/Load');
 const { check, validationResult } = require('express-validator');
 
+// Weight calculator utility function
+const calculateSkidWeight = (width, length, height = 0.5, density = 40) => {
+    if (!width || !length || width <= 0 || length <= 0) {
+        throw new Error('Width and length must be positive numbers');
+    }
+    
+    // Calculate volume in cubic feet
+    const volume = width * length * height;
+    
+    // Calculate weight (volume × density)
+    const weight = volume * density;
+    
+    // Round to 2 decimal places
+    return Math.round(weight * 100) / 100;
+};
+
 // @desc    Get loader dashboard/job selection page
 // @route   GET /loader
 exports.getLoaderDashboard = async (req, res) => {
@@ -159,19 +175,32 @@ exports.addInventorySkid = async (req, res) => {
         console.log(`Adding inventory skid for project ${projectId}`);
         console.log("Request body:", req.body);
 
-        const { width, length, weight, description, editMode, skidId } = req.body;
+        const { width, length, description, editMode, skidId } = req.body;
+        let { weight } = req.body;
         const methodOverride = req.body._method || 'POST';
 
         // Validate input
         const errors = [];
         if (!width || width <= 0) errors.push({ msg: 'Width must be greater than 0' });
         if (!length || length <= 0) errors.push({ msg: 'Length must be greater than 0' });
-        if (!weight || weight <= 0) errors.push({ msg: 'Weight must be greater than 0' });
 
         if (errors.length > 0) {
             console.log(`Validation errors: ${errors.map(e => e.msg).join(', ')}`);
             req.flash('error_msg', errors.map(err => err.msg).join(', '));
             return res.redirect(`/loader/inventory/${projectId}`);
+        }
+
+        // Calculate weight if not provided or zero
+        if (!weight || parseFloat(weight) <= 0) {
+            try {
+                weight = calculateSkidWeight(parseFloat(width), parseFloat(length));
+                console.log(`Calculated weight: ${weight} lbs based on ${width}ft × ${length}ft dimensions`);
+            } catch (calcError) {
+                console.error('Error calculating weight:', calcError);
+                errors.push({ msg: 'Error calculating weight. Please check dimensions.' });
+                req.flash('error_msg', errors.map(err => err.msg).join(', '));
+                return res.redirect(`/loader/inventory/${projectId}`);
+            }
         }
 
         // Validate project exists
@@ -294,17 +323,29 @@ exports.addInventorySkid = async (req, res) => {
 exports.updateInventorySkid = async (req, res) => {
     try {
         const { projectId, skidId } = req.params;
-        const { width, length, weight, description } = req.body;
+        const { width, length, description } = req.body;
+        let { weight } = req.body;
 
         // Validate input
         const errors = [];
         if (!width || width <= 0) errors.push({ msg: 'Width must be greater than 0' });
         if (!length || length <= 0) errors.push({ msg: 'Length must be greater than 0' });
-        if (!weight || weight <= 0) errors.push({ msg: 'Weight must be greater than 0' });
 
         if (errors.length > 0) {
             req.flash('error_msg', errors.map(err => err.msg).join(', '));
             return res.redirect(`/loader/inventory/${projectId}`);
+        }
+        
+        // Calculate weight if not provided or zero
+        if (!weight || parseFloat(weight) <= 0) {
+            try {
+                weight = calculateSkidWeight(parseFloat(width), parseFloat(length));
+                console.log(`Calculated weight: ${weight} lbs based on ${width}ft × ${length}ft dimensions`);
+            } catch (calcError) {
+                console.error('Error calculating weight:', calcError);
+                req.flash('error_msg', 'Error calculating weight. Please check dimensions.');
+                return res.redirect(`/loader/inventory/${projectId}`);
+            }
         }
 
         // Find the inventory load with the skid
@@ -416,6 +457,8 @@ exports.clearInventorySkids = async (req, res) => {
 
 // @desc    Get truck information entry page
 // @route   GET /loader/truck/:projectId
+// @desc    Get truck information entry page
+// @route   GET /loader/truck/:projectId
 exports.getTruckInfoPage = async (req, res) => {
     try {
         const { projectId } = req.params;
@@ -440,27 +483,34 @@ exports.getTruckInfoPage = async (req, res) => {
                 `/loader/truck/${projectId}/skids?loadId=${existingLoad._id}`
             );
         } else {
-            // Create a minimal new load so skid-details has something to attach to
+            // Create a new load with default values for required fields
             const newLoad = new Load({
                 projectCode: projectId,
                 status: 'Planned',
+                // Add default values for required fields
+                truckId: `TEMP-${projectId}-${Date.now().toString().slice(-4)}`,
+                truckInfo: {
+                    length: 20, // Default length
+                    width: 8,   // Default width
+                    weight: 20000 // Default weight capacity
+                },
                 createdBy: req.user._id
             });
-            await newLoad.save();
-            return res.redirect(
-                `/loader/truck/${projectId}/skids?loadId=${newLoad._id}`
-            );
+            
+            try {
+                await newLoad.save();
+                console.log(`Created new load for project ${projectId}: ${newLoad._id}`);
+                return res.redirect(
+                    `/loader/truck/${projectId}/skids?loadId=${newLoad._id}`
+                );
+            } catch (saveErr) {
+                console.error('Error creating new load:', saveErr);
+                req.flash('error_msg', 'Error creating new load: ' + saveErr.message);
+                return res.redirect('/loader/project-selection?task=truckEntry');
+            }
         }
-
-        res.render('loader/truck-info', {
-            title: 'Truck Information',
-            layout: 'layouts/loader',
-            project,
-            existingLoad,
-            value: "<%= existingLoad ? existingLoad.truckId : '' %>"
-        });
     } catch (err) {
-        console.error(err);
+        console.error('Error in getTruckInfoPage:', err);
         req.flash('error_msg', 'Error loading truck information page');
         res.redirect('/loader/project-selection?task=truckEntry');
     }
@@ -650,7 +700,8 @@ exports.getSkidDetailsPage = async (req, res) => {
 exports.addTruckSkid = async (req, res) => {
     try {
         const { projectId } = req.params;
-        const { loadId, width, length, weight, description } = req.body;
+        const { loadId, width, length, description } = req.body;
+        let { weight } = req.body;
 
         if (!loadId) {
             req.flash('error_msg', 'Load ID is required');
@@ -661,7 +712,6 @@ exports.addTruckSkid = async (req, res) => {
         const errors = [];
         if (!width || width <= 0) errors.push({ msg: 'Width must be greater than 0' });
         if (!length || length <= 0) errors.push({ msg: 'Length must be greater than 0' });
-        if (!weight || weight <= 0) errors.push({ msg: 'Weight must be greater than 0' });
 
         if (errors.length > 0) {
             req.flash('error_msg', errors.map(err => err.msg).join(', '));
@@ -675,6 +725,18 @@ exports.addTruckSkid = async (req, res) => {
         if (!load || load.status !== 'Planned' || load.projectCode !== projectId) {
             req.flash('error_msg', 'Invalid load selected');
             return res.redirect(`/loader/truck/${projectId}`);
+        }
+        
+        // Calculate weight if not provided or zero
+        if (!weight || parseFloat(weight) <= 0) {
+            try {
+                weight = calculateSkidWeight(parseFloat(width), parseFloat(length));
+                console.log(`Calculated weight: ${weight} lbs based on ${width}ft × ${length}ft dimensions`);
+            } catch (calcError) {
+                console.error('Error calculating weight:', calcError);
+                req.flash('error_msg', 'Error calculating weight. Please check dimensions.');
+                return res.redirect(`/loader/truck/${projectId}/skids?loadId=${loadId}`);
+            }
         }
 
         const newSkid = {
@@ -990,7 +1052,8 @@ exports.printTruckLoad = async (req, res) => {
 exports.updateTruckSkid = async (req, res) => {
     try {
         const { projectId, skidId } = req.params;
-        const { loadId, width, length, weight, description } = req.body;
+        const { loadId, width, length, description } = req.body;
+        let { weight } = req.body;
 
         if (!loadId) {
             req.flash('error_msg', 'Load ID is required');
@@ -1001,11 +1064,22 @@ exports.updateTruckSkid = async (req, res) => {
         const errors = [];
         if (!width || width <= 0) errors.push({ msg: 'Width must be greater than 0' });
         if (!length || length <= 0) errors.push({ msg: 'Length must be greater than 0' });
-        if (!weight || weight <= 0) errors.push({ msg: 'Weight must be greater than 0' });
 
         if (errors.length > 0) {
             req.flash('error_msg', errors.map(err => err.msg).join(', '));
             return res.redirect(`/loader/truck/${projectId}/skids?loadId=${loadId}`);
+        }
+        
+        // Calculate weight if not provided or zero
+        if (!weight || parseFloat(weight) <= 0) {
+            try {
+                weight = calculateSkidWeight(parseFloat(width), parseFloat(length));
+                console.log(`Calculated weight: ${weight} lbs based on ${width}ft × ${length}ft dimensions`);
+            } catch (calcError) {
+                console.error('Error calculating weight:', calcError);
+                req.flash('error_msg', 'Error calculating weight. Please check dimensions.');
+                return res.redirect(`/loader/truck/${projectId}/skids?loadId=${loadId}`);
+            }
         }
 
         // Find the load
@@ -1246,4 +1320,4 @@ exports.getLoaderStats = async (req, res) => {
       console.error('Error fetching loader stats:', err);
       res.status(500).json({ error: 'Failed to fetch loader stats' });
     }
-  };
+};
