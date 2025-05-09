@@ -466,7 +466,30 @@ exports.getTruckInfoPage = async (req, res) => {
     }
 };
 
-// @desc    Save truck information and proceed to skid details
+// @desc    Truck Information Entry page
+// @route   GET /loader/truck/:projectId/info
+exports.showTruckInfo = async (req, res) => {
+    try {
+        const projectId = req.params.projectId;
+        const loadId = req.query.loadId;
+        const project = await Project.findOne({ code: projectId });
+        const load = await Load.findById(loadId);
+        
+        res.render('loader/truck-info', {
+            title: 'Truck Information Entry',
+            layout: 'layouts/loader',
+            project,
+            load,
+            existingLoad: null // Added to prevent 'existingLoad is not defined' error
+        });
+    } catch (err) {
+        console.error('Error loading truck information entry form:', err);
+        req.flash('error_msg', 'Error loading truck information entry form');
+        res.redirect('/loader/project-selection?task=truckEntry');
+    }
+};
+
+// @desc    Save truck information and proceed to packing list
 // @route   POST /loader/truck/:projectId
 exports.saveTruckInfo = async (req, res) => {
     try {
@@ -482,7 +505,7 @@ exports.saveTruckInfo = async (req, res) => {
 
         if (errors.length > 0) {
             req.flash('error_msg', errors.map(err => err.msg).join(', '));
-            return res.redirect(`/loader/truck/${projectId}`);
+            return res.redirect(`/loader/truck/${projectId}/info?loadId=${loadId}`);
         }
 
         // Validate project exists
@@ -501,7 +524,7 @@ exports.saveTruckInfo = async (req, res) => {
 
             if (!load || load.status !== 'Planned' || load.projectCode !== projectId) {
                 req.flash('error_msg', 'Invalid load selected');
-                return res.redirect(`/loader/truck/${projectId}`);
+                return res.redirect(`/loader/truck/${projectId}/info?loadId=${loadId}`);
             }
 
             // Update truck info
@@ -534,13 +557,15 @@ exports.saveTruckInfo = async (req, res) => {
 
         // Save the load
         await load.save();
-
-        // Redirect to skid details page
-        res.redirect(`/loader/truck/${projectId}/skids?loadId=${load._id}`);
+        
+        console.log(`Redirecting to packing list page for load: ${load._id}`);
+        
+        // Redirect to packing list page instead of skid details
+        return res.redirect(`/loader/truck/${projectId}/packing-list?loadId=${load._id}`);
     } catch (err) {
-        console.error(err);
+        console.error('Error saving truck information:', err);
         req.flash('error_msg', 'Error saving truck information');
-        res.redirect(`/loader/truck/${req.params.projectId}`);
+        res.redirect(`/loader/truck/${projectId}/info?loadId=${req.query.loadId}`);
     }
 };
 
@@ -810,7 +835,6 @@ exports.addSkidsFromInventory = async (req, res) => {
     }
 };
 
-// @desc    Update truck skid
 // @desc    Get packing list page
 // @route   GET /loader/truck/:projectId/packing-list
 exports.getPackingListPage = async (req, res) => {
@@ -1076,9 +1100,6 @@ exports.deleteTruckSkid = async (req, res) => {
 
 // @desc    Get recent projects
 // @route   GET /loader/recent-projects
-
-// @desc    Get recent projects
-// @route   GET /loader/recent-projects
 exports.getRecentProjects = async (req, res) => {
     try {
       // Get projects with recent activity
@@ -1125,7 +1146,8 @@ exports.getRecentProjects = async (req, res) => {
       console.error('Error fetching recent projects:', err);
       res.status(500).json({ error: 'Failed to fetch recent projects' });
     }
-  };
+};
+
 // Helper functions
 
 // Calculate space utilization for a load
@@ -1156,6 +1178,7 @@ function isLoadOverweight(load) {
     const totalWeight = (load.totalWeight || 0);
     return totalWeight > load.truckInfo.weight;
 }
+
 // @desc    Get loader dashboard stats
 // @route   GET /loader/stats
 exports.getLoaderStats = async (req, res) => {
@@ -1224,22 +1247,3 @@ exports.getLoaderStats = async (req, res) => {
       res.status(500).json({ error: 'Failed to fetch loader stats' });
     }
   };
-// Add this function near your other exports (for example, after getTruckInfoPage)
-exports.showTruckInfo = async (req, res) => {
-  try {
-    const projectId = req.params.projectId;
-    const loadId    = req.query.loadId;
-    const project   = await Project.findOne({ code: projectId });
-    const load      = await Load.findById(loadId);
-    res.render('loader/truck-info', {
-      title: 'Truck Information Entry',
-      layout: 'layouts/loader',
-      project,
-      load
-    });
-  } catch (err) {
-    console.error('Error loading truck information entry form:', err);
-    req.flash('error_msg', 'Error loading truck information entry form');
-    res.redirect('/loader/project-selection?task=truckEntry');
-  }
-};

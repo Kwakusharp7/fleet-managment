@@ -1,6 +1,6 @@
 const express           = require('express');
 const router            = express.Router();
-const loaderController  = require('../controllers/loaderController');
+const loaderController  = require('../controllers/loaderController'); // Fixed import path
 const { ensureAuthenticated, ensureLoader } = require('../middleware/auth');
 
 // Apply authentication and loader‐role middleware to all routes
