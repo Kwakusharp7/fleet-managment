@@ -41,25 +41,30 @@
                 Skids that are already on the truck are marked as "Already Added" below.
             </div>
             
+            <!-- Hidden fields for loadId and projectId -->
+            <input type="hidden" id="loadId" value="<%= load._id %>">
+            <input type="hidden" id="projectId" value="<%= project.code %>">
+
+            <!-- Inventory Skid Selection Form -->
             <form action="/loader/truck/<%= project.code %>/skids/add-from-inventory" method="POST" id="inventorySkidForm">
                 <input type="hidden" name="loadId" value="<%= load._id %>">
 
                 <div class="table-responsive">
-                    <table id="inventorySkidSelectionTable" class="table table-striped">
+                    <table id="inventorySkidSelectionTable" class="table table-striped table-hover">
                         <thead>
                             <tr>
                                 <th width="5%">Add</th>
                                 <th width="15%">Inv. ID</th>
-                                <th width="10%">W (ft)</th>
-                                <th width="10%">L (ft)</th>
-                                <th width="10%">Wt (lbs)</th>
+                                <th width="10%">Width (ft)</th>
+                                <th width="10%">Length (ft)</th>
+                                <th width="10%">Weight (lbs)</th>
                                 <th width="50%">Description</th>
                             </tr>
                         </thead>
                         <tbody id="inventorySkidSelectionBody">
                         <% if (inventorySkids && inventorySkids.length > 0) { %>
                             <% inventorySkids.forEach(skid => { %>
-                                <tr class="<%= skid.alreadyOnTruck ? 'already-selected' : '' %>" data-skid-id="<%= skid.id %>">
+                                <tr class="<%= skid.alreadyOnTruck ? 'already-on-truck' : '' %>" data-skid-id="<%= skid.id %>">
                                     <td>
                                         <input type="checkbox"
                                                name="selectedSkids"
@@ -285,6 +290,32 @@
 
 <%- contentFor('styles') %>
 <style>
+      tr.already-on-truck {
+    background-color: #f8f9fa !important;
+    color: #6c757d;
+  }
+  
+  tr.already-on-truck td {
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+  
+  .already-on-truck-label {
+    color: #dc3545;
+    font-style: italic;
+    font-size: 0.85em;
+    margin-left: 5px;
+  }
+  
+  /* Make disabled checkboxes more obvious */
+  input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  tr.already-on-truck label {
+    cursor: not-allowed;
+  }
     .input-group {
         display: flex;
         align-items: stretch;
@@ -346,12 +377,101 @@
         color: #666;
         font-style: italic;
     }
+    /* Add these to your styles section */
+tr.already-selected td {
+    opacity: 0.6;
+    color: #777;
+    text-decoration: line-through;
+}
+
+tr.already-selected input[type="checkbox"] {
+    pointer-events: none;
+}
+
+.already-added-note {
+    font-style: italic;
+    color: #d9534f;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+/* Add a disabled appearance to checkboxes */
+input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+    /* Styles for skids already on the truck */
+    tr.already-on-truck {
+        background-color: #f8f9fa !important;
+        color: #6c757d;
+    }
+    
+    tr.already-on-truck td {
+        text-decoration: line-through;
+        opacity: 0.7;
+    }
+    
+    .already-added-note {
+        color: #dc3545;
+        font-style: italic;
+        font-size: 0.85em;
+        margin-left: 5px;
+    }
+    
+    /* Highlight skids selected for adding to the truck */
+    tr.selected-for-add {
+        background-color: #e8f4ff !important;
+        font-weight: bold;
+    }
+    
+    /* Make disabled checkboxes more obvious */
+    input[type="checkbox"]:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .disabled-label {
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+    
+    /* Add hover effect for rows */
+    tr:hover {
+        background-color: #f1f1f1;
+    }
+    
+    /* Add focus effect for checkboxes */
+    input[type="checkbox"]:focus {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+    }
+    
+    /* Style for table headers */
+    th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    /* Style for table rows */
+    tr {
+        transition: background-color 0.2s ease-in-out;
+    }
+    
+    /* Style for action buttons */
+    .btn {
+        transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    }
+    
+    .btn:hover {
+        background-color: #0056b3;
+        color: #ffffff;
+    }
 </style>
 
 <%- contentFor('scripts') %>
+<%- contentFor('scripts') %>
 <script>
-    // Weight calculation function removed - now using manual input
-
     // Initialize event listeners when document is ready
     document.addEventListener('DOMContentLoaded', function() {
         console.log("DOM Content Loaded");
@@ -432,12 +552,6 @@
                 if (this.checked) {
                     // Make the row appear as selected
                     this.closest('tr').classList.add('selected-skid');
-                    
-                    // Disable the checkbox to prevent unchecking
-                    // We don't disable immediately to allow the change event to complete
-                    setTimeout(() => {
-                        this.disabled = true;
-                    }, 100);
                 } else {
                     // Remove the selected appearance
                     this.closest('tr').classList.remove('selected-skid');
@@ -445,106 +559,137 @@
             });
         });
         
-        // Check if form is being submitted
-        const inventoryForm = document.getElementById('inventorySkidForm');
-        if (inventoryForm) {
-            inventoryForm.addEventListener('submit', async function (e) {
-                e.preventDefault(); // Prevent default form submission
-
-                const form = this;
-                const formData = new FormData(form);
-                const loadId = form.querySelector('input[name="loadId"]').value;
-                const selectedSkids = Array.from(form.querySelectorAll('input[name="selectedSkids"]:checked')).map(checkbox => checkbox.value);
-
-                try {
-                    // Submit the form data to the server
-                    const response = await fetch(form.action, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        // Fetch the updated load data from the server
-                        const loadResponse = await fetch(`/loader/truck/<%= project.code %>/skids?loadId=${loadId}`);
-                        const loadData = await loadResponse.json(); // Expecting the server to return JSON with updated load data
-
-                        // Update the truck skid table dynamically
-                        const skidTableBody = document.getElementById('truckSkidTableBody');
-                        skidTableBody.innerHTML = ''; // Clear existing rows
-
-                        if (loadData.skids && loadData.skids.length > 0) {
-                            loadData.skids.forEach((skid, index) => {
-                                const row = `
-                                    <tr data-skid-id="${skid.id}" data-index="${index}">
-                                        <td>${index + 1}</td>
-                                        <td>${skid.width.toFixed(2)}</td>
-                                        <td>${skid.length.toFixed(2)}</td>
-                                        <td class="skid-weight-cell">${skid.weight.toFixed(2)}</td>
-                                        <td>
-                                            ${skid.description || '-'}
-                                            ${skid.originalInvId ? `<span style="font-size: 0.8em; color: var(--text-muted); white-space: nowrap;">(from Inv: ${skid.originalInvId})</span>` : ''}
-                                        </td>
-                                        <td class="action-buttons no-print">
-                                            <button class="btn-edit btn-sm edit-skid-btn" data-skid-id="${skid.id}" data-index="${index}">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
-                                            <form action="/loader/truck/<%= project.code %>/skids/delete-skid" method="POST" class="delete-skid-form">
-                                                <input type="hidden" name="skidId" value="${skid.id}">
-                                                <input type="hidden" name="loadId" value="${loadId}">
-                                                <button type="submit" class="btn-delete btn-sm delete-skid-btn">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>`;
-                                skidTableBody.insertAdjacentHTML('beforeend', row);
-                            });
-                        } else {
-                            skidTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No skids added to this truck yet.</td></tr>';
-                        }
-
-                        // Reattach event listeners for edit and delete buttons
-                        document.querySelectorAll('.edit-skid-btn').forEach(button => {
-                            button.addEventListener('click', function () {
-                                const skidId = this.getAttribute('data-skid-id');
-                                const index = parseInt(this.getAttribute('data-index'), 10);
-                                editSkid(skidId, index);
-                            });
-                        });
-
-                        document.querySelectorAll('.delete-skid-form').forEach(form => {
-                            form.addEventListener('submit', function (e) {
-                                if (!confirm('Are you sure you want to remove this skid from the truck?')) {
-                                    e.preventDefault();
-                                }
-                            });
-                        });
-
-                        // Update totals
-                        updateTotalWeightFromTable();
-
-                        // Disable selected checkboxes and mark as added
-                        selectedSkids.forEach(skidId => {
-                            const checkbox = document.querySelector(`input[value="${skidId}"]`);
-                            if (checkbox) {
-                                checkbox.disabled = true;
-                                checkbox.checked = true;
-                                checkbox.closest('tr').classList.add('already-selected');
-                            }
-                        });
-                    } else {
-                        alert('Failed to add skids. Please try again.');
-                    }
-                } catch (error) {
-                    console.error('Error adding skids:', error);
-                    alert('An error occurred while adding skids. Please try again.');
-                }
+        // FIX: Handle Add Selected Skids to Truck button click
+        const addSelectedSkidsBtn = document.getElementById('addSelectedSkidsBtn');
+        if (addSelectedSkidsBtn) {
+            addSelectedSkidsBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                submitInventorySkids();
             });
         }
         
         // Calculate initial total weight - fixed version that uses visible table data
         updateTotalWeightFromTable();
+        
+        // IMPORTANT: Mark skids that are already on the truck as disabled
+        disableInventorySkidsAlreadyOnTruck();
     });
+    
+    // Function to check and disable inventory items already on the truck
+    function disableInventorySkidsAlreadyOnTruck() {
+        console.log("Checking for inventory skids already on truck...");
+        
+        // Step 1: Get all inventory IDs from the truck table
+        const skidsOnTruck = [];
+        
+        // Find all rows in the truck skids table
+        const truckSkidRows = document.querySelectorAll('#truckSkidTableBody tr');
+        
+        // Extract information from each row
+        truckSkidRows.forEach(row => {
+            // Try to find the inventory ID in the description column (5th column)
+            const descriptionCell = row.querySelector('td:nth-child(5)');
+            if (descriptionCell) {
+                // Look for text like "(from Inv: INV-XXXXX-X)" in the description
+                const text = descriptionCell.innerHTML || '';
+                const invMatch = text.match(/\(from Inv: ([^)]+)\)/);
+                
+                if (invMatch && invMatch[1]) {
+                    // Found an inventory ID reference
+                    skidsOnTruck.push(invMatch[1].trim());
+                }
+            }
+            
+            // Also check if there's any data attributes that might contain the original inventory ID
+            const invIdAttr = row.getAttribute('data-original-inv-id');
+            if (invIdAttr) {
+                skidsOnTruck.push(invIdAttr);
+            }
+        });
+        
+        console.log("Skids already on truck:", skidsOnTruck);
+        
+        if (skidsOnTruck.length === 0) {
+            console.log("No skids found on truck. No checkboxes to disable.");
+            return;
+        }
+        
+        // Step 2: Disable checkboxes for inventory items that are already on the truck
+        let disabledCount = 0;
+        const inventoryCheckboxes = document.querySelectorAll('.inventory-skid-checkbox');
+        
+        inventoryCheckboxes.forEach(checkbox => {
+            const value = checkbox.value;
+            if (skidsOnTruck.includes(value)) {
+                // Disable the checkbox
+                checkbox.disabled = true;
+                checkbox.checked = false;
+                disabledCount++;
+                
+                // Add visual indication to the row
+                const row = checkbox.closest('tr');
+                if (row) {
+                    row.classList.add('already-on-truck');
+                    
+                    // Add "(Already on truck)" to the description if not already there
+                    const descCell = row.querySelector('td:nth-child(6)');
+                    if (descCell && !descCell.innerHTML.includes('Already on truck')) {
+                        descCell.innerHTML += ' <span class="already-added-note">(Already on truck)</span>';
+                    }
+                    
+                    // Update the label to show it's disabled
+                    const label = row.querySelector('label');
+                    if (label) {
+                        label.title = "Already added to truck";
+                        label.classList.add('disabled-label');
+                    }
+                }
+            }
+        });
+        
+        console.log(`Disabled ${disabledCount} checkboxes for skids already on truck.`);
+        
+        // Step 3: Check if the Add Selected button should be disabled (if all checkboxes are disabled)
+        const addSelectedBtn = document.getElementById('addSelectedSkidsBtn');
+        if (addSelectedBtn && disabledCount === inventoryCheckboxes.length) {
+            addSelectedBtn.disabled = true;
+            addSelectedBtn.title = "All inventory skids are already on the truck";
+        }
+    }
+
+    // Function to mark skids already on the truck (alternative implementation)
+    function markAlreadyAddedSkids() {
+        disableInventorySkidsAlreadyOnTruck();
+    }
+
+    // FIX: Function to handle form submission using traditional POST
+    function submitInventorySkids() {
+        // Get form and form data
+        const form = document.getElementById('inventorySkidForm');
+        
+        // Check if any skids are selected
+        const selectedCheckboxes = form.querySelectorAll('input[name="selectedSkids"]:checked:not(:disabled)');
+        if (selectedCheckboxes.length === 0) {
+            alert('Please select at least one skid to add.');
+            return;
+        }
+        
+        console.log(`Submitting ${selectedCheckboxes.length} selected skids`);
+        
+        // Before submitting, disable the checked checkboxes to prevent multiple clicks
+        selectedCheckboxes.forEach(checkbox => {
+            checkbox.disabled = true;
+            
+            // Add visual indication to the row
+            const row = checkbox.closest('tr');
+            if (row) {
+                row.classList.add('selected-for-add');
+            }
+        });
+        
+        // Submit the form directly (no AJAX)
+        form.submit();
+    }
 
     function toggleAddSkidForm() {
         const formContainer = document.getElementById('addTruckSkidFormContainer');
@@ -657,20 +802,6 @@
             
             descriptionInput.value = cleanDescription || '';
             
-            // Add event listeners for automatic weight calculation
-            function updateWeight() {
-                const width = parseFloat(widthInput.value);
-                const length = parseFloat(lengthInput.value);
-                
-                if (width > 0 && length > 0) {
-                    const weight = calculateSkidWeight(width, length);
-                    weightInput.value = weight.toFixed(2);
-                }
-            }
-
-            widthInput.addEventListener('input', updateWeight);
-            lengthInput.addEventListener('input', updateWeight);
-            
             // Add cancel button event listener
             form.querySelector('.cancel-skid-btn').addEventListener('click', function() {
                 formContainer.style.display = 'none';
@@ -698,8 +829,9 @@
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
             // Make sure this is a valid skid row and not an "empty" message row
-            if (cells.length >= 4 && cells[3].classList.contains('skid-weight-cell')) {
-                const weight = parseFloat(cells[3].textContent);
+            if (cells.length >= 4 && cells[3]) {
+                const weightText = cells[3].textContent;
+                const weight = parseFloat(weightText);
                 if (!isNaN(weight)) {
                     totalWeight += weight;
                     skidCount++;
@@ -731,5 +863,51 @@
         if (summarySkidCountElement) {
             summarySkidCountElement.textContent = skidCount;
         }
+    }
+    
+    // Update inventory selection after deletion
+    function updateAfterSkidDeletion(deletedOriginalInvId) {
+        if (!deletedOriginalInvId) return;
+        
+        console.log(`Skid with original inventory ID ${deletedOriginalInvId} was deleted`);
+        
+        // Find the checkbox for this inventory ID and re-enable it
+        const checkbox = document.querySelector(`input[value="${deletedOriginalInvId}"]`);
+        if (checkbox) {
+            checkbox.disabled = false;
+            
+            // Remove visual indication
+            const row = checkbox.closest('tr');
+            if (row) {
+                row.classList.remove('already-on-truck');
+                
+                // Remove "(Already on truck)" from the description
+                const descCell = row.querySelector('td:nth-child(6)');
+                if (descCell) {
+                    descCell.innerHTML = descCell.innerHTML.replace(/<span class="already-added-note">\(Already on truck\)<\/span>/, '');
+                }
+                
+                // Update the label
+                const label = row.querySelector('label');
+                if (label) {
+                    label.title = `Select ${deletedOriginalInvId}`;
+                    label.classList.remove('disabled-label');
+                }
+            }
+            
+            console.log(`Re-enabled checkbox for inventory ID ${deletedOriginalInvId}`);
+            
+            // Make sure the Add Selected button is enabled
+            const addSelectedBtn = document.getElementById('addSelectedSkidsBtn');
+            if (addSelectedBtn) {
+                addSelectedBtn.disabled = false;
+            }
+        }
+    }
+    
+    // Function to re-check and update disabled checkboxes after any operation
+    function refreshSkidSelectionStatus() {
+        // Call our main function to check and disable already-on-truck skids
+        disableInventorySkidsAlreadyOnTruck();
     }
 </script>

@@ -647,33 +647,37 @@ exports.getSkidDetailsPage = async (req, res) => {
             return res.redirect(`/loader/truck/${projectId}`);
         }
 
-        // Get inventory skids for this project - CRITICAL SECTION
-        // Find the inventory load for this project
-        console.log(`Looking for inventory with projectCode: ${projectId}`);
+        // Get inventory skids for this project
         const inventoryLoad = await Load.findOne({
             projectCode: projectId,
             isInventory: true
         });
 
-        // Debug
-        console.log(`Inventory load found: ${inventoryLoad ? 'Yes' : 'No'}`);
-        if (inventoryLoad) {
-            console.log(`Inventory skids count: ${inventoryLoad.skids ? inventoryLoad.skids.length : 0}`);
+        // Create an array to track which inventory skids are already on the truck
+        const skidsOnTruck = [];
+        
+        // Extract all originalInvId values from truck skids
+        if (load.skids && load.skids.length > 0) {
+            load.skids.forEach(skid => {
+                if (skid.originalInvId) {
+                    skidsOnTruck.push(skid.originalInvId);
+                }
+            });
         }
+        
+        console.log('Skids already on truck:', skidsOnTruck);
 
         let inventorySkids = [];
         if (inventoryLoad && inventoryLoad.skids && inventoryLoad.skids.length > 0) {
             // Mark skids that are already on the truck
-            inventorySkids = inventoryLoad.skids.map(skid => ({
-                ...skid.toObject ? skid.toObject() : skid,
-                alreadyOnTruck: load.skids.some(truckSkid => 
-                    truckSkid.originalInvId === skid.id
-                )
-            }));
+            inventorySkids = inventoryLoad.skids.map(skid => {
+                const alreadyOnTruck = skidsOnTruck.includes(skid.id);
+                return {
+                    ...skid.toObject ? skid.toObject() : skid,
+                    alreadyOnTruck
+                };
+            });
         }
-
-        // Debug
-        console.log(`Processed inventory skids: ${inventorySkids.length}`);
 
         // Calculate space utilization & check if overweight
         const spaceUtilization = calculateSpaceUtilization(load);
@@ -694,7 +698,6 @@ exports.getSkidDetailsPage = async (req, res) => {
         res.redirect(`/loader/truck/${req.params.projectId}`);
     }
 };
-
 // @desc    Add skid to truck load
 // @route   POST /loader/truck/:projectId/skid
 exports.addTruckSkid = async (req, res) => {
@@ -809,14 +812,29 @@ exports.addSkidsFromInventory = async (req, res) => {
     try {
         const { projectId } = req.params;
         const { loadId, selectedSkids } = req.body;
+        
+        console.log('Add skids from inventory request received:', {
+            projectId,
+            loadId,
+            selectedSkids,
+            body: req.body
+        });
 
         if (!loadId) {
             req.flash('error_msg', 'Load ID is required');
             return res.redirect(`/loader/truck/${projectId}`);
         }
 
-        // Convert selectedSkids to array if it's a string (single selection)
-        const skidIds = Array.isArray(selectedSkids) ? selectedSkids : [selectedSkids];
+        // Handle different forms of input
+        let skidIds = [];
+        if (Array.isArray(selectedSkids)) {
+            skidIds = selectedSkids;
+        } else if (selectedSkids) {
+            // If it's a single value, convert to array
+            skidIds = [selectedSkids];
+        }
+
+        console.log(`Processing ${skidIds.length} skid IDs:`, skidIds);
 
         if (!skidIds.length) {
             req.flash('error_msg', 'No skids selected');
@@ -826,7 +844,7 @@ exports.addSkidsFromInventory = async (req, res) => {
         // Find the load
         const load = await Load.findById(loadId);
 
-        if (!load || load.status !== 'Planned' || load.projectCode !== projectId) {
+        if (!load || load.projectCode !== projectId) {
             req.flash('error_msg', 'Invalid load selected');
             return res.redirect(`/loader/truck/${projectId}`);
         }
@@ -834,7 +852,6 @@ exports.addSkidsFromInventory = async (req, res) => {
         // Find the inventory load
         const inventoryLoad = await Load.findOne({
             projectCode: projectId,
-            status: 'Planned',
             isInventory: true
         });
 
@@ -845,12 +862,17 @@ exports.addSkidsFromInventory = async (req, res) => {
 
         // Add selected inventory skids to truck load
         let addedCount = 0;
+        let duplicateCount = 0;
 
         for (const skidId of skidIds) {
             // Check if skid is already on the truck
-            const alreadyOnTruck = load.skids.some(truckSkid => truckSkid.originalInvId === skidId);
+            const alreadyOnTruck = load.skids.some(truckSkid => 
+                truckSkid.originalInvId === skidId
+            );
 
             if (alreadyOnTruck) {
+                console.log(`Skid ${skidId} is already on the truck, skipping`);
+                duplicateCount++;
                 continue; // Skip if already added
             }
 
@@ -858,15 +880,18 @@ exports.addSkidsFromInventory = async (req, res) => {
             const inventorySkid = inventoryLoad.skids.find(skid => skid.id === skidId);
 
             if (!inventorySkid) {
+                console.log(`Skid ${skidId} not found in inventory`);
                 continue; // Skip if not found
             }
+
+            console.log(`Adding skid ${skidId} to truck`);
 
             // Create new truck skid based on inventory skid
             const newSkid = {
                 id: `SKID-${load.skids.length + 1}`,
-                width: inventorySkid.width,
-                length: inventorySkid.length,
-                weight: inventorySkid.weight,
+                width: parseFloat(inventorySkid.width) || 0,
+                length: parseFloat(inventorySkid.length) || 0,
+                weight: parseFloat(inventorySkid.weight) || 0,
                 description: inventorySkid.description || '',
                 originalInvId: inventorySkid.id // Track where this came from
             };
@@ -876,6 +901,8 @@ exports.addSkidsFromInventory = async (req, res) => {
             addedCount++;
         }
 
+        console.log(`Added ${addedCount} skids to truck load`);
+
         // Update skid count and total weight
         load.skidCount = load.skids.length;
         load.totalWeight = load.skids.reduce((sum, skid) => sum + (parseFloat(skid.weight) || 0), 0);
@@ -883,17 +910,25 @@ exports.addSkidsFromInventory = async (req, res) => {
         // Save the load
         await load.save();
 
+        // Create appropriate message
         if (addedCount > 0) {
-            req.flash('success_msg', `Added ${addedCount} skid(s) from inventory to truck load`);
+            let message = `Added ${addedCount} skid(s) from inventory to truck load`;
+            if (duplicateCount > 0) {
+                message += ` (${duplicateCount} skid(s) were already on the truck)`;
+            }
+            req.flash('success_msg', message);
+        } else if (duplicateCount > 0) {
+            req.flash('info_msg', `No new skids added. All selected skids (${duplicateCount}) were already on the truck.`);
         } else {
-            req.flash('info_msg', 'No new skids added. Selected skids may already be on the truck.');
+            req.flash('info_msg', 'No skids were added to the truck.');
         }
 
-        res.redirect(`/loader/truck/${projectId}/skids?loadId=${loadId}`);
+        // Redirect back to the skid details page
+        return res.redirect(`/loader/truck/${projectId}/skids?loadId=${loadId}`);
     } catch (err) {
-        console.error(err);
+        console.error('Error adding skids from inventory:', err);
         req.flash('error_msg', 'Error adding skids from inventory');
-        res.redirect(`/loader/truck/${req.params.projectId}/skids?loadId=${req.body.loadId}`);
+        return res.redirect(`/loader/truck/${req.params.projectId}/skids?loadId=${req.body.loadId || ''}`);
     }
 };
 
