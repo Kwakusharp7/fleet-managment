@@ -1321,3 +1321,42 @@ exports.getLoaderStats = async (req, res) => {
       res.status(500).json({ error: 'Failed to fetch loader stats' });
     }
 };
+
+// GET handler to fetch and display skids assigned to a truck load
+exports.getSkidsPage = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { loadId } = req.query;
+
+    if (!loadId) {
+      req.flash('error_msg', 'Load ID is required');
+      return res.redirect(`/loader/truck/${projectId}`);
+    }
+
+    // Validate project
+    const project = await Project.findOne({ code: projectId, status: 'Active' }).lean();
+    if (!project) {
+      req.flash('error_msg', 'Project not found or inactive');
+      return res.redirect('/loader/project-selection?task=truckEntry');
+    }
+
+    // Fetch load with skids
+    const load = await Load.findById(loadId).lean();
+    if (!load || load.projectCode !== projectId) {
+      req.flash('error_msg', 'Invalid load selected');
+      return res.redirect(`/loader/truck/${projectId}`);
+    }
+
+    // Render skids view
+    res.render('loader/skids', {
+      title: `Skids for Truck: ${load.truckId}`,
+      layout: 'layouts/loader',
+      project,
+      load
+    });
+  } catch (err) {
+    console.error('Error loading skids page:', err);
+    req.flash('error_msg', 'Error loading skids');
+    res.redirect(`/loader/truck/${req.params.projectId}`);
+  }
+};
