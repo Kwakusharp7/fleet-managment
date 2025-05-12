@@ -388,40 +388,39 @@ document.addEventListener('DOMContentLoaded', function() {
                         <% } %>
                     </td>
                     <td>
-                        <% 
-                            let sourceProjectCode = '';
-                            let sourceProjectName = '';
-                            
-                            // First try to use explicitly set source project
-                            if (skid.sourceProject) {
-                                sourceProjectCode = skid.sourceProject;
-                            } else if (skid.originalInvId) {
-                                // Extract project code from inventory ID format: INV-PROJECTCODE-XXX
-                                const parts = skid.originalInvId.split('-');
-                                if (parts.length >= 3 && parts[0] === 'INV') {
-                                    sourceProjectCode = parts[1];
-                                }
+                    <% 
+                        let sourceProjectCode = '';
+                        let sourceProjectName = '';
+                        
+                        // First try to use explicitly set source project
+                        if (skid.sourceProject) {
+                            sourceProjectCode = skid.sourceProject;
+                        } else if (skid.originalInvId) {
+                            // Extract project code from inventory ID format: INV-PROJECTCODE-XXX
+                            const parts = skid.originalInvId.split('-');
+                            if (parts.length >= 3 && parts[0] === 'INV') {
+                                sourceProjectCode = parts[1];
                             }
-                            
-                            // Get project name from projectMap if available
-                            if (sourceProjectCode && projectMap && projectMap[sourceProjectCode]) {
-                                sourceProjectName = projectMap[sourceProjectCode];
-                            } else if (sourceProjectCode) {
-                                // Fallback to code if name not found
-                                sourceProjectName = sourceProjectCode;
-                            }
-                            
-                            // Show project name if available
-                            if (sourceProjectName) {
-                        %>
-                            <span style="color: #333; font-weight: 500;">
-                                <%= sourceProjectName %>
-                            </span>
-                        <% } else { %>
-                            <span style="color: #666; font-style: italic;">
-                                Direct Entry
-                            </span>
-                        <% } %>
+                        }
+                        
+                        // Get project name from projectMap if available
+                        if (sourceProjectCode && projectMap && projectMap[sourceProjectCode]) {
+                            sourceProjectName = projectMap[sourceProjectCode];
+                        } else if (sourceProjectCode === project.code) {
+                            // If it's the main project
+                            sourceProjectName = project.name;
+                        } else if (sourceProjectCode) {
+                            // Fallback to code if name not found
+                            sourceProjectName = sourceProjectCode;
+                        }
+                        
+                        // Show project name if available
+                        if (sourceProjectName) {
+                    %>
+                        <%= sourceProjectName %>
+                    <% } else { %>
+                        Direct Entry
+                    <% } %>
                     </td>
                     <td class="action-buttons no-print">
                         <button class="btn-edit btn-sm edit-skid-btn" data-skid-id="<%= skid.id %>" data-index="<%= index %>">
