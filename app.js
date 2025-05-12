@@ -15,12 +15,14 @@ const app = express();
 
 // Debugging middleware to log requests
 app.use((req, res, next) => {
-  console.log('Request:', {
+  console.log('<<< Request Received:', { // Changed marker for clarity
+    timestamp: new Date().toISOString(),
     method: req.method,
-    url: req.url,
+    url: req.originalUrl, // Use originalUrl to see the full path
     params: req.params,
     query: req.query,
-    body: req.body
+    body: req.body,
+    ip: req.ip
   });
   next();
 });
@@ -33,6 +35,8 @@ try {
   app.use(methodOverride('_method'));
 } catch (err) {
   console.error('Method override is NOT available, install it with: npm install method-override');
+  // Optionally exit if it's critical
+  // process.exit(1);
 }
 
 // Security headers
@@ -40,14 +44,22 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
+            // Allow scripts from self, inline, and specific CDNs
             scriptSrc: ["'self'", "'unsafe-inline'", "code.jquery.com", "cdn.jsdelivr.net", "cdnjs.cloudflare.com"],
+             // Allow styles from self, inline, and specific CDNs
             styleSrc: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "cdn.jsdelivr.net"],
+             // Allow images from self and data URIs (for signatures)
             imgSrc: ["'self'", "data:"],
-            connectSrc: ["'self'"],
-            fontSrc: ["'self'", "cdnjs.cloudflare.com"],
+            connectSrc: ["'self'"], // Allow connections to self (for fetch/XHR)
+            fontSrc: ["'self'", "cdnjs.cloudflare.com"], // Allow fonts from self and CDNs
+            // Ensure frame ancestors is properly set if needed (e.g., 'none' or specific domains)
+            // frameAncestors: ["'none'"],
         },
     },
+    // Add other helmet configurations if needed, e.g., HSTS
+    // hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
 }));
+
 
 // Body parser
 app.use(express.urlencoded({ extended: false }));
@@ -74,15 +86,15 @@ app.use(session({
         autoRemove: 'native'
     }),
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Should be true in production
+        httpOnly: true, // Helps prevent XSS
         maxAge: config.session.duration,
-        sameSite: 'lax'
+        sameSite: 'lax' // Good default for CSRF protection
     }
 }));
 
 // Passport initialization
-require('./config/auth');
+require('./config/auth'); // Ensure your passport config is loaded
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -93,7 +105,10 @@ app.use(flash());
 app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
     res.locals.error_msg = req.flash('error_msg');
-    res.locals.error = req.flash('error');
+    res.locals.error = req.flash('error'); // Passport login errors often use 'error'
+
+    // Add user to locals if authenticated
+    res.locals.currentUser = req.user || null;
 
     // Add path info for sidebar active state
     res.locals.path = req.path;
@@ -104,84 +119,52 @@ app.use((req, res, next) => {
 // Add authentication helpers to res.locals
 app.use(addAuthHelpers);
 
-// Set layout based on user role
+// Set layout based on user role (Consider refactoring this into middleware if complex)
 app.use((req, res, next) => {
-    if (req.isAuthenticated() && req.user && req.user.role === 'Loader') {
-        if (req.path.startsWith('/loader')) {
-            res.locals.layout = 'layouts/loader';
+    let layout = 'layouts/main'; // Default layout
+
+    if (req.isAuthenticated() && req.user) {
+        if (req.user.role === 'Loader' && req.path.startsWith('/loader')) {
+            layout = 'layouts/loader';
         }
+        // Add other role/path conditions if needed
     }
 
+    // Override layout for print views
     if (req.path.includes('/print')) {
-        res.locals.layout = 'layouts/print';
+        layout = 'layouts/print';
     }
 
+    res.locals.layout = layout; // Set the determined layout
+    console.log(`--- Layout set to: ${layout} for path: ${req.path} ---`); // Log layout decision
     next();
 });
 
-// Routes
-app.use('/', require('./routes/authRoutes'));
+
+// --- Routes ---
+console.log('>>> Mounting Application Routes...');
+app.use('/', require('./routes/authRoutes')); // Auth routes first
 app.use('/dashboard', require('./routes/dashboardRoutes'));
 app.use('/loads', require('./routes/loadRoutes'));
 app.use('/projects', require('./routes/projectRoutes'));
 app.use('/users', require('./routes/userRoutes'));
 app.use('/reports', require('./routes/reportRoutes'));
 app.use('/settings', require('./routes/settingsRoutes'));
-app.use('/loader', require('./routes/loaderRoutes'));
 
-// Add API route for loader stats
-app.get('/loader/stats', async (req, res) => {
-    try {
-        const Load = require('./models/Load');
-        const moment = require('moment');
+console.log('>>> Mounting /loader routes...'); // Log before mounting loader routes
+app.use('/loader', require('./routes/loaderRoutes')); // Mount loader routes
+console.log('>>> Finished mounting /loader routes.');
 
-        const startOfToday = moment().startOf('day');
-        const endOfToday = moment().endOf('day');
-        const startOfWeek = moment().startOf('week');
+// --- REMOVED Duplicate /loader/stats route from here ---
+// It's handled by loaderRoutes.js and loaderController.js
 
-        const plannedLoads = await Load.countDocuments({
-            status: 'Planned',
-            isInventory: { $ne: true }
-        });
-
-        const loadedToday = await Load.countDocuments({
-            status: 'Loaded',
-            updatedAt: {
-                $gte: startOfToday.toDate(),
-                $lte: endOfToday.toDate()
-            }
-        });
-
-        const deliveredWeek = await Load.countDocuments({
-            status: 'Delivered',
-            updatedAt: {
-                $gte: startOfWeek.toDate()
-            }
-        });
-
-        const loadCounts = await Load.aggregate([
-            { $match: { createdAt: { $gte: startOfWeek.toDate() } } },
-            { $group: { _id: null, totalSkids: { $sum: "$skidCount" } } }
-        ]);
-
-        const skidsAdded = loadCounts.length > 0 ? loadCounts[0].totalSkids : 0;
-
-        res.json({
-            plannedLoads,
-            loadedToday,
-            deliveredWeek,
-            skidsAdded
-        });
-    } catch (err) {
-        console.error('Error fetching loader stats:', err);
-        res.status(500).json({ error: 'Failed to fetch loader stats' });
-    }
-});
-
-// 404 handler
+// --- Error Handling ---
+// 404 handler (should be after all valid routes)
+console.log('>>> Mounting 404 Handler...');
 app.use(notFoundHandler);
 
-// Error handler
+// Global Error handler (should be last)
+console.log('>>> Mounting Global Error Handler...');
 app.use(globalErrorHandler);
 
 module.exports = app;

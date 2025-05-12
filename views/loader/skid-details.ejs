@@ -30,6 +30,241 @@
         <% } %>
     </p>
 
+    <!-- Complete Multi-Project Interface with Dynamic Current Project -->
+<div class="multi-project-section mb-3" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0">
+                <i class="fas fa-project-diagram"></i> Current Project: 
+                <strong id="currentProjectName"><%= displayProject ? displayProject.name : project.name %></strong> 
+                (<span id="currentProjectCode"><%= displayProject ? displayProject.code : project.code %></span>)
+            </h5>
+            <% if (displayProject && displayProject.code !== project.code) { %>
+                <small class="text-muted">Main Project: <%= project.name %> (<%= project.code %>)</small>
+            <% } %>
+        </div>
+        <button id="addAnotherProjectBtn" class="btn btn-info">
+            <i class="fas fa-plus-circle"></i> Add From Another Project
+        </button>
+    </div>
+</div>
+
+<!-- Project Tabs for Easy Switching -->
+<% if (additionalProjects && additionalProjects.length > 0) { %>
+    <div class="project-tabs-container mb-3">
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link <%= (!showProject || showProject === project.code) ? 'active' : '' %>" 
+                   href="?loadId=<%= load._id %>&showProject=<%= project.code %>"
+                   data-project-code="<%= project.code %>"
+                   data-project-name="<%= project.name %>">
+                    <i class="fas fa-star"></i> <%= project.name %>
+                    <span class="badge badge-primary ml-1">Main</span>
+                </a>
+            </li>
+            <% additionalProjects.forEach(proj => { %>
+                <li class="nav-item">
+                    <a class="nav-link <%= showProject === proj.code ? 'active' : '' %>" 
+                       href="?loadId=<%= load._id %>&showProject=<%= proj.code %>"
+                       data-project-code="<%= proj.code %>"
+                       data-project-name="<%= proj.name %>">
+                        <%= proj.name %>
+                        <% if (showProject === proj.code) { %>
+                            <span class="badge badge-success ml-1">Current</span>
+                        <% } %>
+                    </a>
+                </li>
+            <% }); %>
+        </ul>
+    </div>
+<% } %>
+
+<!-- Additional Projects List (Initially Hidden) -->
+<div id="additionalProjectsSection" style="display: none; margin-bottom: 20px;">
+    <div class="card shadow">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-folder-plus"></i> Select Additional Project
+            </h5>
+        </div>
+        <div class="card-body">
+            <form action="/loader/truck/<%= project.code %>/add-project" method="POST">
+                <input type="hidden" name="loadId" value="<%= load._id %>">
+                <input type="hidden" name="currentProjectCode" value="<%= project.code %>">
+                
+                <div class="form-group">
+                    <label for="additionalProject">Select Project:</label>
+                    <select name="additionalProjectCode" id="additionalProject" class="form-control" required>
+                        <option value="">-- Select a Project --</option>
+                        <!-- Populated via AJAX -->
+                    </select>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary mr-2" id="cancelAddProject">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Load Project Inventory
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addProjectBtn = document.getElementById('addAnotherProjectBtn');
+    const projectSection = document.getElementById('additionalProjectsSection');
+    const cancelBtn = document.getElementById('cancelAddProject');
+    const projectSelect = document.getElementById('additionalProject');
+    
+    // Update current project display when hovering over tabs
+    const projectTabs = document.querySelectorAll('.nav-link[data-project-code]');
+    projectTabs.forEach(tab => {
+        tab.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('active')) {
+                this.style.backgroundColor = '#f0f0f0';
+            }
+        });
+        
+        tab.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('active')) {
+                this.style.backgroundColor = '';
+            }
+        });
+    });
+    
+    // Show project selection
+    addProjectBtn.addEventListener('click', function() {
+        projectSection.style.display = 'block';
+        loadAvailableProjects();
+        // Smooth scroll to the form
+        projectSection.scrollIntoView({ behavior: 'smooth' });
+    });
+    
+    // Cancel project selection
+    cancelBtn.addEventListener('click', function() {
+        projectSection.style.display = 'none';
+        projectSelect.innerHTML = '<option value="">-- Select a Project --</option>';
+    });
+    
+    // Load available projects via AJAX
+    function loadAvailableProjects() {
+        const currentProjectCode = '<%= project.code %>';
+        const loadedProjects = [currentProjectCode];
+        
+        <% if (additionalProjects && additionalProjects.length > 0) { %>
+            <% additionalProjects.forEach(proj => { %>
+                loadedProjects.push('<%= proj.code %>');
+            <% }); %>
+        <% } %>
+        
+        fetch('/loader/api/available-projects')
+            .then(response => response.json())
+            .then(data => {
+                projectSelect.innerHTML = '<option value="">-- Select a Project --</option>';
+                let availableCount = 0;
+                
+                data.projects.forEach(proj => {
+                    if (!loadedProjects.includes(proj.code)) {
+                        const option = document.createElement('option');
+                        option.value = proj.code;
+                        option.textContent = `${proj.name} (${proj.code})`;
+                        projectSelect.appendChild(option);
+                        availableCount++;
+                    }
+                });
+                
+                if (availableCount === 0) {
+                    projectSelect.innerHTML = '<option value="">No additional projects available</option>';
+                    projectSelect.disabled = true;
+                    document.querySelector('button[type="submit"]').disabled = true;
+                } else {
+                    projectSelect.disabled = false;
+                    document.querySelector('button[type="submit"]').disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading projects:', error);
+                alert('Error loading projects. Please try again.');
+            });
+    }
+});
+</script>
+
+<style>
+.multi-project-section {
+    border: 1px solid #dee2e6;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.multi-project-section small {
+    display: block;
+    margin-top: 5px;
+}
+
+.project-tabs-container {
+    border-bottom: 2px solid #dee2e6;
+}
+
+.nav-tabs {
+    border-bottom: none;
+}
+
+.nav-tabs .nav-link {
+    color: #495057;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-bottom: none;
+    margin-right: 5px;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    background-color: #e9ecef;
+}
+
+.nav-tabs .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6;
+    border-bottom: 2px solid #fff;
+    font-weight: bold;
+    position: relative;
+    z-index: 10;
+}
+
+.nav-tabs .nav-link .badge {
+    font-size: 0.7em;
+    vertical-align: top;
+}
+
+#additionalProjectsSection .card {
+    border: none;
+    transition: all 0.3s ease;
+}
+
+#additionalProjectsSection .card-header {
+    background-color: #17a2b8;
+    border: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+
     <!-- Inventory Skid Selection -->
     <% if (inventorySkids && inventorySkids.length > 0) { %>
         <!-- Improved Inventory Skid Selection Table with better visual indicators -->
@@ -48,6 +283,8 @@
             <!-- Inventory Skid Selection Form -->
             <form action="/loader/truck/<%= project.code %>/skids/add-from-inventory" method="POST" id="inventorySkidForm">
                 <input type="hidden" name="loadId" value="<%= load._id %>">
+                <!-- IMPORTANT: Add this hidden field to track source project -->
+                <input type="hidden" name="sourceProject" value="<%= displayProject ? displayProject.code : project.code %>">
 
                 <div class="table-responsive">
                     <table id="inventorySkidSelectionTable" class="table table-striped table-hover">
@@ -117,104 +354,317 @@
         <div id="addTruckSkidFormContainer" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;"></div>
     </div>
 
-    <!-- Truck Skid Table -->
-    <h3 class="section-title" style="font-size: 1.2rem; margin-top: 30px; border-bottom: none;">
-        <i class="fas fa-truck-loading"></i> Skids Assigned to this Truck Load
-    </h3>
-    <div class="table-responsive">
-        <table id="truckSkidTable">
-            <thead>
-            <tr>
-                <th>Truck Skid #</th>
-                <th>Width (ft)</th>
-                <th>Length (ft)</th>
-                <th>Weight (lbs)</th>
-                <th>Description</th>
-                <th class="no-print">Actions</th>
-            </tr>
-            </thead>
-            <tbody id="truckSkidTableBody">
-            <% if (load.skids && load.skids.length > 0) { %>
-                <% load.skids.forEach((skid, index) => { %>
-                    <tr data-skid-id="<%= skid.id %>" data-index="<%= index %>">
-                        <td><%= index + 1 %></td>
-                        <td><%= skid.width.toFixed(2) %></td>
-                        <td><%= skid.length.toFixed(2) %></td>
-                        <td class="skid-weight-cell"><%= skid.weight.toFixed(2) %></td>
-                        <td>
-                            <%= skid.description || '-' %>
-                            <% if (skid.originalInvId) { %>
-                                <span style="font-size: 0.8em; color: var(--text-muted); white-space: nowrap;">
-                                        (from Inv: <%= skid.originalInvId %>)
-                                    </span>
-                            <% } %>
-                        </td>
-                        <td class="action-buttons no-print">
-                            <button class="btn-edit btn-sm edit-skid-btn" data-skid-id="<%= skid.id %>" data-index="<%= index %>">
-                                <i class="fas fa-edit"></i> Edit
+    <!-- Updated Truck Skid Table with Source Project -->
+<h3 class="section-title" style="font-size: 1.2rem; margin-top: 30px; border-bottom: none;">
+    <i class="fas fa-truck-loading"></i> Skids Assigned to this Truck Load
+</h3>
+<div class="table-responsive">
+    <table id="truckSkidTable">
+        <thead>
+        <tr>
+            <th>Truck Skid #</th>
+            <th>Width (ft)</th>
+            <th>Length (ft)</th>
+            <th>Weight (lbs)</th>
+            <th>Description</th>
+            <th>Source Project</th>
+            <th class="no-print">Actions</th>
+        </tr>
+        </thead>
+        <tbody id="truckSkidTableBody">
+        <% if (load.skids && load.skids.length > 0) { %>
+            <% load.skids.forEach((skid, index) => { %>
+                <tr data-skid-id="<%= skid.id %>" data-index="<%= index %>">
+                    <td><%= index + 1 %></td>
+                    <td><%= skid.width.toFixed(2) %></td>
+                    <td><%= skid.length.toFixed(2) %></td>
+                    <td class="skid-weight-cell"><%= skid.weight.toFixed(2) %></td>
+                    <td>
+                        <%= skid.description || '-' %>
+                        <% if (skid.originalInvId) { %>
+                            <span style="font-size: 0.8em; color: #666; display: block;">
+                                Inv ID: <%= skid.originalInvId %>
+                            </span>
+                        <% } %>
+                    </td>
+                    <td>
+                        <% 
+                            let sourceProjectCode = '';
+                            let sourceProjectName = '';
+                            
+                            // First try to use explicitly set source project
+                            if (skid.sourceProject) {
+                                sourceProjectCode = skid.sourceProject;
+                            } else if (skid.originalInvId) {
+                                // Extract project code from inventory ID format: INV-PROJECTCODE-XXX
+                                const parts = skid.originalInvId.split('-');
+                                if (parts.length >= 3 && parts[0] === 'INV') {
+                                    sourceProjectCode = parts[1];
+                                }
+                            }
+                            
+                            // Get project name from projectMap if available
+                            if (sourceProjectCode && projectMap && projectMap[sourceProjectCode]) {
+                                sourceProjectName = projectMap[sourceProjectCode];
+                            } else if (sourceProjectCode) {
+                                // Fallback to code if name not found
+                                sourceProjectName = sourceProjectCode;
+                            }
+                            
+                            // Show project name if available
+                            if (sourceProjectName) {
+                        %>
+                            <span style="color: #333; font-weight: 500;">
+                                <%= sourceProjectName %>
+                            </span>
+                        <% } else { %>
+                            <span style="color: #666; font-style: italic;">
+                                Direct Entry
+                            </span>
+                        <% } %>
+                    </td>
+                    <td class="action-buttons no-print">
+                        <button class="btn-edit btn-sm edit-skid-btn" data-skid-id="<%= skid.id %>" data-index="<%= index %>">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <form action="/loader/truck/<%= project.code %>/skids/delete-skid" method="POST" class="delete-skid-form">
+                            <input type="hidden" name="skidId" value="<%= skid.id %>">
+                            <input type="hidden" name="loadId" value="<%= load._id %>">
+                            <button type="submit" class="btn-delete btn-sm delete-skid-btn">
+                                <i class="fas fa-trash"></i> Delete
                             </button>
-                            <!-- Use our new direct POST route for deletion -->
-                            <form action="/loader/truck/<%= project.code %>/skids/delete-skid" method="POST" class="delete-skid-form">
-                                <input type="hidden" name="skidId" value="<%= skid.id %>">
-                                <input type="hidden" name="loadId" value="<%= load._id %>">
-                                <button type="submit" class="btn-delete btn-sm delete-skid-btn">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                <% }); %>
-            <% } else { %>
-                <tr>
-                    <td colspan="6" style="text-align: center;">No skids added to this truck yet.</td>
+                        </form>
+                    </td>
                 </tr>
-            <% } %>
-            </tbody>
-            <tfoot>
-            <tr style="font-weight: bold; background-color: var(--light-gray);">
-                <td colspan="3">Truck Totals: <span id="totalTruckSkidCount"><%= load.skids.length || 0 %></span> Skids</td>
-                <td id="totalTruckSkidWeight"><%= load.totalWeight?.toFixed(2) || '0.00' %> lbs</td>
-                <td colspan="2"></td>
+            <% }); %>
+        <% } else { %>
+            <tr>
+                <td colspan="7" style="text-align: center;">No skids added to this truck yet.</td>
             </tr>
-            </tfoot>
-        </table>
+        <% } %>
+        </tbody>
+        <tfoot>
+        <tr style="font-weight: bold; background-color: #f8f9fa;">
+            <td colspan="3">Truck Totals: <span id="totalTruckSkidCount"><%= load.skids.length || 0 %></span> Skids</td>
+            <td id="totalTruckSkidWeight"><%= load.totalWeight?.toFixed(2) || '0.00' %> lbs</td>
+            <td colspan="3">
+                <% if (load.skids && load.skids.length > 0) { %>
+                    <% 
+                        const projectCounts = {};
+                        load.skids.forEach(skid => {
+                            let projCode = '';
+                            let projName = '';
+                            
+                            if (skid.sourceProject) {
+                                projCode = skid.sourceProject;
+                            } else if (skid.originalInvId) {
+                                const parts = skid.originalInvId.split('-');
+                                if (parts.length >= 3 && parts[0] === 'INV') {
+                                    projCode = parts[1];
+                                }
+                            }
+                            
+                            if (projCode && projectMap && projectMap[projCode]) {
+                                projName = projectMap[projCode];
+                            } else if (projCode) {
+                                projName = projCode;
+                            } else {
+                                projName = 'Direct Entry';
+                            }
+                            
+                            projectCounts[projName] = (projectCounts[projName] || 0) + 1;
+                        });
+                        const projectList = Object.entries(projectCounts).map(([proj, count]) => `${proj}: ${count}`).join(', ');
+                    %>
+                    <small style="color: #333;">From: <%= projectList %></small>
+                <% } %>
+            </td>
+        </tr>
+        </tfoot>
+    </table>
+</div>
+
+<style>
+/* Clean styles without badges */
+#truckSkidTable {
+    border-collapse: collapse;
+    background-color: white;
+}
+
+#truckSkidTable th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    text-align: center;
+    padding: 12px;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#truckSkidTable td {
+    padding: 10px;
+    vertical-align: middle;
+    color: #333;
+    border-bottom: 1px solid #e9ecef;
+}
+
+#truckSkidTable tr:hover td {
+    background-color: #f5f7fa;
+}
+
+/* Action buttons */
+.btn-edit {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-edit:hover {
+    background-color: #138496;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background-color: #c82333;
+}
+
+.action-buttons form {
+    display: inline-block;
+    margin-left: 5px;
+}
+</style>
+
+<!-- Enhanced Truck Skid Table with Proper Source Project Display -->
+
+
+<style>
+/* Enhanced styles for the source badges */
+#truckSkidTable {
+    border-collapse: collapse;
+}
+
+#truckSkidTable th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    text-align: center;
+    padding: 12px;
+}
+
+#truckSkidTable td {
+    padding: 10px;
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 0.9em;
+    padding: 0.4em 0.7em;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.badge-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.badge-light {
+    background-color: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+</style>
+
+<!-- Updated summary section to show project breakdown -->
+<!-- Fixed Loading Summary with Project Breakdown -->
+<div class="loading-instructions no-print">
+    <div id="loadingInstructions">
+        <h5><i class="fas fa-info-circle"></i> Loading Summary & Instructions</h5>
+        <p><strong>Summary for Truck <%= load.truckId %>:</strong></p>
+        <ul>
+            <li>Total Skids on Truck: <strong><%= load.skids.length || 0 %></strong></li>
+            <li>Total Weight on Truck: <strong><%= load.totalWeight?.toFixed(2) || '0.00' %></strong> lbs
+                (<%= load.truckInfo.weight ? ((load.totalWeight || 0) / load.truckInfo.weight * 100).toFixed(1) : 0 %>% of <%= load.truckInfo.weight %> lbs capacity)</li>
+            <li>Approx. Area Used: <strong><%= spaceUtilization.totalArea.toFixed(2) %></strong> sq ft
+                (<%= spaceUtilization.percentage.toFixed(1) %>% of <%= spaceUtilization.truckArea.toFixed(2) %> sq ft available)</li>
+            <li>Skids by Project:
+                <% if (load.skids && load.skids.length > 0) { %>
+                    <% 
+                        const summaryProjectCounts = {};
+                        load.skids.forEach(skid => {
+                            let projCode = '';
+                            let projName = '';
+                            
+                            // Extract project code
+                            if (skid.sourceProject) {
+                                projCode = skid.sourceProject;
+                            } else if (skid.originalInvId) {
+                                const parts = skid.originalInvId.split('-');
+                                if (parts.length >= 3 && parts[0] === 'INV') {
+                                    projCode = parts[1];
+                                }
+                            }
+                            
+                            // Get project name
+                            if (projCode && projectMap && projectMap[projCode]) {
+                                projName = projectMap[projCode];
+                            } else if (projCode) {
+                                projName = projCode; // Use code as fallback
+                            } else {
+                                projName = 'Direct Entry';
+                            }
+                            
+                            summaryProjectCounts[projName] = (summaryProjectCounts[projName] || 0) + 1;
+                        });
+                    %>
+                    <ul>
+                    <% Object.entries(summaryProjectCounts).forEach(([projName, count]) => { %>
+                        <li><strong><%= projName %></strong>: <%= count %> skid<%= count !== 1 ? 's' : '' %></li>
+                    <% }); %>
+                    </ul>
+                <% } else { %>
+                    <p style="margin-left: 20px; color: #666;">No skids loaded yet</p>
+                <% } %>
+            </li>
+        </ul>
+
+        <% if (isOverweight) { %>
+            <p class="warning" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 4px;">
+                <i class="fas fa-exclamation-triangle"></i> Warning: Total weight exceeds truck capacity!
+            </p>
+        <% } else if (load.truckInfo.weight && (load.totalWeight || 0) > load.truckInfo.weight * 0.95) { %>
+            <p class="warning" style="background-color:#fff3cd;border: 1px solid #ffeeba;color:#856404; padding: 12px; border-radius: 4px;">
+                <i class="fas fa-exclamation-circle"></i> Caution: Approaching maximum weight capacity.
+            </p>
+        <% } %>
+
+        <% if (spaceUtilization.percentage > 100) { %>
+            <p class="warning" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 4px;">
+                <i class="fas fa-exclamation-triangle"></i>
+                Warning: Total skid area exceeds theoretical truck floor space. Check stacking/dimensions.
+            </p>
+        <% } else if (spaceUtilization.percentage > 95 && spaceUtilization.percentage <= 100) { %>
+            <p class="warning" style="background-color:#fff3cd;border: 1px solid #ffeeba;color:#856404; padding: 12px; border-radius: 4px;">
+                <i class="fas fa-exclamation-circle"></i>
+                Caution: High space utilization. Consider loading arrangement.
+            </p>
+        <% } %>
     </div>
-
-    <!-- Loading Instructions -->
-    <div class="loading-instructions no-print">
-        <div id="loadingInstructions">
-            <h5><i class="fas fa-info-circle"></i> Loading Summary & Instructions</h5>
-            <p><strong>Summary for Truck <%= load.truckId %>:</strong></p>
-            <ul>
-                <li>Total Skids on Truck: <span id="summarySkidCount"><%= load.skids.length || 0 %></span></li>
-                <li>Total Weight on Truck: <span id="summaryWeight"><%= load.totalWeight?.toFixed(2) || '0.00' %></span> lbs
-                    (<%= load.truckInfo.weight ? ((load.totalWeight || 0) / load.truckInfo.weight * 100).toFixed(1) : 0 %>%
-                    of <%= load.truckInfo.weight %> lbs capacity)</li>
-                <li>Approx. Area Used: <%= spaceUtilization.totalArea.toFixed(2) %> sq ft
-                    (<%= spaceUtilization.percentage.toFixed(1) %>% of <%= spaceUtilization.truckArea.toFixed(2) %> sq ft available)</li>
-            </ul>
-
-            <% if (isOverweight) { %>
-                <p class="warning"><i class="fas fa-exclamation-triangle"></i> Warning: Total weight exceeds truck capacity!</p>
-            <% } else if (load.truckInfo.weight && (load.totalWeight || 0) > load.truckInfo.weight * 0.95) { %>
-                <p class="warning" style="background-color:#fff3cd;border-color:#ffeeba;color:#856404;">
-                    <i class="fas fa-exclamation-circle"></i> Caution: Approaching maximum weight capacity.
-                </p>
-            <% } %>
-
-            <% if (spaceUtilization.percentage > 100) { %>
-                <p class="warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Warning: Total skid area exceeds theoretical truck floor space. Check stacking/dimensions.
-                </p>
-            <% } else if (spaceUtilization.percentage > 95 && spaceUtilization.percentage <= 100) { %>
-                <p class="warning" style="background-color:#fff3cd;border-color:#ffeeba;color:#856404;">
-                    <i class="fas fa-exclamation-circle"></i>
-                    Caution: High space utilization. Consider loading arrangement.
-                </p>
-            <% } %>
-        </div>
-    </div>
+</div>
 
     <!-- Navigation Buttons -->
     <div class="button-group no-print" style="margin-top: 30px;">
@@ -467,6 +917,24 @@ input[type="checkbox"]:disabled {
         background-color: #0056b3;
         color: #ffffff;
     }
+.multi-project-section {
+    border: 1px solid #dee2e6;
+    margin-bottom: 20px;
+}
+
+.multi-project-section small {
+    display: block;
+    margin-top: 5px;
+}
+
+#additionalProjectsSection .card {
+    border: 2px solid #17a2b8;
+}
+
+#additionalProjectsSection .card-header {
+    background-color: #17a2b8;
+    color: white;
+}
 </style>
 
 <%- contentFor('scripts') %>
@@ -692,43 +1160,78 @@ input[type="checkbox"]:disabled {
     }
 
     function toggleAddSkidForm() {
+        console.log("Toggle add skid form called");
         const formContainer = document.getElementById('addTruckSkidFormContainer');
-        if (formContainer.style.display === 'none') {
+
+        if (!formContainer) {
+            console.error("Form container not found!");
+            return;
+        }
+
+        if (formContainer.style.display === 'none' || formContainer.style.display === '') {
             // Show form
             const template = document.getElementById('skidFormTemplate');
+            if (!template) {
+                console.error("Skid form template not found!");
+                alert("Error: Form template not found. Please refresh the page.");
+                return;
+            }
+
             const content = template.content.cloneNode(true);
             formContainer.innerHTML = '';
             formContainer.appendChild(content);
 
             // Set up form submission
             const form = formContainer.querySelector('.add-skid-form');
+            if (!form) {
+                console.error("Form not found in cloned content!");
+                return;
+            }
+
             form.action = '/loader/truck/<%= project.code %>/skid';
             form.method = 'POST';
 
-            // Add hidden input for loadId
-            const loadIdInput = document.createElement('input');
-            loadIdInput.type = 'hidden';
-            loadIdInput.name = 'loadId';
-            loadIdInput.value = '<%= load._id %>';
-            form.appendChild(loadIdInput);
+            // Add hidden input for loadId if not already present
+            let loadIdInput = form.querySelector('input[name="loadId"]');
+            if (!loadIdInput) {
+                loadIdInput = document.createElement('input');
+                loadIdInput.type = 'hidden';
+                loadIdInput.name = 'loadId';
+                loadIdInput.value = '<%= load._id %>';
+                form.appendChild(loadIdInput);
+            }
 
-            // Add event listeners for automatic weight calculation
-            const widthInput = form.querySelector('.skid-width');
-            const lengthInput = form.querySelector('.skid-length');
-            const weightInput = form.querySelector('.skid-weight');
+            // Set up cancel button event listener
+            const cancelBtn = form.querySelector('.cancel-skid-btn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    formContainer.style.display = 'none';
+                    formContainer.innerHTML = '';
+                });
+            }
 
-            // We're not automatically calculating weight anymore
-            // The user will input the weight manually
-            
-            // Add cancel button event listener
-            form.querySelector('.cancel-skid-btn').addEventListener('click', function() {
-                formContainer.style.display = 'none';
-                formContainer.innerHTML = '';
-            });
-
+            // Show the form first
             formContainer.style.display = 'block';
+
+            // Then try to focus after a delay to ensure DOM is ready
             setTimeout(() => {
-                formContainer.querySelector('.skid-width').focus();
+                // Try multiple selectors to find the width input
+                const widthInput = formContainer.querySelector('.skid-width') ||
+                    formContainer.querySelector('input[name="width"]') ||
+                    formContainer.querySelector('input[type="number"][name="width"]');
+
+                if (widthInput) {
+                    console.log("Width input found, focusing...");
+                    widthInput.focus();
+                } else {
+                    console.warn("Width input not found for focus");
+                    // Try to focus on any input in the form
+                    const anyInput = formContainer.querySelector('input[type="number"], input[type="text"]');
+                    if (anyInput) {
+                        anyInput.focus();
+                    }
+                }
             }, 100);
         } else {
             // Hide form
@@ -737,21 +1240,93 @@ input[type="checkbox"]:disabled {
         }
     }
 
-    // Edit Skid Function - CSP compatible version
+    // Complete event listener setup
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log("DOM Content Loaded - Setting up event listeners");
+
+        // Remove any duplicate event listeners by using a named function
+        const handleAddSkidClick = function (e) {
+            e.preventDefault();
+            console.log("Add skid button clicked");
+            toggleAddSkidForm();
+        };
+
+        // Add event listener for add skid button
+        const addTruckSkidBtn = document.getElementById('addTruckSkidBtn');
+        if (addTruckSkidBtn) {
+            // Remove any existing listeners first
+            addTruckSkidBtn.removeEventListener('click', handleAddSkidClick);
+            // Add new listener
+            addTruckSkidBtn.addEventListener('click', handleAddSkidClick);
+            console.log("Add skid button listener attached");
+        } else {
+            console.error("Add skid button not found!");
+        }
+
+        // Set up event listeners for edit buttons
+        document.querySelectorAll('.edit-skid-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                console.log("Edit button clicked");
+                const skidId = this.getAttribute('data-skid-id');
+                const index = parseInt(this.getAttribute('data-index'), 10);
+                editSkid(skidId, index);
+            });
+        });
+
+        // Set up event listeners for delete form confirmation
+        document.querySelectorAll('.delete-skid-form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                if (!confirm('Are you sure you want to remove this skid from the truck?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+
+        // Set up confirmation for the Reset Truck Skids List button
+        const resetBtn = document.getElementById('resetSkidsBtn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function (e) {
+                if (!confirm('Are you sure you want to clear all skids from this truck load?')) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // Clean up any orphaned event listeners from previous attempts
+        const allButtons = document.querySelectorAll('#addTruckSkidBtn');
+        console.log(`Found ${allButtons.length} add skid button(s)`);
+    });
+
+    // Simplify the editSkid function to avoid similar errors
     function editSkid(skidId, index) {
         console.log(`Editing skid ${skidId} at index ${index}`);
         const formContainer = document.getElementById('addTruckSkidFormContainer');
+
+        if (!formContainer) {
+            console.error("Form container not found!");
+            return;
+        }
+
         const template = document.getElementById('skidFormTemplate');
+        if (!template) {
+            console.error("Skid form template not found!");
+            return;
+        }
+
         const content = template.content.cloneNode(true);
         formContainer.innerHTML = '';
         formContainer.appendChild(content);
 
         // Update title and button text
         const titleEl = formContainer.querySelector('.skid-form-title-dynamic');
-        titleEl.innerHTML = '<i class="fas fa-edit"></i> Edit Skid #' + (index + 1);
+        if (titleEl) {
+            titleEl.innerHTML = '<i class="fas fa-edit"></i> Edit Skid #' + (index + 1);
+        }
 
         const saveBtn = formContainer.querySelector('.save-skid-btn');
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        if (saveBtn) {
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        }
 
         // Find the row in the table with this skid's data
         const skidRow = document.querySelector(`tr[data-skid-id="${skidId}"]`);
@@ -761,11 +1336,14 @@ input[type="checkbox"]:disabled {
             const length = parseFloat(cells[2].textContent);
             const weight = parseFloat(cells[3].textContent);
             const description = cells[4].textContent.trim();
-            
-            console.log(`Found skid data in table: width=${width}, length=${length}, weight=${weight}, description=${description}`);
-            
+
             const form = formContainer.querySelector('.add-skid-form');
-            // Use the correct URL pattern for updating skids
+            if (!form) {
+                console.error("Form not found in template!");
+                return;
+            }
+
+            // Set form attributes
             form.action = '/loader/truck/<%= project.code %>/skid/' + skidId;
             form.method = 'POST';
 
@@ -783,35 +1361,44 @@ input[type="checkbox"]:disabled {
             loadIdInput.value = '<%= load._id %>';
             form.appendChild(loadIdInput);
 
-            // Fill form with skid data
-            const widthInput = form.querySelector('.skid-width');
-            const lengthInput = form.querySelector('.skid-length');
-            const weightInput = form.querySelector('.skid-weight');
-            const descriptionInput = form.querySelector('.skid-description');
-            
-            widthInput.value = width;
-            lengthInput.value = length;
-            weightInput.value = weight;
-            
-            // Clean up description (remove "from Inv" text if present)
-            let cleanDescription = description;
-            const fromInvIndex = cleanDescription.indexOf('(from Inv:');
-            if (fromInvIndex > -1) {
-                cleanDescription = cleanDescription.substring(0, fromInvIndex).trim();
-            }
-            
-            descriptionInput.value = cleanDescription || '';
-            
-            // Add cancel button event listener
-            form.querySelector('.cancel-skid-btn').addEventListener('click', function() {
-                formContainer.style.display = 'none';
-                formContainer.innerHTML = '';
-            });
-            
+            // Show the form first
             formContainer.style.display = 'block';
+
+            // Then fill form with skid data after DOM is ready
             setTimeout(() => {
-                formContainer.querySelector('.skid-width').focus();
+                const widthInput = formContainer.querySelector('.skid-width') || formContainer.querySelector('input[name="width"]');
+                const lengthInput = formContainer.querySelector('.skid-length') || formContainer.querySelector('input[name="length"]');
+                const weightInput = formContainer.querySelector('.skid-weight') || formContainer.querySelector('input[name="weight"]');
+                const descriptionInput = formContainer.querySelector('.skid-description') || formContainer.querySelector('textarea[name="description"]');
+
+                if (widthInput) widthInput.value = width;
+                if (lengthInput) lengthInput.value = length;
+                if (weightInput) weightInput.value = weight;
+
+                // Clean up description
+                let cleanDescription = description;
+                const fromInvIndex = cleanDescription.indexOf('(from Inv:');
+                if (fromInvIndex > -1) {
+                    cleanDescription = cleanDescription.substring(0, fromInvIndex).trim();
+                }
+
+                if (descriptionInput) descriptionInput.value = cleanDescription || '';
+
+                // Focus on first input
+                if (widthInput) {
+                    widthInput.focus();
+                }
             }, 100);
+
+            // Add cancel button event listener
+            const cancelBtn = form.querySelector('.cancel-skid-btn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    formContainer.style.display = 'none';
+                    formContainer.innerHTML = '';
+                });
+            }
         } else {
             console.error(`Could not find skid row for skid ID ${skidId}`);
             alert('Error: Could not find skid data. Please try refreshing the page.');
@@ -910,4 +1497,423 @@ input[type="checkbox"]:disabled {
         // Call our main function to check and disable already-on-truck skids
         disableInventorySkidsAlreadyOnTruck();
     }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM Content Loaded - Setting up skid form");
+
+        // Add Skid Directly to Truck button
+        const addTruckSkidBtn = document.getElementById('addTruckSkidBtn');
+        const formContainer = document.getElementById('addTruckSkidFormContainer');
+
+        if (addTruckSkidBtn && formContainer) {
+            addTruckSkidBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Add skid button clicked");
+
+                // Toggle the form visibility
+                if (formContainer.style.display === 'none' || formContainer.style.display === '') {
+                    showAddSkidForm();
+                } else {
+                    hideAddSkidForm();
+                }
+            });
+        } else {
+            console.error("Add skid button or form container not found!");
+        }
+
+        function showAddSkidForm() {
+            try {
+                const template = document.getElementById('skidFormTemplate');
+                if (!template) {
+                    console.error("Skid form template not found!");
+                    alert("Error: Form template not found. Please refresh the page.");
+                    return;
+                }
+
+                // Clone the template content
+                const content = template.content.cloneNode(true);
+
+                // Clear and add content to container
+                formContainer.innerHTML = '';
+                formContainer.appendChild(content);
+
+                // Set up the form
+                const form = formContainer.querySelector('.add-skid-form');
+                if (!form) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Add skid button clicked");
+
+                // Toggle the form visibility
+                if (formContainer.style.display === 'none' || formContainer.style.display === '') {
+                    showAddSkidForm();
+                } else {
+                    hideAddSkidForm();
+                }
+            });
+        } else {
+            console.error("Add skid button or form container not found!");
+        }
+
+        function showAddSkidForm() {
+            try {
+                const template = document.getElementById('skidFormTemplate');
+                if (!template) {
+                    console.error("Skid form template not found!");
+                    alert("Error: Form template not found. Please refresh the page.");
+                    return;
+                }
+
+                // Clone the template content
+                const content = template.content.cloneNode(true);
+
+                // Clear and add content to container
+                formContainer.innerHTML = '';
+                formContainer.appendChild(content);
+
+                // Set up the form
+                const form = formContainer.querySelector('.add-skid-form');
+                if (!form) {
+                    console.error("Form not found in template!");
+                    return;
+                }
+
+                // Set form attributes
+                form.action = '/loader/truck/<%= project.code %>/skid';
+                form.method = 'POST';
+
+                // Add hidden loadId input if not present
+                let loadIdInput = form.querySelector('input[name="loadId"]');
+                if (!loadIdInput) {
+                    loadIdInput = document.createElement('input');
+                    loadIdInput.type = 'hidden';
+                    loadIdInput.name = 'loadId';
+                    loadIdInput.value = '<%= load._id %>';
+                    form.appendChild(loadIdInput);
+                }
+
+                // Set up cancel button
+                const cancelBtn = form.querySelector('.cancel-skid-btn');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        hideAddSkidForm();
+                    });
+                }
+
+                // Set up form submission
+                form.addEventListener('submit', function(e) {
+                    // Validate form
+                    const widthInput = form.querySelector('input[name="width"]');
+                    const lengthInput = form.querySelector('input[name="length"]');
+                    const weightInput = form.querySelector('input[name="weight"]');
+
+                    if (!widthInput.value || !lengthInput.value || !weightInput.value) {
+                        e.preventDefault();
+                        alert('Please fill in all required fields: width, length, and weight.');
+                        return;
+                    }
+
+                    // Additional validation
+                    if (parseFloat(widthInput.value) <= 0 || parseFloat(lengthInput.value) <= 0 || parseFloat(weightInput.value) <= 0) {
+                        e.preventDefault();
+                        alert('Width, length, and weight must be greater than 0.');
+                        return;
+                    }
+
+                    // Show loading state
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+                    }
+                });
+
+                // Show the form
+                formContainer.style.display = 'block';
+
+                // Focus on first input
+                setTimeout(() => {
+                    const firstInput = form.querySelector('input[name="width"]');
+                    if (firstInput) {
+                        firstInput.focus();
+                    }
+                }, 100);
+
+            } catch (error) {
+                console.error("Error showing add skid form:", error);
+                alert("Error displaying form. Please refresh the page.");
+            }
+        }
+
+        function hideAddSkidForm() {
+            formContainer.style.display = 'none';
+            formContainer.innerHTML = '';
+        }
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log("Setting up inventory skid selection");
+
+        // Fix the form submission for adding inventory skids
+        const inventoryForm = document.getElementById('inventorySkidForm');
+        const addSelectedBtn = document.getElementById('addSelectedSkidsBtn');
+
+        if (inventoryForm && addSelectedBtn) {
+            // Remove any existing event listeners
+            addSelectedBtn.removeEventListener('click', handleAddSelectedSkids);
+
+            // Add new event listener
+            addSelectedBtn.addEventListener('click', handleAddSelectedSkids);
+        }
+
+        function handleAddSelectedSkids(e) {
+            e.preventDefault();
+
+            // Get all checked checkboxes
+            const checkedBoxes = inventoryForm.querySelectorAll('input[name="selectedSkids"]:checked:not(:disabled)');
+
+            console.log(`Found ${checkedBoxes.length} selected skids`);
+
+            if (checkedBoxes.length === 0) {
+                alert('Please select at least one skid to add to the truck.');
+                return;
+            }
+
+            // Debug: Log what we're submitting
+            console.log('Submitting skids:', Array.from(checkedBoxes).map(cb => cb.value));
+
+            // Create a proper form data object
+            const formData = new FormData();
+            formData.append('loadId', '<%= load._id %>');
+
+            // Add each selected skid
+            checkedBoxes.forEach(checkbox => {
+                formData.append('selectedSkids', checkbox.value);
+            });
+
+            // Show loading state
+            addSelectedBtn.disabled = true;
+            addSelectedBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding Skids...';
+
+            // Submit using fetch to have better control
+            fetch(inventoryForm.action, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // If successful, reload the page to show updated state
+                        window.location.reload();
+                    } else {
+                        throw new Error('Failed to add skids');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error adding skids. Please try again.');
+                    // Reset button state
+                    addSelectedBtn.disabled = false;
+                    addSelectedBtn.innerHTML = '<i class="fas fa-plus"></i> Add Selected Skids to Truck';
+                });
+        }
+
+        // Alternative: If fetch doesn't work, use traditional form submission
+        function alternativeSubmit() {
+            // Ensure the form has the correct action and method
+            inventoryForm.action = '/loader/truck/<%= project.code %>/skids/add-from-inventory';
+            inventoryForm.method = 'POST';
+
+            // Add loadId if not present
+            let loadIdInput = inventoryForm.querySelector('input[name="loadId"]');
+            if (!loadIdInput) {
+                loadIdInput = document.createElement('input');
+                loadIdInput.type = 'hidden';
+                loadIdInput.name = 'loadId';
+                loadIdInput.value = '<%= load._id %>';
+                inventoryForm.appendChild(loadIdInput);
+            }
+
+            // Submit the form
+            inventoryForm.submit();
+        }
+
+        // Add checkbox change listeners to provide immediate feedback
+        const checkboxes = document.querySelectorAll('.inventory-skid-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                const row = this.closest('tr');
+                if (this.checked) {
+                    row.classList.add('selected-for-add');
+                    row.style.backgroundColor = '#e8f4ff';
+                } else {
+                    row.classList.remove('selected-for-add');
+                    row.style.backgroundColor = '';
+                }
+
+                // Update button state
+                const anyChecked = document.querySelectorAll('.inventory-skid-checkbox:checked:not(:disabled)').length > 0;
+                addSelectedBtn.disabled = !anyChecked;
+            });
+        });
+
+        // Initialize button state
+        const anyChecked = document.querySelectorAll('.inventory-skid-checkbox:checked:not(:disabled)').length > 0;
+        addSelectedBtn.disabled = !anyChecked;
+    });
+</script>
+
+
+<script>
+    // Fixed inventory skid selection JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Setting up inventory skid selection');
+        
+        const form = document.getElementById('inventorySkidForm');
+        const submitBtn = document.getElementById('addSelectedSkidsBtn');
+        
+        if (!form || !submitBtn) {
+            console.error('Inventory form or submit button not found');
+            return;
+        }
+        
+        // Remove any existing event listeners
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        // Get fresh references
+        const inventoryForm = document.getElementById('inventorySkidForm');
+        const addBtn = document.getElementById('addSelectedSkidsBtn');
+        
+        // Handle form submission
+        inventoryForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const checkedBoxes = inventoryForm.querySelectorAll('input[name="selectedSkids"]:checked');
+            
+            if (checkedBoxes.length === 0) {
+                alert('Please select at least one skid to add to the truck.');
+                return;
+            }
+            
+            // Show loading state
+            addBtn.disabled = true;
+            addBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+            
+            // Submit the form
+            this.submit();
+        });
+        
+        // Visual feedback for checkboxes
+        const checkboxes = inventoryForm.querySelectorAll('.inventory-skid-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const row = this.closest('tr');
+                if (this.checked) {
+                    row.classList.add('selected-for-add');
+                } else {
+                    row.classList.remove('selected-for-add');
+                }
+                
+                // Update button state
+                const checkedCount = inventoryForm.querySelectorAll('input[name="selectedSkids"]:checked').length;
+                addBtn.disabled = checkedCount === 0;
+            });
+        });
+        
+        // Initial button state
+        const initialCheckedCount = inventoryForm.querySelectorAll('input[name="selectedSkids"]:checked').length;
+        addBtn.disabled = initialCheckedCount === 0;
+    });
+</script>
+
+<style>
+    tr.already-on-truck {
+        background-color: #f8f9fa !important;
+        opacity: 0.7;
+    }
+
+    tr.already-on-truck td {
+        text-decoration: line-through;
+    }
+
+    .already-added-note {
+        color: #dc3545;
+        font-style: italic;
+        font-size: 0.9em;
+        margin-left: 5px;
+    }
+
+    tr.selected-for-add {
+        background-color: #e7f3ff !important;
+    }
+
+    .disabled-label {
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+</style>
+<!-- Updated Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addProjectBtn = document.getElementById('addAnotherProjectBtn');
+    const projectSection = document.getElementById('additionalProjectsSection');
+    const cancelBtn = document.getElementById('cancelAddProject');
+    const projectSelect = document.getElementById('additionalProject');
+    
+    // Show project selection
+    addProjectBtn.addEventListener('click', function() {
+        projectSection.style.display = 'block';
+        loadAvailableProjects();
+    });
+    
+    // Cancel project selection
+    cancelBtn.addEventListener('click', function() {
+        projectSection.style.display = 'none';
+        projectSelect.innerHTML = '<option value="">-- Select a Project --</option>';
+    });
+    
+    // Load available projects via AJAX
+    function loadAvailableProjects() {
+        // Get all projects that haven't been added yet
+        const currentProjectCode = '<%= project.code %>';
+        const displayProjectCode = '<%= displayProject ? displayProject.code : project.code %>';
+        
+        // Track already loaded projects
+        const loadedProjects = [currentProjectCode];
+        <% if (additionalProjects && additionalProjects.length > 0) { %>
+            <% additionalProjects.forEach(proj => { %>
+                loadedProjects.push('<%= proj.code %>');
+            <% }); %>
+        <% } %>
+        
+        fetch('/loader/api/available-projects')
+            .then(response => response.json())
+            .then(data => {
+                projectSelect.innerHTML = '<option value="">-- Select a Project --</option>';
+                data.projects.forEach(proj => {
+                    // Only show projects that haven't been loaded yet
+                    if (!loadedProjects.includes(proj.code)) {
+                        const option = document.createElement('option');
+                        option.value = proj.code;
+                        option.textContent = `${proj.name} (${proj.code})`;
+                        projectSelect.appendChild(option);
+                    }
+                });
+                
+                if (projectSelect.options.length === 1) {
+                    projectSelect.innerHTML = '<option value="">No additional projects available</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading projects:', error);
+                alert('Error loading projects. Please try again.');
+            });
+    }
+});
 </script>
