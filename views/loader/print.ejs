@@ -1,163 +1,536 @@
-<!-- Print View for Truck Load -->
+<!-- print.ejs - Professional Version -->
 <div class="print-container">
-    <div class="print-header">
-        <div class="logo-container">
-            <img src="/img/img.webp" alt="Desa Logo">
+    <header class="print-header">
+        <div class="header-left">
+            <p class="date-time"><%= new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></p>
+            <p class="time"><%= new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %></p>
         </div>
-        <div class="title-container">
-            <h1 class="print-title">TRUCK LOAD <%= load.truckId %></h1>
-            <p class="print-subtitle">DESA PANELS - PACKING LIST</p>
-        </div>
-        <div class="print-info">
-            <p><strong>Date:</strong> <%= formattedDate %></p>
-        </div>
-    </div>
-
-    <!-- Project Information -->
-    <div class="section">
-        <h2 class="section-title">Project Information</h2>
-        <div class="info-group">
-            <div class="info-item"><strong>Project Code:</strong> <%= project.code %></div>
-            <div class="info-item"><strong>Project Name:</strong> <%= project.name %></div>
-            <div class="info-item"><strong>Work Order:</strong> <%= load.packingList && load.packingList.workOrder ? load.packingList.workOrder : load.projectCode %></div>
-            <div class="info-item"><strong>Address:</strong> <%= project.address || 'N/A' %></div>
-        </div>
-    </div>
-
-    <!-- Truck Information -->
-    <div class="section">
-        <h2 class="section-title">Truck Information</h2>
-        <div class="info-group">
-            <div class="info-item"><strong>Truck ID:</strong> <%= load.truckId %></div>
-            <div class="info-item"><strong>Status:</strong> <%= load.status %></div>
-            <div class="info-item"><strong>Length:</strong> <%= load.truckInfo.length %> ft</div>
-            <div class="info-item"><strong>Width:</strong> <%= load.truckInfo.width %> ft</div>
-            <div class="info-item"><strong>Weight Capacity:</strong> <%= load.truckInfo.weight.toLocaleString() %> lbs</div>
-            <div class="info-item"><strong>Date Entered:</strong> <%= new Date(load.dateEntered).toLocaleString() %></div>
-        </div>
-    </div>
-
-    <!-- Load Summary -->
-    <div class="section">
-        <h2 class="section-title">Load Summary</h2>
-        <div class="info-group">
-            <div class="info-item"><strong>Total Skids:</strong> <%= load.skids.length %></div>
-            <div class="info-item"><strong>Total Weight:</strong> <%= load.totalWeight ? load.totalWeight.toFixed(2) : '0.00' %> lbs</div>
-            <div class="info-item"><strong>Space Utilization:</strong> <%= spaceUtilization.formattedPercentage %></div>
-            <div class="info-item"><strong>Weight Status:</strong> <%= isOverweight ? 'OVERWEIGHT' : 'Within Capacity' %></div>
-        </div>
-
-        <% if (isOverweight) { %>
-            <div class="warning">
-                <strong>WARNING:</strong> This load exceeds the truck's weight capacity by <%= (load.totalWeight - load.truckInfo.weight).toFixed(2) %> lbs.
-            </div>
-        <% } %>
-
-        <% if (spaceUtilization.percentage > 100) { %>
-            <div class="notice">
-                <strong>NOTICE:</strong> This load's theoretical area exceeds the truck's floor space. Verify that items are properly stacked or arranged.
-            </div>
-        <% } %>
-    </div>
-
-    <!-- Skid Details -->
-    <div class="section">
-        <h2 class="section-title">Skid Details</h2>
-        <table>
-            <thead>
-            <tr>
-                <th>Skid #</th>
-                <th>Width (ft)</th>
-                <th>Length (ft)</th>
-                <th>Weight (lbs)</th>
-                <th>Description</th>
-            </tr>
-            </thead>
-            <tbody>
-            <% load.skids.forEach((skid, index) => { %>
-                <tr>
-                    <td><%= index + 1 %></td>
-                    <td><%= skid.width.toFixed(2) %></td>
-                    <td><%= skid.length.toFixed(2) %></td>
-                    <td><%= skid.weight.toFixed(2) %></td>
-                    <td><%= skid.description || '-' %><%= skid.originalInvId ? ` (from ${skid.originalInvId})` : '' %></td>
-                </tr>
-            <% }); %>
-            </tbody>
-            <tfoot>
-            <tr>
-                <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
-                <td><strong><%= load.totalWeight ? load.totalWeight.toFixed(2) : '0.00' %></strong></td>
-                <td></td>
-            </tr>
-            </tfoot>
-        </table>
-    </div>
-
-    <!-- Delivery Information -->
-    <% if (load.packingList) { %>
-        <div class="section">
-            <h2 class="section-title">Delivery Information</h2>
-            <div class="info-group">
-                <% if (load.packingList.requestedBy) { %>
-                    <div class="info-item"><strong>Requested By:</strong> <%= load.packingList.requestedBy %></div>
-                <% } %>
-                <% if (load.packingList.carrier) { %>
-                    <div class="info-item"><strong>Carrier:</strong> <%= load.packingList.carrier %></div>
-                <% } %>
-                <% if (load.packingList.consignee) { %>
-                    <div class="info-item"><strong>Consignee:</strong> <%= load.packingList.consignee %></div>
-                <% } %>
-                <% if (load.packingList.consigneeAddress) { %>
-                    <div class="info-item"><strong>Delivery Address:</strong> <%= load.packingList.consigneeAddress %></div>
-                <% } %>
-                <% if (load.packingList.siteContact) { %>
-                    <div class="info-item"><strong>Site Contact:</strong> <%= load.packingList.siteContact %></div>
-                <% } %>
-                <% if (load.packingList.sitePhone) { %>
-                    <div class="info-item"><strong>Site Phone:</strong> <%= load.packingList.sitePhone %></div>
-                <% } %>
-                <% if (load.packingList.deliveryDate) { %>
-                    <div class="info-item"><strong>Delivery Date:</strong> <%= new Date(load.packingList.deliveryDate).toLocaleDateString() %></div>
-                <% } %>
+        <div class="header-center">
+            <img src="/img/img.webp" alt="Desa Systems" class="company-logo">
+            <div class="company-info">
+                <h1 class="company-name">Desa Systems</h1>
+                <p class="system-title">Loading & Inventory System</p>
             </div>
         </div>
+        <div class="header-right">
+            <p class="document-type">LOADING SHEET</p>
+            <p class="document-number">DOC: <%= load._id.toString().slice(-8).toUpperCase() %></p>
+        </div>
+    </header>
 
-        <div class="section">
-            <h2 class="section-title">Processing Information</h2>
-            <div class="info-group">
-                <% if (load.packingList.packagedBy) { %>
-                    <div class="info-item"><strong>Packaged By:</strong> <%= load.packingList.packagedBy %></div>
-                <% } %>
-                <% if (load.packingList.checkedBy) { %>
-                    <div class="info-item"><strong>Loaded By:</strong> <%= load.packingList.checkedBy %></div>
-                <% } %>
-                <% if (load.packingList.receivedBy) { %>
-                    <div class="info-item"><strong>Received By:</strong> <%= load.packingList.receivedBy %></div>
-                <% } %>
-            </div>
+    <main class="print-main">
+        <div class="document-title-section">
+            <h2 class="document-title">
+                Load Sheet for Truck: <span class="truck-id"><%= load.truckId %></span>
+            </h2>
+            <h3 class="project-name">Project: <%= project.name %></h3>
         </div>
 
-        <% if (load.packingList.signature) { %>
-            <div class="section signature-section">
-                <h2 class="section-title">Driver Signature</h2>
-                <div style="text-align: center;">
-                    <img src="<%= load.packingList.signature %>" alt="Driver Signature" style="max-width: 100%; max-height: 200px;">
+        <section class="skids-section">
+            <h3 class="section-title">Skids Assigned to this Truck Load</h3>
+            
+            <table class="skids-table">
+                <thead>
+                    <tr>
+                        <th>TRUCK<br>SKID #</th>
+                        <th>WIDTH<br>(FT)</th>
+                        <th>LENGTH<br>(FT)</th>
+                        <th>WEIGHT<br>(LBS)</th>
+                        <th>DESCRIPTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                        // Declare variables outside the if block
+                        let calculatedWeight = 0;
+                        let displayWeight = 0;
+                        
+                        if (load.skids && load.skids.length > 0) {
+                            load.skids.forEach((skid, index) => { 
+                                const skidWeight = parseFloat(skid.weight) || 0;
+                                calculatedWeight += skidWeight;
+                    %>
+                            <tr>
+                                <td class="center"><%= index + 1 %></td>
+                                <td class="center"><%= skid.width.toFixed(2) %></td>
+                                <td class="center"><%= skid.length.toFixed(2) %></td>
+                                <td class="center"><%= skid.weight.toFixed(2) %></td>
+                                <td>
+                                    <%= skid.description || '-' %>
+                                    <% if (skid.originalInvId) { %>
+                                        <div class="inventory-ref">
+                                            <%= skid.originalInvId %>
+                                        </div>
+                                    <% } %>
+                                </td>
+                            </tr>
+                    <% 
+                            });
+                        }
+                        // Use calculated weight if load.totalWeight is not set properly
+                        displayWeight = load.totalWeight || calculatedWeight;
+                    %>
+                </tbody>
+                <tfoot>
+                    <tr class="totals-row">
+                        <td colspan="3" class="total-label">Truck Totals: <%= load.skids.length %> Skids</td>
+                        <td class="center total-weight"><%= displayWeight.toFixed(2) %> lbs</td>
+                        <td class="project-source">
+                            <% if (load.skids && load.skids.length > 0) { %>
+                                From: 
+                                <% 
+                                    const projectCounts = {};
+                                    load.skids.forEach(skid => {
+                                        let projName = project.name;
+                                        
+                                        if (skid.sourceProject && projectMap && projectMap[skid.sourceProject]) {
+                                            projName = projectMap[skid.sourceProject];
+                                        } else if (skid.originalInvId) {
+                                            const parts = skid.originalInvId.split('-');
+                                            if (parts.length >= 3 && parts[0] === 'INV') {
+                                                const projCode = parts[1];
+                                                if (projectMap && projectMap[projCode]) {
+                                                    projName = projectMap[projCode];
+                                                }
+                                            }
+                                        }
+                                        
+                                        projectCounts[projName] = (projectCounts[projName] || 0) + 1;
+                                    });
+                                    const projectList = Object.entries(projectCounts).map(([proj, count]) => `${proj}: ${count}`).join(' • ');
+                                %>
+                                <%= projectList %>
+                            <% } %>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </section>
+
+        <section class="summary-section">
+            <div class="summary-box">
+                <h3 class="summary-title">Skid Selection Summary</h3>
+                <div class="summary-content">
+                    <p class="summary-subtitle">Current Selection:</p>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="label">Total Skids Selected:</span>
+                            <span class="value"><%= load.skids.length || 0 %></span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Total Weight:</span>
+                            <span class="value"><%= displayWeight.toFixed(2) %> lbs</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Total Area:</span>
+                            <% 
+                                let calculatedArea = 0;
+                                if (load.skids && load.skids.length > 0) {
+                                    load.skids.forEach(skid => {
+                                        const width = parseFloat(skid.width) || 0;
+                                        const length = parseFloat(skid.length) || 0;
+                                        calculatedArea += (width * length);
+                                    });
+                                }
+                                const displayArea = (spaceUtilization && spaceUtilization.totalArea) || calculatedArea;
+                            %>
+                            <span class="value"><%= displayArea.toFixed(2) %> sq ft</span>
+                        </div>
+                    </div>
+                    
+                    <% if (load.skids && load.skids.length > 0) { %>
+                        <div class="project-breakdown">
+                            <p class="breakdown-title">Skids by Project:</p>
+                            <% 
+                                const summaryProjectCounts = {};
+                                load.skids.forEach(skid => {
+                                    let projName = '';
+                                    
+                                    if (skid.sourceProject && projectMap && projectMap[skid.sourceProject]) {
+                                        projName = projectMap[skid.sourceProject];
+                                    } else if (skid.originalInvId) {
+                                        const parts = skid.originalInvId.split('-');
+                                        if (parts.length >= 3 && parts[0] === 'INV') {
+                                            const projCode = parts[1];
+                                            if (projectMap && projectMap[projCode]) {
+                                                projName = projectMap[projCode];
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (!projName) {
+                                        projName = project.name;
+                                    }
+                                    
+                                    summaryProjectCounts[projName] = (summaryProjectCounts[projName] || 0) + 1;
+                                });
+                            %>
+                            <ul class="project-list">
+                            <% Object.entries(summaryProjectCounts).forEach(([projName, count]) => { %>
+                                <li><span class="project-name"><%= projName %>:</span> <span class="count"><%= count %> skid<%= count !== 1 ? 's' : '' %></span></li>
+                            <% }); %>
+                            </ul>
+                        </div>
+                    <% } %>
                 </div>
             </div>
-        <% } %>
-    <% } %>
+        </section>
 
-    <!-- Record Information -->
-    <div class="section">
-        <h2 class="section-title">Record Information</h2>
-        <div class="info-group">
-            <div class="info-item"><strong>Created By:</strong> <%= load.createdBy ? load.createdBy.username : 'System' %></div>
-            <div class="info-item"><strong>Created Date:</strong> <%= new Date(load.createdAt).toLocaleString() %></div>
-            <% if (load.updatedBy) { %>
-                <div class="info-item"><strong>Last Updated By:</strong> <%= load.updatedBy.username %></div>
-                <div class="info-item"><strong>Last Updated Date:</strong> <%= new Date(load.updatedAt).toLocaleString() %></div>
-            <% } %>
+        <section class="signatures-section">
+            <div class="signature-grid">
+                <div class="signature-block">
+                    <div class="signature-line"></div>
+                    <p class="signature-label">Prepared By</p>
+                    <p class="signature-date">Date: _______________</p>
+                </div>
+                <div class="signature-block">
+                    <div class="signature-line"></div>
+                    <p class="signature-label">Loaded By</p>
+                    <p class="signature-date">Date: _______________</p>
+                </div>
+                <div class="signature-block">
+                    <div class="signature-line"></div>
+                    <p class="signature-label">Driver Signature</p>
+                    <p class="signature-date">Date: _______________</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="print-footer">
+        <div class="footer-left">
+            <p class="company-copyright">© <%= new Date().getFullYear() %> Desa Systems</p>
         </div>
-    </div>
+        <div class="footer-center">
+            <p class="confidential">CONFIDENTIAL - INTERNAL USE ONLY</p>
+        </div>
+        <div class="footer-right">
+            <p class="page-info">Page 1 of 1</p>
+        </div>
+    </footer>
 </div>
+
+<style>
+    /* Professional Print Styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    .print-container {
+        font-family: 'Arial', sans-serif;
+        max-width: 8.5in;
+        margin: 0 auto;
+        padding: 0.5in;
+        color: #333;
+        line-height: 1.4;
+    }
+    
+    /* Header Styles */
+    .print-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #0066cc;
+    }
+    
+    .header-left,
+    .header-right {
+        flex: 1;
+    }
+    
+    .header-center {
+        flex: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .company-logo {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .company-info {
+        text-align: center;
+    }
+    
+    .company-name {
+        font-size: 24px;
+        font-weight: bold;
+        color: #0066cc;
+        margin: 0;
+    }
+    
+    .system-title {
+        font-size: 14px;
+        color: #666;
+        margin: 0;
+    }
+    
+    .header-right {
+        text-align: right;
+    }
+    
+    .date-time,
+    .time {
+        font-size: 12px;
+        color: #666;
+    }
+    
+    .document-type {
+        font-weight: bold;
+        font-size: 14px;
+        color: #333;
+    }
+    
+    .document-number {
+        font-size: 12px;
+        color: #666;
+    }
+    
+    /* Document Title Section */
+    .document-title-section {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .document-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .truck-id {
+        color: #0066cc;
+    }
+    
+    .project-name {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    
+    /* Table Styles */
+    .section-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #333;
+    }
+    
+    .skids-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+    }
+    
+    .skids-table th,
+    .skids-table td {
+        border: 1px solid #ddd;
+        padding: 10px 8px;
+        text-align: left;
+    }
+    
+    .skids-table th {
+        background-color: #f0f0f0;
+        font-weight: bold;
+        font-size: 12px;
+        text-align: center;
+    }
+    
+    .skids-table td {
+        font-size: 12px;
+    }
+    
+    .center {
+        text-align: center;
+    }
+    
+    .inventory-ref {
+        font-size: 10px;
+        color: #666;
+        margin-top: 2px;
+    }
+    
+    .totals-row {
+        background-color: #f9f9f9;
+        font-weight: bold;
+    }
+    
+    .total-label {
+        text-align: right;
+        padding-right: 15px;
+    }
+    
+    .total-weight {
+        background-color: #e6f2ff;
+    }
+    
+    /* Summary Section */
+    .summary-section {
+        margin-bottom: 30px;
+    }
+    
+    .summary-box {
+        background-color: #f0f7ff;
+        border: 2px solid #0066cc;
+        border-radius: 5px;
+        padding: 20px;
+    }
+    
+    .summary-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #0066cc;
+        margin-bottom: 15px;
+    }
+    
+    .summary-subtitle {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .summary-grid {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+    }
+    
+    .summary-item {
+        flex: 1;
+    }
+    
+    .summary-item .label {
+        font-weight: normal;
+        color: #666;
+    }
+    
+    .summary-item .value {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .project-breakdown {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #ccc;
+    }
+    
+    .breakdown-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .project-list {
+        list-style: none;
+        padding-left: 20px;
+    }
+    
+    .project-list li {
+        margin-bottom: 5px;
+    }
+    
+    .project-name {
+        font-weight: bold;
+    }
+    
+    /* Signatures Section */
+    .signatures-section {
+        margin: 40px 0;
+    }
+    
+    .signature-grid {
+        display: flex;
+        justify-content: space-between;
+        gap: 30px;
+    }
+    
+    .signature-block {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .signature-line {
+        border-bottom: 2px solid #333;
+        margin-bottom: 5px;
+        height: 30px;
+    }
+    
+    .signature-label {
+        font-weight: bold;
+        font-size: 12px;
+        margin-bottom: 5px;
+    }
+    
+    .signature-date {
+        font-size: 11px;
+        color: #666;
+    }
+    
+    /* Footer */
+    .print-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 50px;
+        padding-top: 20px;
+        border-top: 2px solid #ddd;
+        font-size: 11px;
+        color: #666;
+    }
+    
+    .footer-center {
+        text-align: center;
+    }
+    
+    .confidential {
+        font-weight: bold;
+        color: #ff0000;
+    }
+    
+    /* Print-specific styles */
+    @media print {
+        .print-container {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .print-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 0.25in 0.5in;
+            background: white;
+        }
+        
+        .print-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0.25in 0.5in;
+            background: white;
+        }
+        
+        .print-main {
+            margin-top: 2.5in;
+            margin-bottom: 1in;
+        }
+        
+        .signatures-section {
+            page-break-inside: avoid;
+        }
+        
+        .summary-section {
+            page-break-inside: avoid;
+        }
+    }
+</style>

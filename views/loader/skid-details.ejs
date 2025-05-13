@@ -16,19 +16,10 @@
     </div><!-- ==== Skid Details Page ==== -->
 <div id="skidDetailsPage" class="page active">
     <h2 class="section-title">
-        <i class="fas fa-pallet"></i> Skids for Truck:
-        <span id="truckIdentifier"><%= load.truckId %></span>
-        (<span id="skidDetailsProjectName"><%= project.name %></span>)
+    <i class="fas fa-pallet"></i> Skid Management
+    (<%= project.name %>)
     </h2>
-
-    <p class="intro-paragraph">
-        Add skids directly, select from inventory for this project, or edit/remove skids for this load.
-        <% if (load.truckInfo && load.truckInfo.length && load.truckInfo.width && load.truckInfo.weight) { %>
-            <span id="truckSizeDisplay">
-                (<%= load.truckInfo.length %>ft L × <%= load.truckInfo.width %>ft W, <%= load.truckInfo.weight %>lbs Cap.)
-            </span>
-        <% } %>
-    </p>
+    
 
     <!-- Complete Multi-Project Interface with Dynamic Current Project -->
 <div class="multi-project-section mb-3" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
@@ -589,23 +580,28 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 
-<!-- Fixed Loading Summary with Project Breakdown -->
+<!-- Fixed Loading Summary for Skids Only -->
+<!-- Fixed Loading Summary for Skids Only -->
 <div class="loading-instructions no-print">
     <div id="loadingInstructions">
-        <h5><i class="fas fa-info-circle"></i> Loading Summary & Instructions</h5>
-        <p><strong>Summary for Truck <%= load.truckId %>:</strong></p>
+        <h5><i class="fas fa-info-circle"></i> Skid Selection Summary</h5>
+        <p><strong>Current Selection:</strong></p>
         <ul>
-            <li>Total Skids on Truck: <strong><%= load.skids.length || 0 %></strong></li>
-            <li>Total Weight on Truck: <strong><%= load.totalWeight?.toFixed(2) || '0.00' %></strong> lbs
-                (<%= load.truckInfo.weight ? ((load.totalWeight || 0) / load.truckInfo.weight * 100).toFixed(1) : 0 %>% of <%= load.truckInfo.weight %> lbs capacity)</li>
-            <li>Approx. Area Used: <strong><%= spaceUtilization.totalArea.toFixed(2) %></strong> sq ft
-                (<%= spaceUtilization.percentage.toFixed(1) %>% of <%= spaceUtilization.truckArea.toFixed(2) %> sq ft available)</li>
+            <li>Total Skids Selected: <strong><%= load.skids.length || 0 %></strong></li>
+            <li>Total Weight: <strong><%= ((load.totalWeight || spaceUtilization.totalWeight || 0)).toFixed(2) %></strong> lbs</li>
+            <li>Total Area: <strong><%= spaceUtilization.totalArea.toFixed(2) %></strong> sq ft</li>
             <li>Skids by Project:
                 <% if (load.skids && load.skids.length > 0) { %>
                     <% 
                         const summaryProjectCounts = {};
+                        let calculatedTotalWeight = 0;
+                        
                         load.skids.forEach(skid => {
                             let projName = '';
+                            
+                            // Calculate weight while iterating
+                            const skidWeight = parseFloat(skid.weight) || 0;
+                            calculatedTotalWeight += skidWeight;
                             
                             // Extract project code
                             if (skid.sourceProject) {
@@ -633,6 +629,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             summaryProjectCounts[projName] = (summaryProjectCounts[projName] || 0) + 1;
                         });
+                        
+                        // If total weight is still 0, use calculated weight
+                        if ((load.totalWeight || 0) === 0 && calculatedTotalWeight > 0) {
+                            load.totalWeight = calculatedTotalWeight;
+                        }
                     %>
                     <ul>
                     <% Object.entries(summaryProjectCounts).forEach(([projName, count]) => { %>
@@ -640,32 +641,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     <% }); %>
                     </ul>
                 <% } else { %>
-                    <p style="margin-left: 20px; color: #666;">No skids loaded yet</p>
+                    <p style="margin-left: 20px; color: #666;">No skids selected yet</p>
                 <% } %>
             </li>
         </ul>
-
-        <% if (isOverweight) { %>
-            <p class="warning" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 4px;">
-                <i class="fas fa-exclamation-triangle"></i> Warning: Total weight exceeds truck capacity!
-            </p>
-        <% } else if (load.truckInfo.weight && (load.totalWeight || 0) > load.truckInfo.weight * 0.95) { %>
-            <p class="warning" style="background-color:#fff3cd;border: 1px solid #ffeeba;color:#856404; padding: 12px; border-radius: 4px;">
-                <i class="fas fa-exclamation-circle"></i> Caution: Approaching maximum weight capacity.
-            </p>
-        <% } %>
-
-        <% if (spaceUtilization.percentage > 100) { %>
-            <p class="warning" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 12px; border-radius: 4px;">
-                <i class="fas fa-exclamation-triangle"></i>
-                Warning: Total skid area exceeds theoretical truck floor space. Check stacking/dimensions.
-            </p>
-        <% } else if (spaceUtilization.percentage > 95 && spaceUtilization.percentage <= 100) { %>
-            <p class="warning" style="background-color:#fff3cd;border: 1px solid #ffeeba;color:#856404; padding: 12px; border-radius: 4px;">
-                <i class="fas fa-exclamation-circle"></i>
-                Caution: High space utilization. Consider loading arrangement.
-            </p>
-        <% } %>
+        
+        <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle"></i> <strong>Next Step:</strong> After selecting all required skids, click "Next: Truck Information Entry" to specify the truck details and capacity.
+        </div>
     </div>
 </div>
 
@@ -940,9 +923,8 @@ input[type="checkbox"]:disabled {
 }
 </style>
 
-
 <%- contentFor('scripts') %>
-
+<%- contentFor('scripts') %>
 <script>
     // Initialize event listeners when document is ready
     document.addEventListener('DOMContentLoaded', function() {

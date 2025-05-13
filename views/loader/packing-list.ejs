@@ -198,11 +198,11 @@
 
     <!-- Packing List Action Buttons -->
     <div class="packing-action-buttons no-print">
-        <a href="/loader/truck/<%= project.code %>/skids?loadId=<%= load._id %>" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Skid Details
+        <a href="/loader/truck/<%= project.code %>/info?loadId=<%= load._id %>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Truck Information Entry
         </a>
-        <button id="resetPackingListBtn" type="button" class="btn btn-cancel">
-            <i class="fas fa-undo"></i> Reset Form
+        <button id="mainDashboardBtn" type="button" class="btn btn-cancel">
+            <i class="fas fa-home"></i> Main Dashboard
         </button>
         <button type="button" class="btn btn-print" id="printPackingListBtn">
             <i class="fas fa-print"></i> Print Packing List
@@ -761,12 +761,10 @@
             }
         });
 
-        // Reset form button
-        document.getElementById('resetPackingListBtn').addEventListener('click', function() {
-            if (confirm('Are you sure you want to reset the form? Unsaved changes will be lost.')) {
-                document.getElementById('packing-list-form').reset();
-                if (signaturePad) signaturePad.clear();
-                document.getElementById('signature-data').value = '';
+        // Main dashboard button
+        document.getElementById('mainDashboardBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to return to the main dashboard? Any unsaved changes will be lost.')) {
+                window.location.href = '/loader';
             }
         });
     });

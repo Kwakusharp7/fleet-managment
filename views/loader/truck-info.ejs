@@ -88,10 +88,6 @@
                 <i class="fas fa-arrow-left"></i> Back to Task Selection
             </a>
             
-            <a href="/loader/project-selection?task=truckEntry" class="btn btn-secondary">
-                <i class="fas fa-project-diagram"></i> Select Different Project
-            </a>
-            
             <button type="button" class="btn btn-cancel" id="resetTruckInfoBtn">
                 <i class="fas fa-undo"></i> Reset Fields
             </button>
@@ -102,31 +98,105 @@
         </div>
     </form>
 
-   <!-- If there's an existing load with skids, show option to continue with skids -->
-    <% if (typeof existingLoad !== 'undefined' && existingLoad && existingLoad.skids && existingLoad.skids.length > 0) { %>
-        <div class="existing-load-skids" style="margin: 25px; padding: 20px; background-color: #f0f9ff; border-radius: 8px; border: 1px solid #bde0ff;">
-            <h3 style="margin-top: 0; color: var(--primary-blue);">
-                <i class="fas fa-info-circle"></i> Existing Load Information
-            </h3>
-            <p>This truck already has <%= existingLoad.skids.length %> skid(s) loaded with a total weight of <%= existingLoad.totalWeight ? existingLoad.totalWeight.toFixed(2) : '0.00' %> lbs.</p>
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="/loader/truck/<%= project.code %>/skids?loadId=<%= existingLoad._id %>" class="btn btn-primary">
-                    <i class="fas fa-truck-loading"></i> Continue with Existing Skids
-                </a>
-            </div>
-        </div>
-    <% } %>
-
+    <!-- Professional Loading Summary -->
     <% if (typeof load !== 'undefined' && load && load.skids && load.skids.length > 0) { %>
-        <div class="existing-load-skids" style="margin: 25px; padding: 20px; background-color: #f0f9ff; border-radius: 8px; border: 1px solid #bde0ff;">
-            <h3 style="margin-top: 0; color: var(--primary-blue);">
-                <i class="fas fa-info-circle"></i> Existing Load Information
+        <% 
+            // Calculate totals for the current load
+            let totalSkids = load.skids ? load.skids.length : 0;
+            
+            // Calculate actual weight from skids
+            let totalWeight = 0;
+            let totalAreaUsed = 0;
+            
+            if (load.skids && load.skids.length > 0) {
+                load.skids.forEach(skid => {
+                    // Add weight from each skid
+                    totalWeight += parseFloat(skid.weight) || 0;
+                    
+                    // Calculate area for each skid
+                    const width = parseFloat(skid.width) || 0;
+                    const length = parseFloat(skid.length) || 0;
+                    totalAreaUsed += (width * length);
+                });
+            }
+            
+            let truckCapacity = load.truckInfo && load.truckInfo.weight ? load.truckInfo.weight : 0;
+            let truckLength = load.truckInfo && load.truckInfo.length ? load.truckInfo.length : 0;
+            let truckWidth = load.truckInfo && load.truckInfo.width ? load.truckInfo.width : 0;
+            let truckArea = truckLength * truckWidth;
+            
+            // Calculate percentages
+            let weightPercentage = truckCapacity > 0 ? ((totalWeight / truckCapacity) * 100).toFixed(1) : 0;
+            let areaPercentage = truckArea > 0 ? ((totalAreaUsed / truckArea) * 100).toFixed(1) : 0;
+        %>
+
+        <div class="loading-summary-section">
+            <h3 class="summary-header">
+                <i class="fas fa-truck"></i> Loading Summary for Truck: <%= load.truckId %>
             </h3>
-            <p>This truck already has <%= load.skids.length %> skid(s) loaded with a total weight of <%= load.totalWeight ? load.totalWeight.toFixed(2) : '0.00' %> lbs.</p>
-            <div style="text-align: center; margin-top: 20px;">
-                <a href="/loader/truck/<%= project.code %>/skids?loadId=<%= load._id %>" class="btn btn-primary">
-                    <i class="fas fa-truck-loading"></i> Continue with Existing Skids
-                </a>
+            
+            <div class="summary-content">
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <i class="fas fa-pallet"></i>
+                        <span class="summary-label">Total Skids on Truck:</span>
+                        <span class="summary-value"><%= totalSkids %></span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <i class="fas fa-weight"></i>
+                        <span class="summary-label">Total Weight on Truck:</span>
+                        <span class="summary-value">
+                            <%= totalWeight.toFixed(2) %> lbs
+                            <span class="percentage">(<%= weightPercentage %>% of <%= truckCapacity.toLocaleString() %> lbs capacity)</span>
+                        </span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <i class="fas fa-ruler-combined"></i>
+                        <span class="summary-label">Approx. Area Used:</span>
+                        <span class="summary-value">
+                            <%= totalAreaUsed.toFixed(2) %> sq ft
+                            <span class="percentage">(<%= areaPercentage %>% of <%= truckArea.toFixed(2) %> sq ft available)</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Progress Bars -->
+                <div class="progress-section">
+                    <div class="progress-container">
+                        <label>Weight Utilization</label>
+                        <div class="progress-bar">
+                            <div class="progress-fill weight-progress" style="width: <%= weightPercentage %>%;">
+                                <span class="progress-text"><%= weightPercentage %>%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-container">
+                        <label>Space Utilization</label>
+                        <div class="progress-bar">
+                            <div class="progress-fill space-progress" style="width: <%= areaPercentage %>%;">
+                                <span class="progress-text"><%= areaPercentage %>%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Warning Messages -->
+                <% if (parseFloat(weightPercentage) > 95) { %>
+                    <div class="warning-message high-weight">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Warning: Load is approaching maximum weight capacity</span>
+                    </div>
+                <% } %>
+                
+                <% if (parseFloat(areaPercentage) > 95) { %>
+                    <div class="warning-message high-space">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Warning: Load is approaching maximum space capacity</span>
+                    </div>
+                <% } %>
             </div>
         </div>
     <% } %>
@@ -279,5 +349,182 @@
     .btn-cancel {
         background-color: #6c757d;
         color: white;
+    }
+    
+    /* Professional Loading Summary Styles */
+    .loading-summary-section {
+        background-color: #f8f9fa;
+        border: 2px solid #0066cc;
+        border-radius: 8px;
+        padding: 25px;
+        margin: 30px 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .summary-header {
+        color: #0066cc;
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .summary-header i {
+        margin-right: 10px;
+    }
+    
+    .summary-content {
+        padding: 10px 0;
+    }
+    
+    .summary-row {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .summary-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        background-color: white;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+    
+    .summary-item:hover {
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        transform: translateY(-1px);
+    }
+    
+    .summary-item i {
+        color: #0066cc;
+        font-size: 20px;
+        margin-right: 15px;
+        width: 25px;
+        text-align: center;
+    }
+    
+    .summary-label {
+        font-weight: 600;
+        color: #495057;
+        margin-right: 10px;
+        flex: 1;
+    }
+    
+    .summary-value {
+        font-weight: bold;
+        font-size: 18px;
+        color: #333;
+    }
+    
+    .percentage {
+        font-size: 14px;
+        color: #6c757d;
+        font-weight: normal;
+    }
+    
+    /* Progress Bars */
+    .progress-section {
+        margin-top: 25px;
+    }
+    
+    .progress-container {
+        margin-bottom: 20px;
+    }
+    
+    .progress-container label {
+        display: block;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .progress-bar {
+        background-color: #e9ecef;
+        border-radius: 20px;
+        height: 30px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        border-radius: 20px;
+        transition: width 0.6s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .weight-progress {
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .space-progress {
+        background: linear-gradient(90deg, #007bff 0%, #17a2b8 100%);
+    }
+    
+    .progress-text {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    /* Warning Messages */
+    .warning-message {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-top: 15px;
+        font-weight: 600;
+    }
+    
+    .warning-message i {
+        margin-right: 10px;
+        font-size: 18px;
+    }
+    
+    .high-weight {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .high-space {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+    }
+    
+    /* Responsive Design */
+    @media (min-width: 768px) {
+        .summary-row {
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        .summary-item {
+            flex: 1;
+        }
+    }
+    
+    /* Animation for progress bars */
+    @keyframes fillProgress {
+        from {
+            width: 0;
+        }
+    }
+    
+    .progress-fill {
+        animation: fillProgress 1s ease-out;
     }
 </style>

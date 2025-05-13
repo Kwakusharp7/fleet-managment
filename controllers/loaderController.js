@@ -1227,30 +1227,50 @@ exports.getLoaderStats = async (req, res) => {
 
 // --- Helper Functions ---
 
-// Calculate space utilization for a load (Corrected Version)
+// Update calculateSpaceUtilization function to handle weight properly
 function calculateSpaceUtilization(load) {
-    if (!load || !load.truckInfo || !load.truckInfo.length || !load.truckInfo.width || isNaN(parseFloat(load.truckInfo.length)) || isNaN(parseFloat(load.truckInfo.width)) || parseFloat(load.truckInfo.length) <= 0 || parseFloat(load.truckInfo.width) <= 0) {
-        return { totalArea: 0, truckArea: 0, percentage: 0, formattedPercentage: '0.0%' };
-    }
-    const truckArea = parseFloat(load.truckInfo.length) * parseFloat(load.truckInfo.width);
-    if (!load.skids || !Array.isArray(load.skids)) {
-         return { totalArea: 0, truckArea: truckArea, percentage: 0, formattedPercentage: '0.0%' };
-    }
-    const totalArea = load.skids.reduce((sum, skid) => {
-        const width = parseFloat(skid.width);
-        const length = parseFloat(skid.length);
-        if (!isNaN(width) && !isNaN(length) && width > 0 && length > 0) {
-            return sum + (width * length);
-        }
-        return sum;
-    }, 0);
-    const percentage = truckArea > 0 ? (totalArea / truckArea) * 100 : 0;
-    return {
-        totalArea: totalArea,              // Raw number
-        truckArea: truckArea,              // Raw number
-        percentage: percentage,            // Raw number
-        formattedPercentage: `${percentage.toFixed(1)}%`
+    const result = {
+        totalArea: 0,
+        truckArea: 0,
+        percentage: 0,
+        formattedPercentage: '0.0%',
+        totalWeight: 0  // Add this property
     };
+    
+    // Calculate truck area if truck info exists
+    if (load && load.truckInfo && load.truckInfo.length && load.truckInfo.width) {
+        const length = parseFloat(load.truckInfo.length);
+        const width = parseFloat(load.truckInfo.width);
+        
+        if (!isNaN(length) && !isNaN(width) && length > 0 && width > 0) {
+            result.truckArea = length * width;
+        }
+    }
+    
+    // Calculate total area and weight from skids
+    if (load && load.skids && Array.isArray(load.skids)) {
+        load.skids.forEach(skid => {
+            const width = parseFloat(skid.width);
+            const length = parseFloat(skid.length);
+            const weight = parseFloat(skid.weight);
+            
+            if (!isNaN(width) && !isNaN(length) && width > 0 && length > 0) {
+                result.totalArea += (width * length);
+            }
+            
+            if (!isNaN(weight) && weight > 0) {
+                result.totalWeight += weight;
+            }
+        });
+    }
+    
+    // Calculate percentage if truck area is available
+    if (result.truckArea > 0) {
+        result.percentage = (result.totalArea / result.truckArea) * 100;
+        result.formattedPercentage = `${result.percentage.toFixed(1)}%`;
+    }
+    
+    return result;
 }
 
 // Check if a load is overweight (Corrected Version)

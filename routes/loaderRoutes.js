@@ -1,4 +1,4 @@
-// Updated loaderRoutes.js - Fix for Reset Truck Skids List functionality
+// Updated loaderRoutes.js - Fix for Skid Edit functionality
 
 console.log('--- loaderRoutes.js file loaded by Node ---');
 const express = require('express');
@@ -52,24 +52,38 @@ router.get('/truck/:projectId/skids', loaderController.getSkidDetailsPageMultiPr
 router.post('/truck/:projectId/skid', loaderController.addTruckSkid);
 router.put('/truck/:projectId/skid/:skidId', loaderController.updateTruckSkid);
 
-// --- DELETE Truck Skid Routes ---
-console.log('--- Defining DELETE /truck/:projectId/skid/:skidId route ---');
-router.delete('/truck/:projectId/skid/:skidId', loaderController.deleteTruckSkid);
-
-console.log('--- Defining POST /truck/:projectId/skid/:skidId for method override ---');
+// --- UPDATE/EDIT Truck Skid Routes ---
+console.log('--- Defining POST /truck/:projectId/skid/:skidId for PUT method override ---');
 router.post('/truck/:projectId/skid/:skidId', (req, res, next) => {
+    // Handle PUT via method override
+    if (req.body._method === 'PUT') {
+        console.log('--- Handling PUT via POST override for skid update:', req.originalUrl);
+        if (loaderController && typeof loaderController.updateTruckSkid === 'function') {
+            return loaderController.updateTruckSkid(req, res, next);
+        } else {
+            console.error('!!! ERROR: loaderController.updateTruckSkid is not a function in POST override !!!');
+            return next(new Error('Controller function missing for skid update'));
+        }
+    }
+    
+    // Handle DELETE via method override
     if (req.body._method === 'DELETE') {
         console.log('--- Handling DELETE via POST override for:', req.originalUrl);
         if (loaderController && typeof loaderController.deleteTruckSkid === 'function') {
             return loaderController.deleteTruckSkid(req, res, next);
         } else {
-             console.error('!!! ERROR: loaderController.deleteTruckSkid is not a function in POST override !!!');
-             return next(new Error('Controller function missing for skid deletion'));
+            console.error('!!! ERROR: loaderController.deleteTruckSkid is not a function in POST override !!!');
+            return next(new Error('Controller function missing for skid deletion'));
         }
     }
-    console.log('--- POST /truck/:projectId/skid/:skidId request without _method=DELETE, calling next() ---');
+    
+    console.log('--- POST /truck/:projectId/skid/:skidId request without _method override, calling next() ---');
     next();
 });
+
+// --- DELETE Truck Skid Routes ---
+console.log('--- Defining DELETE /truck/:projectId/skid/:skidId route ---');
+router.delete('/truck/:projectId/skid/:skidId', loaderController.deleteTruckSkid);
 
 console.log('--- Defining POST /truck/:projectId/skids/delete-skid route ---');
 router.post('/truck/:projectId/skids/delete-skid', async (req, res, next) => {
@@ -113,7 +127,6 @@ router.post('/truck/:projectId/skids/delete-skid', async (req, res, next) => {
         next(err);
     }
 });
-
 
 // --- Clear Truck Skids Routes ---
 
