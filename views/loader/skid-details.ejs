@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const projectSelect = document.getElementById('additionalProject');
     
     // Update current project display when hovering over tabs
-    const projectTabs = document.querySelectorAll('.nav-link[data-project-code]');
+    const projectTabs = document.querySelectorAll('.nav-tabs .nav-link[data-project-code]');
     projectTabs.forEach(tab => {
         tab.addEventListener('mouseenter', function() {
             if (!this.classList.contains('active')) {
@@ -282,64 +282,64 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <!-- Inventory Skid Selection Form -->
             <form action="/loader/truck/<%= project.code %>/skids/add-from-inventory" method="POST" id="inventorySkidForm">
-                <input type="hidden" name="loadId" value="<%= load._id %>">
-                <!-- IMPORTANT: Add this hidden field to track source project -->
-                <input type="hidden" name="sourceProject" value="<%= displayProject ? displayProject.code : showProject || project.code %>">
+            <input type="hidden" name="loadId" value="<%= load._id %>">
+            <!-- CRITICAL FIX: Ensure sourceProject is dynamically set -->
+            <input type="hidden" name="sourceProject" id="sourceProjectInput" value="<%= showProject || displayProject?.code || project.code %>">
 
-                <div class="table-responsive">
-                    <table id="inventorySkidSelectionTable" class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th width="5%">Add</th>
-                                <th width="15%">Inv. ID</th>
-                                <th width="10%">Width (ft)</th>
-                                <th width="10%">Length (ft)</th>
-                                <th width="10%">Weight (lbs)</th>
-                                <th width="50%">Description</th>
+            <div class="table-responsive">
+                <table id="inventorySkidSelectionTable" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th width="5%">Add</th>
+                            <th width="15%">Inv. ID</th>
+                            <th width="10%">Width (ft)</th>
+                            <th width="10%">Length (ft)</th>
+                            <th width="10%">Weight (lbs)</th>
+                            <th width="50%">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventorySkidSelectionBody">
+                    <% if (inventorySkids && inventorySkids.length > 0) { %>
+                        <% inventorySkids.forEach(skid => { %>
+                            <tr class="<%= skid.alreadyOnTruck ? 'already-on-truck' : '' %>" data-skid-id="<%= skid.id %>">
+                                <td>
+                                    <input type="checkbox"
+                                            name="selectedSkids"
+                                            value="<%= skid.id %>"
+                                            id="inv-select-<%= skid.id %>"
+                                            class="inventory-skid-checkbox"
+                                            <%= skid.alreadyOnTruck ? 'disabled checked' : '' %>>
+                                </td>
+                                <td>
+                                    <label for="inv-select-<%= skid.id %>"
+                                            class="<%= skid.alreadyOnTruck ? 'disabled-label' : '' %>"
+                                            title="<%= skid.alreadyOnTruck ? 'Already added to truck' : `Select ${skid.id}` %>">
+                                        <%= skid.id %>
+                                    </label>
+                                </td>
+                                <td><%= skid.width.toFixed(2) %></td>
+                                <td><%= skid.length.toFixed(2) %></td>
+                                <td><%= skid.weight.toFixed(2) %></td>
+                                <td>
+                                    <%= skid.description || '-' %>
+                                    <% if (skid.alreadyOnTruck) { %>
+                                        <span class="already-added-note">(Already on truck)</span>
+                                    <% } %>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody id="inventorySkidSelectionBody">
-                        <% if (inventorySkids && inventorySkids.length > 0) { %>
-                            <% inventorySkids.forEach(skid => { %>
-                                <tr class="<%= skid.alreadyOnTruck ? 'already-on-truck' : '' %>" data-skid-id="<%= skid.id %>">
-                                    <td>
-                                        <input type="checkbox"
-                                               name="selectedSkids"
-                                               value="<%= skid.id %>"
-                                               id="inv-select-<%= skid.id %>"
-                                               class="inventory-skid-checkbox"
-                                               <%= skid.alreadyOnTruck ? 'disabled checked' : '' %>>
-                                    </td>
-                                    <td>
-                                        <label for="inv-select-<%= skid.id %>"
-                                               class="<%= skid.alreadyOnTruck ? 'disabled-label' : '' %>"
-                                               title="<%= skid.alreadyOnTruck ? 'Already added to truck' : `Select ${skid.id}` %>">
-                                            <%= skid.id %>
-                                        </label>
-                                    </td>
-                                    <td><%= skid.width.toFixed(2) %></td>
-                                    <td><%= skid.length.toFixed(2) %></td>
-                                    <td><%= skid.weight.toFixed(2) %></td>
-                                    <td>
-                                        <%= skid.description || '-' %>
-                                        <% if (skid.alreadyOnTruck) { %>
-                                            <span class="already-added-note">(Already on truck)</span>
-                                        <% } %>
-                                    </td>
-                                </tr>
-                            <% }); %>
-                        <% } else { %>
-                            <tr>
-                                <td colspan="6" style="text-align: center;">No inventory skids available.</td>
-                            </tr>
-                        <% } %>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <button type="submit" class="btn btn-primary mt-3" id="addSelectedSkidsBtn">
-                    <i class="fas fa-plus"></i> Add Selected Skids to Truck
-                </button>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" style="text-align: center;">No inventory skids available.</td>
+                        </tr>
+                    <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3" id="addSelectedSkidsBtn">
+                <i class="fas fa-plus"></i> Add Selected Skids to Truck
+            </button>
             </form>
         </div>
     <% } %>
@@ -391,29 +391,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         <% 
                             let sourceProjectName = '';
                             
-                            // FIRST: Check if the skid has an explicit source project - this takes priority
-                            if (skid.sourceProject) {
-                                if (projectMap && projectMap[skid.sourceProject]) {
-                                    sourceProjectName = projectMap[skid.sourceProject];
-                                } else {
-                                    // Fallback to the source project code if name not found
-                                    sourceProjectName = skid.sourceProject;
-                                }
-                            } 
-                            // SECOND: If no sourceProject but has originalInvId, extract from inventory ID
-                            else if (skid.originalInvId) {
+                            // Check if the skid has an explicit source project
+                            if (skid.sourceProject && projectMap && projectMap[skid.sourceProject]) {
+                                sourceProjectName = projectMap[skid.sourceProject];
+                            } else if (skid.originalInvId) {
+                                // Extract project code from inventory ID format: INV-PROJECTCODE-XXX
                                 const parts = skid.originalInvId.split('-');
                                 if (parts.length >= 3 && parts[0] === 'INV') {
                                     const projCode = parts[1];
                                     if (projectMap && projectMap[projCode]) {
                                         sourceProjectName = projectMap[projCode];
-                                    } else {
-                                        sourceProjectName = projCode;
                                     }
                                 }
                             }
                             
-                            // LAST: If still no source project found, it's a direct entry - use the main project
+                            // If still no source project found, it's a direct entry - use the main project
                             if (!sourceProjectName) {
                                 sourceProjectName = project.name;
                             }
@@ -948,8 +940,9 @@ input[type="checkbox"]:disabled {
 }
 </style>
 
+
 <%- contentFor('scripts') %>
-<%- contentFor('scripts') %>
+
 <script>
     // Initialize event listeners when document is ready
     document.addEventListener('DOMContentLoaded', function() {

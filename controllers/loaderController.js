@@ -496,13 +496,17 @@ exports.saveTruckInfo = async (req, res, next) => {
     }
 };
 
-// @desc    Get skid details page for truck (Complete fix for source projects)
+// @desc    Get skid details page for truck (Fixed version)
 // @route   GET /loader/truck/:projectId/skids
 exports.getSkidDetailsPage = async (req, res, next) => {
     try {
         const { projectId } = req.params;
         const { loadId, showProject } = req.query;
-        console.log(`--- Loading Skid Details Page for project ${projectId}, load ${loadId}, showing ${showProject || projectId} ---`);
+        
+        console.log(`--- Loading Skid Details Page ---`);
+        console.log('Main project:', projectId);
+        console.log('Show project:', showProject);
+        console.log('Load ID:', loadId);
 
         if (!loadId || !mongoose.Types.ObjectId.isValid(loadId)) {
             req.flash('error_msg', 'Valid Load ID is required to view skids.');
@@ -534,11 +538,13 @@ exports.getSkidDetailsPage = async (req, res, next) => {
             projectMap[proj.code] = proj.name;
         });
         
-        console.log('Complete project mapping:', projectMap);
-        console.log('Current display project:', showProject || projectId);
+        console.log('Project mapping:', projectMap);
 
-        // Determine which project's inventory to show
+        // CRITICAL: Determine which project's inventory to show
+        // Use showProject from URL if available, otherwise use main project
         const displayProjectCode = showProject || projectId;
+        console.log('Display project code:', displayProjectCode);
+        
         let displayProject = await Project.findOne({ code: displayProjectCode, status: 'Active' }).lean();
         
         // Fallback to main project if display project not found
@@ -547,9 +553,14 @@ exports.getSkidDetailsPage = async (req, res, next) => {
             console.warn(`Display project ${displayProjectCode} not found, using main project`);
         }
 
-        // Get inventory skids
-        const inventoryLoad = await Load.findOne({ projectCode: displayProjectCode, isInventory: true }).lean();
+        // Get inventory skids for the display project
+        const inventoryLoad = await Load.findOne({ 
+            projectCode: displayProjectCode, 
+            isInventory: true 
+        }).lean();
+        
         const inventorySkidsRaw = inventoryLoad?.skids || [];
+        console.log(`Found ${inventorySkidsRaw.length} inventory skids for project ${displayProjectCode}`);
 
         // Get skids already on the truck
         const skidsOnTruckIds = new Set(load.skids.map(skid => skid.originalInvId).filter(id => id));
@@ -557,7 +568,7 @@ exports.getSkidDetailsPage = async (req, res, next) => {
         const inventorySkids = inventorySkidsRaw.map(skid => ({
             ...skid,
             alreadyOnTruck: skidsOnTruckIds.has(skid.id),
-            fromProject: displayProjectCode
+            fromProject: displayProjectCode // Track which project this skid is from
         }));
 
         // Get additional projects if any
@@ -573,6 +584,11 @@ exports.getSkidDetailsPage = async (req, res, next) => {
         const spaceUtilization = calculateSpaceUtilization(load);
         const isOverweight = isLoadOverweight(load);
 
+        console.log('Rendering view with:');
+        console.log('- Main project:', project.code);
+        console.log('- Display project:', displayProject.code);
+        console.log('- Show project param:', showProject);
+
         res.render('loader/skid-details', {
             title: `Skid Details - ${project.name} / ${load.truckId}`,
             layout: 'layouts/loader',
@@ -583,7 +599,7 @@ exports.getSkidDetailsPage = async (req, res, next) => {
             spaceUtilization,
             isOverweight,
             additionalProjects,
-            showProject: displayProjectCode,
+            showProject: displayProjectCode, // This is what the form should use
             projectMap,
             currentProjectCode: projectId
         });
@@ -593,7 +609,6 @@ exports.getSkidDetailsPage = async (req, res, next) => {
         res.redirect(`/loader/truck/${req.params.projectId || ''}`);
     }
 };
-
 // @desc    Add skid directly to truck load (with source project tracking)
 // @route   POST /loader/truck/:projectId/skid
 exports.addTruckSkid = async (req, res, next) => {
