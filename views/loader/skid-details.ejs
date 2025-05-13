@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <form action="/loader/truck/<%= project.code %>/skids/add-from-inventory" method="POST" id="inventorySkidForm">
                 <input type="hidden" name="loadId" value="<%= load._id %>">
                 <!-- IMPORTANT: Add this hidden field to track source project -->
-                <input type="hidden" name="sourceProject" value="<%= displayProject ? displayProject.code : project.code %>">
+                <input type="hidden" name="sourceProject" value="<%= displayProject ? displayProject.code : showProject || project.code %>">
 
                 <div class="table-responsive">
                     <table id="inventorySkidSelectionTable" class="table table-striped table-hover">
@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div id="addTruckSkidFormContainer" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;"></div>
     </div>
 
-    <!-- Updated Truck Skid Table with Source Project -->
+<!-- Updated Truck Skid Table with Source Project -->
 <h3 class="section-title" style="font-size: 1.2rem; margin-top: 30px; border-bottom: none;">
     <i class="fas fa-truck-loading"></i> Skids Assigned to this Truck Load
 </h3>
@@ -388,45 +388,44 @@ document.addEventListener('DOMContentLoaded', function() {
                         <% } %>
                     </td>
                     <td>
-                    <% 
-                        let sourceProjectCode = '';
-                        let sourceProjectName = '';
-                        
-                        // First try to use explicitly set source project
-                        if (skid.sourceProject) {
-                            sourceProjectCode = skid.sourceProject;
-                        } else if (skid.originalInvId) {
-                            // Extract project code from inventory ID format: INV-PROJECTCODE-XXX
-                            const parts = skid.originalInvId.split('-');
-                            if (parts.length >= 3 && parts[0] === 'INV') {
-                                sourceProjectCode = parts[1];
+                        <% 
+                            let sourceProjectName = '';
+                            
+                            // FIRST: Check if the skid has an explicit source project - this takes priority
+                            if (skid.sourceProject) {
+                                if (projectMap && projectMap[skid.sourceProject]) {
+                                    sourceProjectName = projectMap[skid.sourceProject];
+                                } else {
+                                    // Fallback to the source project code if name not found
+                                    sourceProjectName = skid.sourceProject;
+                                }
+                            } 
+                            // SECOND: If no sourceProject but has originalInvId, extract from inventory ID
+                            else if (skid.originalInvId) {
+                                const parts = skid.originalInvId.split('-');
+                                if (parts.length >= 3 && parts[0] === 'INV') {
+                                    const projCode = parts[1];
+                                    if (projectMap && projectMap[projCode]) {
+                                        sourceProjectName = projectMap[projCode];
+                                    } else {
+                                        sourceProjectName = projCode;
+                                    }
+                                }
                             }
-                        }
-                        
-                        // Get project name from projectMap if available
-                        if (sourceProjectCode && projectMap && projectMap[sourceProjectCode]) {
-                            sourceProjectName = projectMap[sourceProjectCode];
-                        } else if (sourceProjectCode === project.code) {
-                            // If it's the main project
-                            sourceProjectName = project.name;
-                        } else if (sourceProjectCode) {
-                            // Fallback to code if name not found
-                            sourceProjectName = sourceProjectCode;
-                        }
-                        
-                        // Show project name if available
-                        if (sourceProjectName) {
-                    %>
+                            
+                            // LAST: If still no source project found, it's a direct entry - use the main project
+                            if (!sourceProjectName) {
+                                sourceProjectName = project.name;
+                            }
+                        %>
                         <%= sourceProjectName %>
-                    <% } else { %>
-                        Direct Entry
-                    <% } %>
                     </td>
                     <td class="action-buttons no-print">
                         <button class="btn-edit btn-sm edit-skid-btn" data-skid-id="<%= skid.id %>" data-index="<%= index %>">
                             <i class="fas fa-edit"></i> Edit
                         </button>
                         <form action="/loader/truck/<%= project.code %>/skids/delete-skid" method="POST" class="delete-skid-form">
+                            <input type="hidden" name="_method" value="DELETE">
                             <input type="hidden" name="skidId" value="<%= skid.id %>">
                             <input type="hidden" name="loadId" value="<%= load._id %>">
                             <button type="submit" class="btn-delete btn-sm delete-skid-btn">
@@ -451,24 +450,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     <% 
                         const projectCounts = {};
                         load.skids.forEach(skid => {
-                            let projCode = '';
                             let projName = '';
                             
-                            if (skid.sourceProject) {
-                                projCode = skid.sourceProject;
+                            // For direct entries without sourceProject, use the current project
+                            if (!skid.sourceProject && !skid.originalInvId) {
+                                projName = project.name;
+                            } else if (skid.sourceProject) {
+                                // Has explicit source project
+                                if (projectMap && projectMap[skid.sourceProject]) {
+                                    projName = projectMap[skid.sourceProject];
+                                } else {
+                                    projName = skid.sourceProject;
+                                }
                             } else if (skid.originalInvId) {
+                                // Extract from inventory ID
                                 const parts = skid.originalInvId.split('-');
                                 if (parts.length >= 3 && parts[0] === 'INV') {
-                                    projCode = parts[1];
+                                    const projCode = parts[1];
+                                    if (projectMap && projectMap[projCode]) {
+                                        projName = projectMap[projCode];
+                                    } else {
+                                        projName = projCode;
+                                    }
                                 }
                             }
                             
-                            if (projCode && projectMap && projectMap[projCode]) {
-                                projName = projectMap[projCode];
-                            } else if (projCode) {
-                                projName = projCode;
-                            } else {
-                                projName = 'Direct Entry';
+                            // Default to the current project name
+                            if (!projName) {
+                                projName = project.name;
                             }
                             
                             projectCounts[projName] = (projectCounts[projName] || 0) + 1;
@@ -588,7 +597,6 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 
-<!-- Updated summary section to show project breakdown -->
 <!-- Fixed Loading Summary with Project Breakdown -->
 <div class="loading-instructions no-print">
     <div id="loadingInstructions">
@@ -605,26 +613,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     <% 
                         const summaryProjectCounts = {};
                         load.skids.forEach(skid => {
-                            let projCode = '';
                             let projName = '';
                             
                             // Extract project code
                             if (skid.sourceProject) {
-                                projCode = skid.sourceProject;
+                                if (projectMap && projectMap[skid.sourceProject]) {
+                                    projName = projectMap[skid.sourceProject];
+                                } else {
+                                    projName = skid.sourceProject;
+                                }
                             } else if (skid.originalInvId) {
                                 const parts = skid.originalInvId.split('-');
                                 if (parts.length >= 3 && parts[0] === 'INV') {
-                                    projCode = parts[1];
+                                    const projCode = parts[1];
+                                    if (projectMap && projectMap[projCode]) {
+                                        projName = projectMap[projCode];
+                                    } else {
+                                        projName = projCode;
+                                    }
                                 }
                             }
                             
-                            // Get project name
-                            if (projCode && projectMap && projectMap[projCode]) {
-                                projName = projectMap[projCode];
-                            } else if (projCode) {
-                                projName = projCode; // Use code as fallback
-                            } else {
-                                projName = 'Direct Entry';
+                            // Use main project name for direct entries
+                            if (!projName) {
+                                projName = project.name;
                             }
                             
                             summaryProjectCounts[projName] = (summaryProjectCounts[projName] || 0) + 1;

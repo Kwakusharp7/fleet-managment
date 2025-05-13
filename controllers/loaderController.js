@@ -496,15 +496,13 @@ exports.saveTruckInfo = async (req, res, next) => {
     }
 };
 
-// @desc    Get skid details page for truck
-// @route   GET /loader/truck/:projectId/skids
-// @desc    Get skid details page for truck (Fixed to show source projects)
+// @desc    Get skid details page for truck (Complete fix for source projects)
 // @route   GET /loader/truck/:projectId/skids
 exports.getSkidDetailsPage = async (req, res, next) => {
     try {
         const { projectId } = req.params;
         const { loadId, showProject } = req.query;
-        console.log(`--- Loading Skid Details Page for project ${projectId}, load ${loadId} ---`);
+        console.log(`--- Loading Skid Details Page for project ${projectId}, load ${loadId}, showing ${showProject || projectId} ---`);
 
         if (!loadId || !mongoose.Types.ObjectId.isValid(loadId)) {
             req.flash('error_msg', 'Valid Load ID is required to view skids.');
@@ -527,45 +525,27 @@ exports.getSkidDetailsPage = async (req, res, next) => {
             return res.redirect(`/loader/truck/${projectId}`);
         }
 
-        // Collect unique project codes from skids - INCLUDING the main project
-        const projectCodes = new Set();
-        projectCodes.add(projectId); // Always include the main project
-
-        // Extract project codes from existing skids
-        load.skids.forEach(skid => {
-            if (skid.sourceProject) {
-                projectCodes.add(skid.sourceProject);
-            } else if (skid.originalInvId) {
-                const parts = skid.originalInvId.split('-');
-                if (parts.length >= 3 && parts[0] === 'INV') {
-                    projectCodes.add(parts[1]);
-                }
-            }
-        });
-
-        // Add any additional projects that have been explicitly added
-        if (load.additionalProjects && load.additionalProjects.length > 0) {
-            load.additionalProjects.forEach(code => projectCodes.add(code));
-        }
-
-        // Fetch all projects to create a mapping
-        const allProjects = await Project.find({
-            code: { $in: Array.from(projectCodes) },
-            status: 'Active'
-        }).lean();
-
-        // Create a project code-to-name mapping
+        // IMPORTANT: Fetch ALL active projects to ensure complete mapping
+        const allProjects = await Project.find({ status: 'Active' }).lean();
+        
+        // Create a comprehensive project mapping
         const projectMap = {};
         allProjects.forEach(proj => {
             projectMap[proj.code] = proj.name;
         });
-
-        // Make sure the main project is always in the map
-        projectMap[projectId] = project.name;
+        
+        console.log('Complete project mapping:', projectMap);
+        console.log('Current display project:', showProject || projectId);
 
         // Determine which project's inventory to show
         const displayProjectCode = showProject || projectId;
-        const displayProject = await Project.findOne({ code: displayProjectCode, status: 'Active' }).lean();
+        let displayProject = await Project.findOne({ code: displayProjectCode, status: 'Active' }).lean();
+        
+        // Fallback to main project if display project not found
+        if (!displayProject) {
+            displayProject = project;
+            console.warn(`Display project ${displayProjectCode} not found, using main project`);
+        }
 
         // Get inventory skids
         const inventoryLoad = await Load.findOne({ projectCode: displayProjectCode, isInventory: true }).lean();
@@ -593,9 +573,6 @@ exports.getSkidDetailsPage = async (req, res, next) => {
         const spaceUtilization = calculateSpaceUtilization(load);
         const isOverweight = isLoadOverweight(load);
 
-        console.log('Project mapping:', projectMap);
-        console.log('Current project codes:', Array.from(projectCodes));
-
         res.render('loader/skid-details', {
             title: `Skid Details - ${project.name} / ${load.truckId}`,
             layout: 'layouts/loader',
@@ -607,7 +584,8 @@ exports.getSkidDetailsPage = async (req, res, next) => {
             isOverweight,
             additionalProjects,
             showProject: displayProjectCode,
-            projectMap // Pass the project mapping to the view
+            projectMap,
+            currentProjectCode: projectId
         });
     } catch (err) {
         console.error('Error loading skid details page:', err);
@@ -616,7 +594,7 @@ exports.getSkidDetailsPage = async (req, res, next) => {
     }
 };
 
-// @desc    Add skid directly to truck load
+// @desc    Add skid directly to truck load (with source project tracking)
 // @route   POST /loader/truck/:projectId/skid
 exports.addTruckSkid = async (req, res, next) => {
     try {
@@ -650,13 +628,14 @@ exports.addTruckSkid = async (req, res, next) => {
             return res.redirect(`/loader/truck/${projectId}`);
         }
 
-        // Create new skid
+        // Create new skid WITH source project
         const newSkid = {
             id: `TRUCK-${load.truckId}-${Date.now()}`, // Generate unique ID
             width: parseFloat(width),
             length: parseFloat(length),
             weight: parseFloat(weight),
             description: description || '',
+            sourceProject: projectId,  // Track which project this skid belongs to
             addedAt: new Date(),
             addedBy: req.user._id
         };
@@ -682,7 +661,6 @@ exports.addTruckSkid = async (req, res, next) => {
         res.redirect(`/loader/truck/${req.params.projectId}/skids?loadId=${req.body.loadId}`);
     }
 };
-
 // @desc    Update truck skid (handles PUT via _method from form)
 // @route   PUT /loader/truck/:projectId/skid/:skidId
 exports.updateTruckSkid = async (req, res, next) => {
@@ -886,21 +864,18 @@ exports.clearTruckSkids = async (req, res, next) => {
     }
 };
 
-
-// @desc    Add skids from inventory to truck
+// @desc    Add skids from inventory to truck (FIXED VERSION)
 // @route   POST /loader/truck/:projectId/skids/add-from-inventory
 exports.addSkidsFromInventory = async (req, res, next) => {
     try {
         const { projectId } = req.params;
-        const { loadId, selectedSkids, sourceProject } = req.body; // Added sourceProject
+        const { loadId, selectedSkids, sourceProject } = req.body;
 
-        console.log('Adding inventory skids to truck:', {
-            projectId,
-            loadId,
-            selectedSkids,
-            sourceProject,
-            bodyKeys: Object.keys(req.body)
-        });
+        console.log('=== Adding inventory skids ===');
+        console.log('Main project (from URL):', projectId);
+        console.log('Source project (from form):', sourceProject);
+        console.log('Load ID:', loadId);
+        console.log('Selected skids:', selectedSkids);
 
         // Validate loadId
         if (!loadId) {
@@ -929,14 +904,12 @@ exports.addSkidsFromInventory = async (req, res, next) => {
             return res.redirect(`/loader/truck/${projectId}`);
         }
 
-        // Verify the load belongs to the correct project
-        if (load.projectCode !== projectId) {
-            req.flash('error_msg', 'Invalid load for this project');
-            return res.redirect(`/loader/truck/${projectId}`);
-        }
-
-        // Determine which project's inventory we're adding from
+        // CRITICAL FIX: Use the sourceProject from the form, NOT the main project
         const inventoryProjectCode = sourceProject || projectId;
+        
+        console.log('=== Source Project Resolution ===');
+        console.log('Using inventory project code:', inventoryProjectCode);
+        console.log('================================');
 
         // Find inventory skids from the correct project
         const inventoryLoad = await Load.findOne({
@@ -970,7 +943,7 @@ exports.addSkidsFromInventory = async (req, res, next) => {
                 continue;
             }
 
-            // Create new truck skid with source project tracking
+            // Create new truck skid with the correct source project
             const newSkid = {
                 id: `TRUCK-${load.truckId}-${Date.now()}-${addedCount}`,
                 width: inventorySkid.width,
@@ -978,10 +951,16 @@ exports.addSkidsFromInventory = async (req, res, next) => {
                 weight: inventorySkid.weight,
                 description: inventorySkid.description,
                 originalInvId: inventorySkid.id,
-                sourceProject: inventoryProjectCode, // Track which project this came from
+                sourceProject: inventoryProjectCode, // THIS IS THE KEY FIX
                 addedAt: new Date(),
                 addedBy: req.user._id
             };
+
+            console.log(`=== Creating skid ===`);
+            console.log(`Skid ID: ${newSkid.id}`);
+            console.log(`Source Project: ${newSkid.sourceProject}`);
+            console.log(`Original Inv ID: ${newSkid.originalInvId}`);
+            console.log(`====================`);
 
             load.skids.push(newSkid);
             addedCount++;
@@ -995,23 +974,33 @@ exports.addSkidsFromInventory = async (req, res, next) => {
             load.updatedBy = req.user._id;
 
             await load.save();
-            req.flash('success_msg', `${addedCount} skid(s) from ${inventoryProjectCode} added to truck successfully`);
+            
+            // Verify the saved data
+            const verifyLoad = await Load.findById(loadId);
+            console.log('=== Verification ===');
+            const lastSkid = verifyLoad.skids[verifyLoad.skids.length - 1];
+            console.log('Last added skid source project:', lastSkid.sourceProject);
+            console.log('===================');
+            
+            // Get project name for the message
+            const sourceProjectDoc = await Project.findOne({ code: inventoryProjectCode });
+            const projectName = sourceProjectDoc ? sourceProjectDoc.name : inventoryProjectCode;
+            req.flash('success_msg', `${addedCount} skid(s) from ${projectName} added to truck successfully`);
         } else if (alreadyOnTruckCount > 0) {
             req.flash('info_msg', 'Selected skids are already on the truck');
         } else {
             req.flash('warning_msg', 'No valid skids were found to add');
         }
 
-        // Redirect back to the skids page
+        // Redirect back with the source project
         res.redirect(`/loader/truck/${projectId}/skids?loadId=${loadId}&showProject=${inventoryProjectCode}`);
 
     } catch (error) {
-        console.error('Error adding inventory skids:', error);
+        console.error('ERROR in addSkidsFromInventory:', error);
         req.flash('error_msg', 'Error adding skids to truck');
         res.redirect(`/loader/truck/${req.params.projectId}/skids?loadId=${req.body.loadId || ''}`);
     }
 };
-
 
 // @desc    Get packing list page
 // @route   GET /loader/truck/:projectId/packing-list
